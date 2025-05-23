@@ -4,19 +4,21 @@ interface UserJoinDialogProps {
   onJoin: (nickname: string, sessionId?: string, avatar?: string) => void;
   isVisible: boolean;
   error?: string;
+  rooms: { id?: string; name: string }[]; // Added rooms prop
 }
 
 export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
   onJoin,
   isVisible,
   error,
+  rooms, // Destructure rooms prop
 }) => {
   const [nickname, setNickname] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [joinMode, setJoinMode] = useState<"new" | "existing">("new");
   const [selectedAvatar, setSelectedAvatar] = useState("🎮");
 
-  const avatarOptions = ["🎮", "🎯", "🎲", "🎪", "🎨", "🎭", "🎪", "🎸"];
+  const avatarOptions = ["🎮", "🎯", "🎲", "🎪", "🎨", "🎭", "🎸", "🎵"];
 
   // Load saved nickname from localStorage
   useEffect(() => {
@@ -52,6 +54,10 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
   };
 
   if (!isVisible) return null;
+
+  function handleRoomSelect(_room: { id?: string; name: string }): void {
+    throw new Error("Function not implemented.");
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -89,9 +95,9 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
               Choose Avatar
             </label>
             <div className="flex flex-wrap gap-2">
-              {avatarOptions.map((avatar) => (
+              {avatarOptions.map((avatar, index) => (
                 <button
-                  key={avatar}
+                  key={`avatar-${index}`} // Use index-based key for extra safety
                   type="button"
                   onClick={() => setSelectedAvatar(avatar)}
                   className={`text-2xl p-2 rounded-lg border-2 transition-colors ${
@@ -184,6 +190,25 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
             {joinMode === "new" ? "Create & Join Game" : "Join Game"}
           </button>
         </form>
+
+        {/* Room Selection - Added section */}
+        {joinMode === "existing" && rooms.length > 0 && (
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Available Rooms
+            </label>
+            <div className="flex flex-col gap-2">
+              {rooms.map((room, index) => (
+                <button
+                  key={`room-${index}`} // Use index as unique key
+                  onClick={() => handleRoomSelect(room)}
+                >
+                  🎪 {room.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 pt-4 border-t border-gray-200 text-center">
           <p className="text-xs text-gray-500">
