@@ -69,10 +69,10 @@ export class UserManager {
           currentWord: "",
           guessedLetters: [],
           incorrectGuesses: 0,
-          maxIncorrectGuesses: 8,
+          maxIncorrectGuesses: 8, // This should already be 8
           gameStatus: "waiting",
           displayWord: "",
-          remainingGuesses: 8,
+          remainingGuesses: 8, // This should already be 8
         },
         createdAt: new Date(),
         lastActivity: new Date(),

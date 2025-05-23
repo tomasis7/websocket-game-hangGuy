@@ -2,7 +2,7 @@ import type { GameState, GuessResult } from "../types/gameTypes";
 import { GuessHandler } from "./guessHandler";
 import { getRandomWord } from "./wordSelection";
 
-const MAX_INCORRECT_GUESSES = 8; // 9 hangman stages (0-8)
+const MAX_INCORRECT_GUESSES = 8; // Changed from 9 back to 8
 
 export class HangGuyGame {
   private state: GameState;
