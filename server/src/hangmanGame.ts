@@ -1,12 +1,12 @@
-import { HangGuyGame } from '../../client/src/utils/gameLogic';
-import { GameStateEvent, GuessEvent, NewGameEvent } from '../../client/src/types/socketTypes';
+import { HangGuyGame } from "../../client/src/utils/gameLogic";
+import { GameStateEvent, GuessEvent } from "../../client/src/types/socketTypes";
 
 export class MultiplayerHangmanGame {
   private game: HangGuyGame;
   private players: Set<string> = new Set();
   private gameId: string;
 
-  constructor(gameId: string = 'main-game') {
+  constructor(gameId: string = "main-game") {
     this.game = new HangGuyGame();
     this.gameId = gameId;
   }
@@ -27,7 +27,10 @@ export class MultiplayerHangmanGame {
     return Array.from(this.players);
   }
 
-  processGuess(letter: string, playerId: string): {
+  processGuess(
+    letter: string,
+    playerId: string
+  ): {
     isCorrect: boolean;
     gameState: GameStateEvent;
   } {
@@ -36,11 +39,14 @@ export class MultiplayerHangmanGame {
 
     return {
       isCorrect: guessResult.isCorrect,
-      gameState
+      gameState,
     };
   }
 
-  startNewGame(options?: { category?: string; difficulty?: 'easy' | 'medium' | 'hard' }): GameStateEvent {
+  startNewGame(options?: {
+    category?: string;
+    difficulty?: "easy" | "medium" | "hard";
+  }): GameStateEvent {
     // Note: The current game logic doesn't support category/difficulty in resetGame
     // This would need to be updated in the original game logic
     this.game.resetGame();
@@ -49,7 +55,7 @@ export class MultiplayerHangmanGame {
 
   getGameState(): GameStateEvent {
     const state = this.game.getState();
-    
+
     return {
       word: state.word,
       guessedLetters: Array.from(state.guessedLetters),
@@ -59,13 +65,16 @@ export class MultiplayerHangmanGame {
       maxGuesses: state.maxGuesses,
       status: state.status,
       displayWord: state.displayWord,
-      players: this.getPlayers()
+      players: this.getPlayers(),
     };
   }
 
-  canPlayerGuess(playerId: string, letter: string): { canGuess: boolean; reason?: string } {
+  canPlayerGuess(
+    playerId: string,
+    letter: string
+  ): { canGuess: boolean; reason?: string } {
     if (!this.players.has(playerId)) {
-      return { canGuess: false, reason: 'Player not in game' };
+      return { canGuess: false, reason: "Player not in game" };
     }
 
     return this.game.canGuessLetter(letter);
