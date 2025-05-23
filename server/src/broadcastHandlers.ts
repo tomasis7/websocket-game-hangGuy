@@ -106,47 +106,6 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
     }
   });
 
-  // Request game history for new players
-  socket.on("hangman:request-game-history", () => {
-    try {
-      const gameState = gameManager.getGameState();
-      const player = gameManager.getPlayer(socket.id);
-
-      if (!player) {
-        socket.emit("hangman:error", {
-          message: "Player not found",
-          code: "PLAYER_NOT_FOUND",
-          timestamp: Date.now(),
-        });
-        return;
-      }
-
-      // Construct game history from current state
-      const gameHistory = {
-        correctGuesses: gameState.correctGuesses,
-        incorrectGuesses: gameState.incorrectGuesses,
-        guessSequence: [
-          ...gameState.correctGuesses,
-          ...gameState.incorrectGuesses,
-        ].sort(),
-        currentWord: gameState.displayWord,
-        gameStatus: gameState.status,
-        playersInvolved: gameState.players.map((p) => p.name),
-        timestamp: Date.now(),
-      };
-
-      socket.emit("hangman:game-history-response", gameHistory);
-      console.log(`📚 Sent game history to ${player.name}`);
-    } catch (error) {
-      console.error("❌ Error sending game history:", error);
-      socket.emit("hangman:error", {
-        message: "Failed to get game history",
-        code: "HISTORY_ERROR",
-        timestamp: Date.now(),
-      });
-    }
-  });
-
   // Leave game handler
   socket.on("hangman:leave-game", () => {
     const playerId = socket.id;

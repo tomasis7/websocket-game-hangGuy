@@ -4,7 +4,6 @@ interface UserJoinDialogProps {
   onJoin: (nickname: string, sessionId?: string, avatar?: string) => void;
   isVisible: boolean;
   error?: string;
-  rooms: { id?: string; name: string }[]; // Added rooms prop
 }
 
 export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({

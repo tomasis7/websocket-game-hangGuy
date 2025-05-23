@@ -191,15 +191,6 @@ export const MultiplayerHangGuy: React.FC = () => {
           >
             Sync Game State
           </button>
-          {/* <button
-            onClick={() => {
-              console.log("Game history request feature not yet implemented");
-              // TODO: Implement game history request functionality
-            }}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 ml-2"
-          >
-            Get Game History
-          </button> */}
         </div>
       </div>
     );
@@ -215,7 +206,6 @@ export const MultiplayerHangGuy: React.FC = () => {
         onJoin={handleJoinGame}
         isVisible={true}
         error={joinError || error || undefined}
-        rooms={[]} // Add rooms prop if available
       />
     );
   }
@@ -254,16 +244,6 @@ export const MultiplayerHangGuy: React.FC = () => {
                 word={gameState.word}
                 correctGuesses={new Set(gameState.correctGuesses)}
               />
-
-              {/* Guess Display
-              <GuessDisplay
-                correctGuesses={new Set(gameState.correctGuesses)}
-                incorrectGuesses={new Set(gameState.incorrectGuesses)}
-                remainingGuesses={
-                  gameState.maxGuesses - gameState.incorrectGuesses.length
-                }
-                maxGuesses={gameState.maxGuesses}
-              /> */}
 
               {/* Letter Input */}
               {isGameActive && (
