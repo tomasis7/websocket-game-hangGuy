@@ -1,5 +1,9 @@
 import { HangGuyGame } from "../../client/src/utils/gameLogic";
-import { GameStateEvent, GuessEvent } from "../../client/src/types/socketTypes";
+import {
+  GameStateEvent,
+  GuessEvent,
+  PlayerInfo,
+} from "../../client/src/types/socketTypes";
 
 export class MultiplayerHangmanGame {
   private game: HangGuyGame;
@@ -57,6 +61,7 @@ export class MultiplayerHangmanGame {
     const state = this.game.getState();
 
     return {
+      gameId: this.gameId,
       word: state.word,
       guessedLetters: Array.from(state.guessedLetters),
       correctGuesses: Array.from(state.correctGuesses),
@@ -65,7 +70,12 @@ export class MultiplayerHangmanGame {
       maxGuesses: state.maxGuesses,
       status: state.status,
       displayWord: state.displayWord,
-      players: this.getPlayers(),
+      players: this.getPlayers().map((id) => ({
+        id,
+        name: id,
+        joinedAt: new Date().getTime(),
+        isActive: true,
+      })),
     };
   }
 
