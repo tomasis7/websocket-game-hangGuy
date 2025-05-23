@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { socket } from '../socket';
-import type { User, SessionInfo, UserIdentification, JoinGameRequest } from '../../../shared/types';
+import type { 
+  User, 
+  SessionInfo, 
+  UserIdentification, 
+  JoinGameRequest,
+  JoinGameResponse,
+  ReconnectResponse 
+} from '../../../shared/types';
+
+interface SavedSessionData {
+  userId: string;
+  sessionId: string;
+  nickname: string;
+}
 
 export const useUserIdentification = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -10,15 +23,20 @@ export const useUserIdentification = () => {
   const [joinError, setJoinError] = useState<string>('');
   const [isJoining, setIsJoining] = useState(false);
 
-  // Generate unique user ID
-  const generateUserId = useCallback(() => {
-    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Generate unique user ID with proper typing
+  const generateUserId = useCallback((): string => {
+    return `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }, []);
 
-  // Join game with user identification
-  const joinGame = useCallback((nickname: string, sessionId?: string, avatar?: string) => {
+  // Join game with proper error handling
+  const joinGame = useCallback((nickname: string, sessionId?: string, avatar?: string): void => {
     if (!socket) {
       setJoinError('Socket connection not available');
+      return;
+    }
+
+    if (!nickname.trim()) {
+      setJoinError('Nickname is required');
       return;
     }
 
@@ -26,13 +44,14 @@ export const useUserIdentification = () => {
     setJoinError('');
 
     const userId = generateUserId();
-    const joinRequest: JoinGameRequest = {
+    const joinRequest: JoinGameRequest & { userId: string } = {
       nickname: nickname.trim(),
       sessionId: sessionId?.trim(),
       avatar,
+      userId,
     };
 
-    // Store user info locally
+    // Store user info locally with proper typing
     const userInfo: UserIdentification = {
       userId,
       nickname: nickname.trim(),
@@ -43,7 +62,7 @@ export const useUserIdentification = () => {
     setUserIdentification(userInfo);
 
     // Emit join game event
-    socket.emit('joinGame', { ...joinRequest, userId });
+    socket.emit('joinGame', joinRequest);
 
     // Set timeout for join response
     const joinTimeout = setTimeout(() => {
@@ -51,8 +70,8 @@ export const useUserIdentification = () => {
       setJoinError('Join request timed out. Please try again.');
     }, 10000);
 
-    // Listen for join response
-    const handleJoinResponse = (response: { success: boolean; error?: string; user?: User; session?: SessionInfo }) => {
+    // Listen for join response with proper typing
+    const handleJoinResponse = (response: JoinGameResponse): void => {
       clearTimeout(joinTimeout);
       setIsJoining(false);
 
@@ -66,11 +85,12 @@ export const useUserIdentification = () => {
         });
         
         // Save session info to localStorage for reconnection
-        localStorage.setItem('hangGuy_lastSession', JSON.stringify({
+        const savedSession: SavedSessionData = {
           userId: response.user.id,
           sessionId: response.session.id,
           nickname: response.user.nickname,
-        }));
+        };
+        localStorage.setItem('hangGuy_lastSession', JSON.stringify(savedSession));
       } else {
         setJoinError(response.error || 'Failed to join game');
         setCurrentUser(null);
@@ -82,8 +102,8 @@ export const useUserIdentification = () => {
     socket.once('joinGameResponse', handleJoinResponse);
   }, [generateUserId]);
 
-  // Leave game
-  const leaveGame = useCallback(() => {
+  // Leave game with proper cleanup
+  const leaveGame = useCallback((): void => {
     if (!socket || !currentUser) return;
 
     socket.emit('leaveGame', { userId: currentUser.id });
@@ -98,12 +118,17 @@ export const useUserIdentification = () => {
   }, [currentUser]);
 
   // Attempt to reconnect to previous session
-  const attemptReconnect = useCallback(() => {
-    const savedSession = localStorage.getItem('hangGuy_lastSession');
-    if (savedSession && socket) {
+  const attemptReconnect = useCallback((): void => {
+    const savedSessionString = localStorage.getItem('hangGuy_lastSession');
+    if (savedSessionString && socket) {
       try {
-        const sessionData = JSON.parse(savedSession);
-        socket.emit('reconnectToSession', sessionData);
+        const sessionData: SavedSessionData = JSON.parse(savedSessionString);
+        // Validate required fields
+        if (sessionData.userId && sessionData.sessionId && sessionData.nickname) {
+          socket.emit('reconnectToSession', sessionData);
+        } else {
+          localStorage.removeItem('hangGuy_lastSession');
+        }
       } catch (error) {
         console.error('Failed to parse saved session:', error);
         localStorage.removeItem('hangGuy_lastSession');
@@ -111,30 +136,30 @@ export const useUserIdentification = () => {
     }
   }, []);
 
-  // Socket event listeners
+  // Socket event listeners with proper typing
   useEffect(() => {
     if (!socket) return;
 
-    const handleUserJoined = (user: User) => {
+    const handleUserJoined = (user: User): void => {
       setUsers(prev => {
         const filtered = prev.filter(u => u.id !== user.id);
         return [...filtered, user];
       });
     };
 
-    const handleUserLeft = (userId: string) => {
+    const handleUserLeft = (userId: string): void => {
       setUsers(prev => prev.filter(u => u.id !== userId));
     };
 
-    const handleUserListUpdated = (userList: User[]) => {
+    const handleUserListUpdated = (userList: User[]): void => {
       setUsers(userList);
     };
 
-    const handleSessionUpdated = (session: SessionInfo) => {
+    const handleSessionUpdated = (session: SessionInfo): void => {
       setSessionInfo(session);
     };
 
-    const handleReconnectResponse = (response: { success: boolean; user?: User; session?: SessionInfo; error?: string }) => {
+    const handleReconnectResponse = (response: ReconnectResponse): void => {
       if (response.success && response.user && response.session) {
         setCurrentUser(response.user);
         setSessionInfo(response.session);
@@ -146,6 +171,9 @@ export const useUserIdentification = () => {
         });
       } else {
         localStorage.removeItem('hangGuy_lastSession');
+        if (response.error) {
+          setJoinError(response.error);
+        }
       }
     };
 
@@ -177,5 +205,5 @@ export const useUserIdentification = () => {
     joinGame,
     leaveGame,
     attemptReconnect,
-  };
+  } as const;
 };
