@@ -75,6 +75,7 @@ export class MultiplayerHangmanGame {
         name: id,
         joinedAt: new Date().getTime(),
         isActive: true,
+        avatar: null,
       })),
     };
   }
