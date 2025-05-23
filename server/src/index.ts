@@ -1,23 +1,51 @@
-import { Server } from "socket.io";
-import { createServer } from "http";
-import { setupHangmanHandlers } from "./socketHandlers";
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
+import { setupHangmanBroadcasters } from './broadcastHandlers';
 
-const server = createServer();
-const io = new Server(server);
+const app = express();
+const server = createServer(app);
 
-io.on("connection", (socket) => {
-  console.log("A user connected");
+// Configure CORS for Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
 
-  // Setup hangman game handlers
-  setupHangmanHandlers(io, socket);
+app.use(cors());
+app.use(express.json());
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
+// Basic health check endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Hang Guy Game Server', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
   });
-  const PORT = process.env.PORT || 3000;
-  server.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
+});
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log(`User connected: ${socket.id}`);
+
+  // Setup hangman game broadcasting handlers
+  setupHangmanBroadcasters(io, socket);
+
+  // Log disconnection
+  socket.on('disconnect', () => {
+    console.log(`User disconnected: ${socket.id}`);
   });
+});
+
+const PORT = process.env.PORT || 3001;
+
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🎮 Hang Guy Game ready for multiplayer action!`);
 });
 
 export default io;
