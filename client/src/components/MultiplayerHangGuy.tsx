@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { HangmanSVGs } from "./hangman/HangmanSVGs";
 import { HangGuyWord } from "./HangGuyWord";
 import { GuessDisplay } from "./GuessDisplay";
@@ -21,12 +21,9 @@ export const MultiplayerHangGuy: React.FC = () => {
 
   const {
     gameState,
-    players,
-    playerInfo,
     isConnected,
     isJoining: gameJoining,
     error,
-    notifications,
     joinWelcome,
     actions,
   } = useMultiplayerGame();

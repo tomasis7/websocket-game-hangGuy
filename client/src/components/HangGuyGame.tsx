@@ -19,10 +19,7 @@ export const HangGuyGame: React.FC = () => {
     }
   };
 
-  const handleNewGame = (options?: {
-    category?: string;
-    difficulty?: "easy" | "medium" | "hard";
-  }) => {
+  const handleNewGame = () => {
     resetGame(undefined); // For now, just reset with random word
     // TODO: Update resetGame to accept category and difficulty options
   };

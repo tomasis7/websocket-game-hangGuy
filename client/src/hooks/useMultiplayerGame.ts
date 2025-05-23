@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { socket } from "../socket";
-import type {
-  GameStateEvent,
-  PlayerInfo,
-  GameBroadcast,
-} from "../types/socketTypes";
+import type { GameStateEvent, PlayerInfo } from "../types/socketTypes";
 
 export const useMultiplayerGame = () => {
   // Game state
