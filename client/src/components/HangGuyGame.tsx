@@ -4,6 +4,7 @@ import { HangGuyWord } from "./HangGuyWord";
 import { GuessDisplay } from "./GuessDisplay";
 import { LetterInput } from "./LetterInput";
 import { GameStatus } from "./GameStatus";
+import { GameControls } from "./GameControls";
 import { useHangGuyGame } from "../hooks/useHangGuyGame";
 
 export const HangGuyGame: React.FC = () => {
@@ -18,8 +19,12 @@ export const HangGuyGame: React.FC = () => {
     }
   };
 
-  const handleReset = () => {
-    resetGame();
+  const handleNewGame = (options?: {
+    category?: string;
+    difficulty?: "easy" | "medium" | "hard";
+  }) => {
+    resetGame(undefined); // For now, just reset with random word
+    // TODO: Update resetGame to accept category and difficulty options
   };
 
   return (
@@ -58,16 +63,6 @@ export const HangGuyGame: React.FC = () => {
                 />
               </div>
             </div>
-
-            {/* Reset/New Game Button */}
-            {!isGameActive && (
-              <button
-                onClick={handleReset}
-                className="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 transition-colors"
-              >
-                🔄 Start New Game
-              </button>
-            )}
           </div>
 
           {/* Middle Column: Guess Tracking */}
@@ -80,8 +75,9 @@ export const HangGuyGame: React.FC = () => {
             />
           </div>
 
-          {/* Right Column: Input Controls */}
+          {/* Right Column: Input Controls & Game Controls */}
           <div className="flex flex-col items-center space-y-6">
+            {/* Input Controls */}
             <div className="bg-white rounded-lg shadow-md p-6 w-full">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                 {isGameActive ? "Make Your Guess" : "Game Finished"}
@@ -93,28 +89,12 @@ export const HangGuyGame: React.FC = () => {
               />
             </div>
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow-md p-4 w-full">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 text-center">
-                Quick Actions
-              </h4>
-              <div className="space-y-2">
-                <button
-                  onClick={handleReset}
-                  className="w-full bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 transition-colors"
-                >
-                  🔄 New Game
-                </button>
-                {gameState.status === "lost" && (
-                  <div className="text-xs text-center text-gray-500 mt-2">
-                    The word was:{" "}
-                    <span className="font-mono font-semibold">
-                      {gameState.word}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Game Controls */}
+            <GameControls
+              onNewGame={handleNewGame}
+              gameStatus={gameState.status}
+              disabled={false}
+            />
           </div>
         </div>
       </div>

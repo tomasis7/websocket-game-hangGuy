@@ -47,16 +47,16 @@
 
 2. **SVG Images**
 
-   - [ ] Design or import 9 SVG images representing each hangman stage.
-   - [ ] Integrate SVG images into the UI to reflect the current game state.
+   - [x] Design or import 9 SVG images representing each hangman stage.
+   - [x] Integrate SVG images into the UI to reflect the current game state.
 
 3. **Frontend UI**
 
-   - [ ] Display underscores for unguessed letters and reveal correct guesses.
-   - [ ] Show guessed letters and remaining guesses.
-   - [ ] Create input field or keyboard handler for letter guesses.
-   - [ ] Display game status (in progress, won, lost).
-   - [ ] Add UI for resetting or starting a new game.
+   - [x] Display underscores for unguessed letters and reveal correct guesses.
+   - [x] Show guessed letters and remaining guesses.
+   - [x] Create input field or keyboard handler for letter guesses.
+   - [x] Display game status (in progress, won, lost).
+   - [x] Add UI for resetting or starting a new game.
 
 4. **Websocket Integration**
 
