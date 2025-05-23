@@ -60,9 +60,9 @@
 
 4. **Websocket Integration**
 
-   - [ ] Synchronize game state across all connected users in real-time using Socket.IO.
-   - [ ] Broadcast guesses and game state updates to all clients.
-   - [ ] Handle new users joining an ongoing game (sync state).
+   - [x] Synchronize game state across all connected users in real-time using Socket.IO.
+   - [x] Broadcast guesses and game state updates to all clients.
+   - [x] Handle new users joining an ongoing game (sync state).
 
 5. **Multi-user Support**
 

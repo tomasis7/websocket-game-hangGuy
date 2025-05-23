@@ -1,5 +1,9 @@
-import { HangGuyGame } from '../../client/src/utils/gameLogic';
-import { GameStateEvent, PlayerInfo, GameAction } from '../../client/src/types/socketTypes';
+import { HangGuyGame } from "../../client/src/utils/gameLogic";
+import {
+  GameStateEvent,
+  PlayerInfo,
+  GameAction,
+} from "../../client/src/types/socketTypes";
 
 export class GameManager {
   private game: HangGuyGame;
@@ -7,7 +11,7 @@ export class GameManager {
   private gameId: string;
   private lastAction?: GameAction;
 
-  constructor(gameId: string = 'main-hangman-game') {
+  constructor(gameId: string = "main-hangman-game") {
     this.game = new HangGuyGame();
     this.gameId = gameId;
   }
@@ -17,37 +21,44 @@ export class GameManager {
       id: playerId,
       name: playerName,
       joinedAt: Date.now(),
-      isActive: true
+      isActive: true,
     };
 
     this.players.set(playerId, playerInfo);
 
     this.lastAction = {
-      type: 'player_join',
+      type: "player_join",
       playerId,
       playerName,
       timestamp: Date.now(),
-      data: { playerCount: this.players.size }
+      data: { playerCount: this.players.size },
     };
 
-    console.log(`Player ${playerName} (${playerId}) joined game. Total: ${this.players.size}`);
+    console.log(
+      `Player ${playerName} (${playerId}) joined game. Total: ${this.players.size}`
+    );
     return playerInfo;
   }
 
-  removePlayer(playerId: string): { removed: boolean; playerInfo?: PlayerInfo } {
+  removePlayer(playerId: string): {
+    removed: boolean;
+    playerInfo?: PlayerInfo;
+  } {
     const playerInfo = this.players.get(playerId);
     const removed = this.players.delete(playerId);
 
     if (removed && playerInfo) {
       this.lastAction = {
-        type: 'player_leave',
+        type: "player_leave",
         playerId,
         playerName: playerInfo.name,
         timestamp: Date.now(),
-        data: { playerCount: this.players.size }
+        data: { playerCount: this.players.size },
       };
 
-      console.log(`Player ${playerInfo.name} (${playerId}) left game. Total: ${this.players.size}`);
+      console.log(
+        `Player ${playerInfo.name} (${playerId}) left game. Total: ${this.players.size}`
+      );
     }
 
     return { removed, playerInfo };
@@ -65,7 +76,10 @@ export class GameManager {
     return this.players.size;
   }
 
-  processGuess(letter: string, playerId: string): {
+  processGuess(
+    letter: string,
+    playerId: string
+  ): {
     success: boolean;
     isCorrect: boolean;
     gameState: GameStateEvent;
@@ -77,7 +91,7 @@ export class GameManager {
         success: false,
         isCorrect: false,
         gameState: this.getGameState(),
-        error: 'Player not found in game'
+        error: "Player not found in game",
       };
     }
 
@@ -88,54 +102,61 @@ export class GameManager {
         success: false,
         isCorrect: false,
         gameState: this.getGameState(),
-        error: canGuess.reason
+        error: canGuess.reason,
       };
     }
 
     // Process the guess
     const guessResult = this.game.guessLetter(letter);
-    
+
     this.lastAction = {
-      type: 'guess',
+      type: "guess",
       playerId,
       playerName: player.name,
       timestamp: Date.now(),
       data: {
         letter,
         isCorrect: guessResult.isCorrect,
-        gameStateAfter: guessResult.gameStateAfter
-      }
+        gameStateAfter: guessResult.gameStateAfter,
+      },
     };
 
-    console.log(`${player.name} guessed "${letter}" - ${guessResult.isCorrect ? 'Correct' : 'Incorrect'}`);
+    console.log(
+      `${player.name} guessed "${letter}" - ${
+        guessResult.isCorrect ? "Correct" : "Incorrect"
+      }`
+    );
 
     return {
       success: true,
       isCorrect: guessResult.isCorrect,
-      gameState: this.getGameState()
+      gameState: this.getGameState(),
     };
   }
 
-  startNewGame(options?: { category?: string; difficulty?: 'easy' | 'medium' | 'hard' }, startedBy?: string): GameStateEvent {
+  startNewGame(
+    options?: { category?: string; difficulty?: "easy" | "medium" | "hard" },
+    startedBy?: string
+  ): GameStateEvent {
     this.game.resetGame();
-    
+
     const player = startedBy ? this.players.get(startedBy) : undefined;
-    
+
     this.lastAction = {
-      type: 'new_game',
-      playerId: startedBy || 'system',
-      playerName: player?.name || 'System',
+      type: "new_game",
+      playerId: startedBy || "system",
+      playerName: player?.name || "System",
       timestamp: Date.now(),
-      data: options
+      data: options,
     };
 
-    console.log(`New game started by ${player?.name || 'System'}`);
+    console.log(`New game started by ${player?.name || "System"}`);
     return this.getGameState();
   }
 
   getGameState(): GameStateEvent {
     const state = this.game.getState();
-    
+
     return {
       word: state.word,
       guessedLetters: Array.from(state.guessedLetters),
@@ -147,7 +168,7 @@ export class GameManager {
       displayWord: state.displayWord,
       players: this.getPlayers(),
       gameId: this.gameId,
-      lastAction: this.lastAction
+      lastAction: this.lastAction,
     };
   }
 
@@ -158,7 +179,7 @@ export class GameManager {
       gameStatus: this.game.getState().status,
       totalGuesses: this.game.getState().guessedLetters.size,
       correctGuesses: this.game.getState().correctGuesses.size,
-      incorrectGuesses: this.game.getState().incorrectGuesses.size
+      incorrectGuesses: this.game.getState().incorrectGuesses.size,
     };
   }
 }

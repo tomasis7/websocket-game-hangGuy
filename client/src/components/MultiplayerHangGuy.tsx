@@ -1,20 +1,23 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { HangmanSVGs } from "./hangman/HangmanSVGs";
 import { HangGuyWord } from "./HangGuyWord";
 import { GuessDisplay } from "./GuessDisplay";
 import { LetterInput } from "./LetterInput";
 import { GameStatus } from "./GameStatus";
 import { GameControls } from "./GameControls";
+import { JoinGameWelcome } from "./JoinGameWelcome";
 import { useMultiplayerGame } from "../hooks/useMultiplayerGame";
 
 export const MultiplayerHangGuy: React.FC = () => {
   const {
     gameState,
     players,
-    playerId,
+    playerInfo,
     isConnected,
+    isJoining,
     error,
-    lastGuessResult,
+    notifications,
+    joinWelcome,
     actions,
   } = useMultiplayerGame();
 
@@ -36,31 +39,47 @@ export const MultiplayerHangGuy: React.FC = () => {
     }
   };
 
-  // Auto-sync on connection
-  useEffect(() => {
-    if (isConnected && !gameState) {
-      actions.requestSync();
-    }
-  }, [isConnected, gameState, actions]);
-
-  if (!isConnected) {
+  // Loading/connecting state
+  if (!isConnected || isJoining) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+        <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-md">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            Connecting to Game...
+            {isJoining ? "Joining Game..." : "Connecting to Game..."}
           </h2>
-          <p className="text-gray-600">
-            Please wait while we connect you to the multiplayer game.
+          <p className="text-gray-600 mb-4">
+            {isJoining
+              ? "Please wait while we sync you with the current game state."
+              : "Please wait while we connect you to the multiplayer game."}
           </p>
           {error && (
             <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
               Error: {error}
             </div>
           )}
+          <button
+            onClick={actions.requestSync}
+            disabled={!isConnected}
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            Retry Connection
+          </button>
         </div>
       </div>
+    );
+  }
+
+  // Show welcome modal for new joiners
+  if (joinWelcome.show && joinWelcome.gameState && joinWelcome.playerInfo) {
+    return (
+      <JoinGameWelcome
+        gameState={joinWelcome.gameState}
+        playerInfo={joinWelcome.playerInfo}
+        isGameInProgress={joinWelcome.isGameInProgress}
+        gameSummary={joinWelcome.gameSummary}
+        onDismiss={actions.dismissWelcome}
+      />
     );
   }
 
@@ -71,12 +90,20 @@ export const MultiplayerHangGuy: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             Loading Game...
           </h2>
-          <button
-            onClick={actions.requestSync}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Sync Game State
-          </button>
+          <div className="space-y-2">
+            <button
+              onClick={actions.requestSync}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Sync Game State
+            </button>
+            <button
+              onClick={actions.requestGameHistory}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 ml-2"
+            >
+              Get Game History
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -105,7 +132,7 @@ export const MultiplayerHangGuy: React.FC = () => {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span>🆔 You: Player {playerId.slice(-4)}</span>
+              <span>🆔 You: {playerInfo.name}</span>
             </div>
           </div>
         </div>
@@ -117,29 +144,32 @@ export const MultiplayerHangGuy: React.FC = () => {
           </div>
         )}
 
-        {/* Last guess result notification */}
-        {lastGuessResult && (
-          <div
-            className={`mb-6 p-4 rounded-lg text-center ${
-              lastGuessResult.isCorrect
-                ? "bg-green-100 border border-green-400 text-green-700"
-                : "bg-red-100 border border-red-400 text-red-700"
-            }`}
-          >
-            {lastGuessResult.playerId === playerId ? (
-              <span>
-                {lastGuessResult.isCorrect ? "✅" : "❌"}
-                You guessed "{lastGuessResult.letter}" -{" "}
-                {lastGuessResult.isCorrect ? "Correct!" : "Incorrect!"}
-              </span>
-            ) : (
-              <span>
-                {lastGuessResult.isCorrect ? "✅" : "❌"}
-                {lastGuessResult.playerName ||
-                  `Player ${lastGuessResult.playerId.slice(-4)}`}
-                guessed "{lastGuessResult.letter}" -{" "}
-                {lastGuessResult.isCorrect ? "Correct!" : "Incorrect!"}
-              </span>
+        {/* Notifications */}
+        {notifications.length > 0 && (
+          <div className="mb-6 space-y-2">
+            {notifications.slice(-3).map((notification) => (
+              <div
+                key={notification.id}
+                className={`p-3 rounded-lg text-sm ${
+                  notification.type === "success"
+                    ? "bg-green-100 border border-green-400 text-green-700"
+                    : notification.type === "error"
+                    ? "bg-red-100 border border-red-400 text-red-700"
+                    : notification.type === "warning"
+                    ? "bg-yellow-100 border border-yellow-400 text-yellow-700"
+                    : "bg-blue-100 border border-blue-400 text-blue-700"
+                }`}
+              >
+                {notification.message}
+              </div>
+            ))}
+            {notifications.length > 3 && (
+              <button
+                onClick={actions.clearNotifications}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                Clear all notifications
+              </button>
             )}
           </div>
         )}
@@ -182,16 +212,21 @@ export const MultiplayerHangGuy: React.FC = () => {
               <div className="space-y-1">
                 {players.map((player) => (
                   <div
-                    key={player}
+                    key={player.id}
                     className={`text-sm p-2 rounded ${
-                      player === playerId
+                      player.id === playerInfo.id
                         ? "bg-blue-100 text-blue-800 font-medium"
                         : "bg-gray-100 text-gray-700"
                     }`}
                   >
-                    {player === playerId
+                    {player.id === playerInfo.id
                       ? "👤 You"
-                      : `👤 Player ${player.slice(-4)}`}
+                      : `👤 ${player.name}`}
+                    {player.id === gameState.lastAction?.playerId && (
+                      <span className="ml-2 text-xs text-green-600">
+                        • last action
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -237,7 +272,7 @@ export const MultiplayerHangGuy: React.FC = () => {
             {/* Connection Controls */}
             <div className="bg-white rounded-lg shadow-md p-4 w-full">
               <h4 className="text-sm font-semibold text-gray-700 mb-3 text-center">
-                Connection
+                Debug
               </h4>
               <div className="space-y-2">
                 <button
@@ -246,6 +281,13 @@ export const MultiplayerHangGuy: React.FC = () => {
                   className="w-full bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 transition-colors disabled:bg-gray-400"
                 >
                   🔄 Sync Game State
+                </button>
+                <button
+                  onClick={actions.requestGameHistory}
+                  disabled={!isConnected}
+                  className="w-full bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 transition-colors disabled:bg-gray-400"
+                >
+                  📚 Get Game History
                 </button>
               </div>
             </div>

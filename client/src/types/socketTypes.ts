@@ -52,6 +52,7 @@ export interface HangGuySocketEvents {
     startedBy: string;
   }) => void;
   "hangman:request-sync": () => void;
+  "hangman:request-game-history": () => void; // Added missing event
 
   // Server to Client - Broadcasts
   "hangman:state-broadcast": (data: GameBroadcast) => void;
@@ -69,6 +70,7 @@ export interface HangGuySocketEvents {
     playerName: string;
     playerCount: number;
     gameState: GameStateEvent;
+    isNewPlayer?: boolean; // Added missing optional field
     timestamp: number;
   }) => void;
   "hangman:game-start-broadcast": (data: {
@@ -77,7 +79,40 @@ export interface HangGuySocketEvents {
     gameState: GameStateEvent;
     timestamp: number;
   }) => void;
-  "hangman:sync-response": (data: GameStateEvent) => void;
+
+  // Enhanced response events - these were missing
+  "hangman:join-success": (data: {
+    gameState: GameStateEvent;
+    playerInfo: PlayerInfo;
+    isGameInProgress: boolean;
+    gameSummary: string;
+    timestamp: number;
+  }) => void;
+
+  "hangman:game-in-progress-welcome": (data: {
+    message: string;
+    gameState: GameStateEvent;
+    helpText: string;
+    timestamp: number;
+  }) => void;
+
+  "hangman:sync-response": (data: {
+    gameState: GameStateEvent;
+    playerInfo: PlayerInfo;
+    gameSummary: string;
+    timestamp: number;
+  }) => void;
+
+  "hangman:game-history-response": (data: {
+    correctGuesses: string[];
+    incorrectGuesses: string[];
+    guessSequence: string[];
+    currentWord: string;
+    gameStatus: string;
+    playersInvolved: string[];
+    timestamp: number;
+  }) => void;
+
   "hangman:error": (data: {
     message: string;
     code?: string;

@@ -2,143 +2,292 @@ import { useState, useEffect, useCallback } from "react";
 import { useSocket } from "./useSocket";
 import type {
   GameStateEvent,
-  GuessEvent,
-  NewGameEvent,
+  PlayerInfo,
   HangGuySocketEvents,
 } from "../types/socketTypes";
 import type { Socket } from "socket.io-client";
 
-export const useMultiplayerGame = () => {
+export const useMultiplayerGame = (playerName?: string) => {
   const socket = useSocket() as Socket<HangGuySocketEvents>;
 
   const [gameState, setGameState] = useState<GameStateEvent | null>(null);
-  const [players, setPlayers] = useState<string[]>([]);
+  const [players, setPlayers] = useState<PlayerInfo[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastGuessResult, setLastGuessResult] = useState<{
-    letter: string;
-    isCorrect: boolean;
-    playerId: string;
-    playerName?: string;
-  } | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinWelcome, setJoinWelcome] = useState<{
+    show: boolean;
+    gameState?: GameStateEvent;
+    playerInfo?: PlayerInfo;
+    isGameInProgress: boolean;
+    gameSummary: string;
+  }>({
+    show: false,
+    isGameInProgress: false,
+    gameSummary: "",
+  });
 
-  // Generate unique player ID
-  const [playerId] = useState(
-    () => `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  const [notifications, setNotifications] = useState<
+    Array<{
+      id: string;
+      message: string;
+      type: "info" | "success" | "error" | "warning";
+      timestamp: number;
+    }>
+  >([]);
+
+  const [playerInfo] = useState(() => ({
+    id: `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    name: playerName || `Player${Math.random().toString(36).substr(2, 4)}`,
+  }));
+
+  const addNotification = useCallback(
+    (
+      message: string,
+      type: "info" | "success" | "error" | "warning" = "info"
+    ) => {
+      const notification = {
+        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        message,
+        type,
+        timestamp: Date.now(),
+      };
+
+      setNotifications((prev) => [...prev.slice(-4), notification]); // Keep only last 5 notifications
+
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        setNotifications((prev) =>
+          prev.filter((n) => n.id !== notification.id)
+        );
+      }, 5000);
+    },
+    []
   );
 
-  // Socket event handlers
   useEffect(() => {
     if (!socket) return;
 
     const handleConnect = () => {
       setIsConnected(true);
       setError(null);
+      setIsJoining(true);
+      addNotification("Connected to game server", "success");
+
       // Auto-join game on connect
-      socket.emit("hangman:join-game");
+      socket.emit("hangman:join-game", { playerName: playerInfo.name });
     };
 
     const handleDisconnect = () => {
       setIsConnected(false);
+      setIsJoining(false);
+      addNotification("Disconnected from game server", "error");
     };
 
-    const handleGameState = (data: GameStateEvent) => {
-      setGameState(data);
-      setPlayers(data.players);
-    };
-
-    const handlePlayerJoined = (data: {
-      playerId: string;
-      playerName?: string;
-      playerCount: number;
+    // Enhanced join success handler
+    const handleJoinSuccess = (data: {
+      gameState: GameStateEvent;
+      playerInfo: PlayerInfo;
+      isGameInProgress: boolean;
+      gameSummary: string;
+      timestamp: number;
     }) => {
-      console.log(`Player joined: ${data.playerName || data.playerId}`);
+      setIsJoining(false);
+      setGameState(data.gameState);
+      setPlayers(data.gameState.players);
+
+      // Show welcome modal for new players
+      setJoinWelcome({
+        show: true,
+        gameState: data.gameState,
+        playerInfo: data.playerInfo,
+        isGameInProgress: data.isGameInProgress,
+        gameSummary: data.gameSummary,
+      });
+
+      addNotification(
+        data.isGameInProgress
+          ? "Joined ongoing game - you can start playing!"
+          : "Joined game - waiting for game to start",
+        "success"
+      );
     };
 
-    const handlePlayerLeft = (data: {
-      playerId: string;
-      playerCount: number;
+    // Handle welcome message for ongoing games
+    const handleGameInProgressWelcome = (data: {
+      message: string;
+      gameState: GameStateEvent;
+      helpText: string;
+      timestamp: number;
     }) => {
-      console.log(`Player left: ${data.playerId}`);
+      addNotification(data.message, "info");
+      console.log("Game in progress welcome:", data.helpText);
     };
 
-    const handleGuessResult = (data: {
+    // Enhanced sync response handler - fix type mismatch
+    const handleSyncResponse = (data: GameStateEvent | {
+      gameState: GameStateEvent;
+      playerInfo: PlayerInfo;
+      gameSummary: string;
+      timestamp: number;
+    }) => {
+      // Handle both old and new sync response formats
+      if ('gameState' in data) {
+        setGameState(data.gameState);
+        setPlayers(data.gameState.players);
+      } else {
+        setGameState(data);
+        setPlayers(data.players);
+      }
+      addNotification("Game state synchronized", "info");
+    };
+
+    // Game history response
+    const handleGameHistoryResponse = (data: {
+      correctGuesses: string[];
+      incorrectGuesses: string[];
+      guessSequence: string[];
+      currentWord: string;
+      gameStatus: string;
+      playersInvolved: string[];
+      timestamp: number;
+    }) => {
+      console.log("Game history received:", data);
+      addNotification(
+        `Game history: ${data.guessSequence.length} guesses made`,
+        "info"
+      );
+    };
+
+    // Existing handlers...
+    const handleGuessBroadcast = (data: {
       letter: string;
       isCorrect: boolean;
       playerId: string;
-      playerName?: string;
+      playerName: string;
       gameState: GameStateEvent;
+      timestamp: number;
     }) => {
-      setLastGuessResult({
-        letter: data.letter,
-        isCorrect: data.isCorrect,
-        playerId: data.playerId,
-        playerName: data.playerName,
-      });
       setGameState(data.gameState);
       setPlayers(data.gameState.players);
+
+      const isOwnGuess = data.playerId === socket.id;
+      const message = isOwnGuess
+        ? `You guessed "${data.letter}" - ${
+            data.isCorrect ? "Correct!" : "Incorrect!"
+          }`
+        : `${data.playerName} guessed "${data.letter}" - ${
+            data.isCorrect ? "Correct!" : "Incorrect!"
+          }`;
+
+      addNotification(message, data.isCorrect ? "success" : "warning");
     };
 
-    const handleGameStarted = (data: {
+    const handlePlayerActionBroadcast = (data: {
+      action: "joined" | "left";
+      playerId: string;
+      playerName: string;
+      playerCount: number;
+      gameState: GameStateEvent;
+      isNewPlayer?: boolean;
+      timestamp: number;
+    }) => {
+      setGameState(data.gameState);
+      setPlayers(data.gameState.players);
+
+      // Don't show notification for own join
+      if (data.playerId !== socket.id) {
+        const message =
+          data.action === "joined"
+            ? `${data.playerName} joined the game (${data.playerCount} players)`
+            : `${data.playerName} left the game (${data.playerCount} players)`;
+
+        addNotification(message, "info");
+      }
+    };
+
+    const handleGameStartBroadcast = (data: {
       startedBy: string;
+      startedByName: string;
       gameState: GameStateEvent;
+      timestamp: number;
     }) => {
       setGameState(data.gameState);
       setPlayers(data.gameState.players);
-      console.log(`New game started by: ${data.startedBy}`);
+
+      const isOwnStart = data.startedBy === socket.id;
+      const message = isOwnStart
+        ? "You started a new game!"
+        : `${data.startedByName} started a new game!`;
+
+      addNotification(message, "success");
     };
 
-    const handleError = (data: { message: string; code?: string }) => {
+    const handleError = (data: {
+      message: string;
+      code?: string;
+      timestamp: number;
+    }) => {
       setError(data.message);
+      setIsJoining(false);
+      addNotification(`Error: ${data.message}`, "error");
       console.error("Hangman game error:", data);
     };
 
-    // Register event listeners
+    // Register all event listeners
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
-    socket.on("hangman:game-state", handleGameState);
-    socket.on("hangman:player-joined", handlePlayerJoined);
-    socket.on("hangman:player-left", handlePlayerLeft);
-    socket.on("hangman:guess-result", handleGuessResult);
-    socket.on("hangman:game-started", handleGameStarted);
+    socket.on("hangman:join-success", handleJoinSuccess);
+    socket.on("hangman:game-in-progress-welcome", handleGameInProgressWelcome);
+    socket.on("hangman:sync-response", handleSyncResponse);
+    socket.on("hangman:game-history-response", handleGameHistoryResponse);
+    socket.on("hangman:guess-broadcast", handleGuessBroadcast);
+    socket.on("hangman:player-action-broadcast", handlePlayerActionBroadcast);
+    socket.on("hangman:game-start-broadcast", handleGameStartBroadcast);
     socket.on("hangman:error", handleError);
 
-    // Initial connection check
     if (socket.connected) {
       handleConnect();
     }
 
-    // Cleanup event listeners
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
-      socket.off("hangman:game-state", handleGameState);
-      socket.off("hangman:player-joined", handlePlayerJoined);
-      socket.off("hangman:player-left", handlePlayerLeft);
-      socket.off("hangman:guess-result", handleGuessResult);
-      socket.off("hangman:game-started", handleGameStarted);
+      socket.off("hangman:join-success", handleJoinSuccess);
+      socket.off(
+        "hangman:game-in-progress-welcome",
+        handleGameInProgressWelcome
+      );
+      socket.off("hangman:sync-response", handleSyncResponse);
+      socket.off("hangman:game-history-response", handleGameHistoryResponse);
+      socket.off("hangman:guess-broadcast", handleGuessBroadcast);
+      socket.off(
+        "hangman:player-action-broadcast",
+        handlePlayerActionBroadcast
+      );
+      socket.off("hangman:game-start-broadcast", handleGameStartBroadcast);
       socket.off("hangman:error", handleError);
     };
-  }, [socket]);
+  }, [socket, playerInfo.name, addNotification]);
 
   // Game actions
   const guessLetter = useCallback(
     (letter: string) => {
       if (!socket || !isConnected) {
-        setError("Not connected to server");
+        addNotification("Not connected to server", "error");
         return;
       }
 
-      const guessData: GuessEvent = {
+      socket.emit("hangman:guess-letter", {
         letter: letter.toUpperCase(),
-        playerId,
-        playerName: `Player ${playerId.slice(-4)}`,
-      };
+        playerId: socket.id!,
+        playerName: playerInfo.name,
+        timestamp: Date.now(),
+      });
 
-      socket.emit("hangman:guess-letter", guessData);
       setError(null);
     },
-    [socket, isConnected, playerId]
+    [socket, isConnected, playerInfo.name, addNotification]
   );
 
   const startNewGame = useCallback(
@@ -147,46 +296,46 @@ export const useMultiplayerGame = () => {
       difficulty?: "easy" | "medium" | "hard";
     }) => {
       if (!socket || !isConnected) {
-        setError("Not connected to server");
+        addNotification("Not connected to server", "error");
         return;
       }
 
-      const newGameData: NewGameEvent = {
-        startedBy: playerId,
+      socket.emit("hangman:new-game", {
+        startedBy: socket.id!,
         ...options,
-      };
+      });
 
-      socket.emit("hangman:new-game", newGameData);
       setError(null);
     },
-    [socket, isConnected, playerId]
+    [socket, isConnected, addNotification]
   );
 
   const requestSync = useCallback(() => {
     if (!socket || !isConnected) {
-      setError("Not connected to server");
+      addNotification("Not connected to server", "error");
       return;
     }
 
-    socket.emit("hangman:sync-request");
-  }, [socket, isConnected]);
+    socket.emit("hangman:request-sync");
+  }, [socket, isConnected, addNotification]);
 
-  const joinGame = useCallback(() => {
+  const requestGameHistory = useCallback(() => {
     if (!socket || !isConnected) {
-      setError("Not connected to server");
+      addNotification("Not connected to server", "error");
       return;
     }
 
-    socket.emit("hangman:join-game");
-  }, [socket, isConnected]);
+    socket.emit("hangman:request-game-history");
+  }, [socket, isConnected, addNotification]);
 
-  const leaveGame = useCallback(() => {
-    if (!socket || !isConnected) return;
+  const dismissWelcome = useCallback(() => {
+    setJoinWelcome((prev) => ({ ...prev, show: false }));
+  }, []);
 
-    socket.emit("hangman:leave-game");
-  }, [socket, isConnected]);
+  const clearNotifications = useCallback(() => {
+    setNotifications([]);
+  }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (socket && isConnected) {
@@ -198,16 +347,19 @@ export const useMultiplayerGame = () => {
   return {
     gameState,
     players,
-    playerId,
+    playerInfo,
     isConnected,
+    isJoining,
     error,
-    lastGuessResult,
+    notifications,
+    joinWelcome,
     actions: {
       guessLetter,
       startNewGame,
       requestSync,
-      joinGame,
-      leaveGame,
+      requestGameHistory,
+      dismissWelcome,
+      clearNotifications,
     },
   };
 };
