@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { HangmanSVGs } from "./hangman/HangmanSVGs";
 import { HangGuyWord } from "./HangGuyWord";
 import { GuessDisplay } from "./GuessDisplay";
@@ -21,9 +21,12 @@ export const MultiplayerHangGuy: React.FC = () => {
 
   const {
     gameState,
+    players,
+    playerInfo,
     isConnected,
     isJoining: gameJoining,
     error,
+    notifications,
     joinWelcome,
     actions,
   } = useMultiplayerGame();
@@ -75,6 +78,9 @@ export const MultiplayerHangGuy: React.FC = () => {
     leaveGame();
     setShowJoinDialog(true);
   }, [leaveGame]);
+
+  // Remove the duplicate socket effect - it's already handled in useUserIdentification
+  // This was causing duplicate event listeners and potential memory leaks
 
   // Loading/connecting state
   if (!isConnected || isJoining) {
@@ -313,7 +319,7 @@ export const MultiplayerHangGuy: React.FC = () => {
             <UserList
               users={users}
               currentUserId={currentUser?.id}
-              sessionInfo={sessionInfo || undefined}
+              sessionInfo={sessionInfo}
             />
           </div>
         </div>

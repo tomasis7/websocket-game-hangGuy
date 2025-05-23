@@ -5,7 +5,15 @@ import { io, Socket } from "socket.io-client";
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
-} from "../../server/types";
+} from "../../shared/types";
 
 // Create a typed socket.io client instance
-export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io();
+export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
+  import.meta.env.VITE_SERVER_URL || "http://localhost:3001",
+  {
+    autoConnect: true,
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+  }
+);

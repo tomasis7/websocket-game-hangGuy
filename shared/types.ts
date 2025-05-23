@@ -1,25 +1,22 @@
 export interface User {
   id: string;
   nickname: string;
-  sessionId: string;
-  joinedAt: Date;
-  isActive: boolean;
   avatar?: string;
+  isActive: boolean;
+  joinedAt: number;
 }
 
 export interface SessionInfo {
   id: string;
-  userCount: number;
-  createdAt: Date;
-  isPrivate: boolean;
-  hostUserId?: string;
+  hostUserId: string;
+  createdAt: number;
+  playerCount: number;
 }
 
 export interface JoinGameRequest {
   nickname: string;
   sessionId?: string;
   avatar?: string;
-  userId?: string; // Add this for consistency
 }
 
 export interface UserIdentification {
@@ -29,12 +26,11 @@ export interface UserIdentification {
   isHost: boolean;
 }
 
-// Add proper response types
 export interface JoinGameResponse {
   success: boolean;
-  error?: string;
   user?: User;
   session?: SessionInfo;
+  error?: string;
 }
 
 export interface ReconnectResponse {
@@ -44,20 +40,46 @@ export interface ReconnectResponse {
   error?: string;
 }
 
-// Fix Socket.IO event types
+export interface GameStateEvent {
+  word: string;
+  correctGuesses: string[];
+  incorrectGuesses: string[];
+  remainingGuesses: number;
+  maxGuesses: number;
+  status: "playing" | "won" | "lost";
+}
+
 export interface ClientToServerEvents {
-  joinGame: (data: JoinGameRequest & { userId: string }) => void;
+  joinGame: (request: JoinGameRequest & { userId: string }) => void;
   leaveGame: (data: { userId: string }) => void;
-  getUserList: () => void;
-  reconnectToSession: (data: { userId: string; sessionId: string; nickname: string }) => void;
+  reconnectToSession: (data: {
+    userId: string;
+    sessionId: string;
+    nickname: string;
+  }) => void;
+  guessLetter: (data: { letter: string; playerId: string }) => void;
+  startNewGame: (options?: {
+    category?: string;
+    difficulty?: "easy" | "medium" | "hard";
+  }) => void;
+  requestSync: () => void;
+  requestGameHistory: () => void;
 }
 
 export interface ServerToClientEvents {
+  joinGameResponse: (response: JoinGameResponse) => void;
+  reconnectResponse: (response: ReconnectResponse) => void;
   userJoined: (user: User) => void;
   userLeft: (userId: string) => void;
   userListUpdated: (users: User[]) => void;
-  sessionInfo: (session: SessionInfo) => void;
   sessionUpdated: (session: SessionInfo) => void;
-  joinGameResponse: (response: JoinGameResponse) => void;
-  reconnectResponse: (response: ReconnectResponse) => void;
+  gameStateUpdated: (gameState: GameStateEvent) => void;
+  playerGuessed: (data: {
+    playerId: string;
+    letter: string;
+    isCorrect: boolean;
+  }) => void;
+  gameEnded: (data: { status: "won" | "lost"; word: string }) => void;
+  notification: (message: string) => void;
+  error: (error: string) => void;
 }
