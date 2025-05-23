@@ -135,32 +135,27 @@ export const MultiplayerHangGuy: React.FC = () => {
   if (!gameState) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <button
-              onClick={() => {
-                // Call an existing method or implement sync functionality
-                if (actions.joinGame) {
-                  actions.joinGame();
-                }
-              }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              Sync Game State
-            </button>
-            <button
-              onClick={() => {
-                // Implement game history functionality or use an existing method
-                console.log("Game history requested");
-              }}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 ml-2"
-            >
-              Get Game History
-            </button>
-              onClick={actions.requestGameHistory}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 ml-2"
-            >
-              Get Game History
-            </button>
-          </div>
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <button
+            onClick={() => {
+              // Call an existing method or implement sync functionality
+              if (actions.joinGame) {
+                actions.joinGame();
+              }
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Sync Game State
+          </button>
+          <button
+            onClick={() => {
+              console.log("Game history request feature not yet implemented");
+              // TODO: Implement game history request functionality
+            }}
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 ml-2"
+          >
+            Get Game History
+          </button>
         </div>
       </div>
     );
