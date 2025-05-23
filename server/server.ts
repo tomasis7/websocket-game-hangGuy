@@ -1,32 +1,38 @@
-// This is the main entry point for the websocket server using Socket.IO.
-// It sets up event listeners for client connections and handles the 'like' event.
+// This is a simple redirect server - use src/index.ts for the full Hang Guy game
 import { Server } from "socket.io";
-import {
-  ClientToServerEvents,
-  InterServerEvents,
-  ServerToClientEvents,
-  SocketData,
-} from "./types";
+import { ClientToServerEvents, ServerToClientEvents } from "../shared/types";
 
 // Create a new Socket.IO server instance with typed events and socket data
-const io = new Server<
-  ClientToServerEvents,
-  ServerToClientEvents,
-  InterServerEvents,
-  SocketData
->();
+const io = new Server<ClientToServerEvents, ServerToClientEvents>({
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
 
-let guestIndex = 1; // Used to assign unique guest names to each connection
+let guestIndex = 1;
 
 // Listen for new client connections
 io.on("connection", (socket) => {
-  console.log(`A user connected ` + socket.id);
+  console.log(`🔗 User connected: ${socket.id}`);
+
   // Assign a unique guest name to the connected socket
   socket.data.name = "Guest" + guestIndex++;
-  // Listen for 'like' events from the client and broadcast to all clients
-  socket.on("like", () => io.emit("like"));
+
+  // Inform user about the main game server
+  socket.emit(
+    "notification",
+    "Please connect to the main Hang Guy game server on port 3001"
+  );
+
+  // Handle disconnection
+  socket.on("disconnect", () => {
+    console.log(`🔌 User disconnected: ${socket.id}`);
+  });
 });
 
 // Start the server on port 3000
 io.listen(3000);
-console.log("Websocket server is running on port 3000");
+console.log("🚀 Simple redirection server running on port 3000");
+console.log("⚠️  For the full Hang Guy game, use: npm run dev");
+console.log("⚠️  The main game server is at: server/src/index.ts (port 3001)");

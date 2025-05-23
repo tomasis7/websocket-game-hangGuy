@@ -66,8 +66,8 @@
 
 5. **Multi-user Support**
 
-   - [ ] Allow multiple users to play together in the same game session.
-   - [ ] Optionally, implement user identification (nickname or session ID).
+   - [x] Allow multiple users to play together in the same game session.
+   - [x] Optionally, implement user identification (nickname or session ID).
 
 6. **Chat & Notifications**
 

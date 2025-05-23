@@ -8,12 +8,4 @@ import type {
 } from "../../shared/types";
 
 // Create a typed socket.io client instance
-export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
-  import.meta.env.VITE_SERVER_URL || "http://localhost:3001",
-  {
-    autoConnect: true,
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
-  }
-);
+export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io();

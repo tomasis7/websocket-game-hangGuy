@@ -1,42 +1,4 @@
 /*
-  This CSS file imports TailwindCSS and defines a custom animation for the Droplet component.
-  The wobble animation is triggered when the like count changes, making the droplet visually respond to user interaction.
+  This CSS file imports TailwindCSS for styling the Hang Guy game components.
 */
 @import "tailwindcss";
-
-/* Custom keyframes for the wobble animation used in the Droplet component */
-@keyframes wobble {
-  0% {
-    transform: scale(1) translate(0, 0);
-  }
-  10% {
-    transform: scale(1.1, 0.9) translate(2px, -2px);
-  }
-  20% {
-    transform: scale(0.9, 1.08) translate(-3px, 2px);
-  }
-  30% {
-    transform: scale(1.05, 0.95) translate(2px, -1px);
-  }
-  40% {
-    transform: scale(0.95, 1.03) translate(-2px, 1px);
-  }
-  50% {
-    transform: scale(1.02, 0.98) translate(1px, -1px);
-  }
-  60% {
-    transform: scale(0.98, 1.02) translate(-1px, 1px);
-  }
-  70% {
-    transform: scale(1.01, 0.99) translate(0.5px, -0.5px);
-  }
-  80% {
-    transform: scale(0.99, 1.01) translate(-0.5px, 0.5px);
-  }
-  90% {
-    transform: scale(1.005, 0.995) translate(0, 0);
-  }
-  100% {
-    transform: scale(1) translate(0, 0);
-  }
-}
