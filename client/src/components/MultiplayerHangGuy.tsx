@@ -34,7 +34,6 @@ export const MultiplayerHangGuy: React.FC = () => {
     currentUser,
     users,
     sessionInfo,
-    userIdentification,
     joinError,
     isJoining: userJoining,
     leaveGame,
@@ -71,7 +70,7 @@ export const MultiplayerHangGuy: React.FC = () => {
     const handleJoinSuccess = (data: any) => {
       console.log("Successfully joined game:", data);
       setIsJoining(false);
-      setShowJoinDialog(false);
+      setShowJoinDialog(false); // This should hide the join dialog
     };
 
     const handleJoinError = (error: any) => {
@@ -82,7 +81,7 @@ export const MultiplayerHangGuy: React.FC = () => {
 
     socket.on("hangman:join-success", handleJoinSuccess);
     socket.on("hangman:join-error", handleJoinError);
-    socket.on("hangman:game-state", handleJoinSuccess); // Also treat game state as join success
+    socket.on("hangman:game-state", handleJoinSuccess);
 
     return () => {
       socket.off("hangman:join-success", handleJoinSuccess);
@@ -97,9 +96,17 @@ export const MultiplayerHangGuy: React.FC = () => {
       setIsJoining(true);
 
       if (socket && socket.connected) {
+        const targetSessionId =
+          sessionId || `GAME_${Date.now().toString(36).toUpperCase()}`;
+
+        console.log(
+          "Emitting hangman:join-game with sessionId:",
+          targetSessionId
+        );
+
         socket.emit("hangman:join-game", {
           playerName: nickname,
-          sessionId: sessionId || "default",
+          sessionId: targetSessionId,
           avatar,
         });
       } else {
@@ -107,7 +114,7 @@ export const MultiplayerHangGuy: React.FC = () => {
         setIsJoining(false);
       }
     },
-    [socket]
+    [socket] // Dependency is correct
   );
 
   const handleLeaveGame = useCallback((): void => {
@@ -197,170 +204,87 @@ export const MultiplayerHangGuy: React.FC = () => {
     );
   }
 
-  // Show join dialog if no current user
-  if (!currentUser || showJoinDialog) {
+  // Show join dialog if no current user OR showJoinDialog is true
+  if (
+    showJoinDialog ||
+    (!currentUser && !gameState?.players?.find((p) => p.id === socket?.id))
+  ) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <UserJoinDialog
-          onJoin={handleJoinGame}
-          isVisible={true}
-          error={joinError}
-          rooms={[]}
-        />
-        {isJoining && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
-            <div className="bg-white rounded-lg p-6 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p>Joining game...</p>
-            </div>
-          </div>
-        )}
-      </div>
+      <UserJoinDialog
+        onJoin={handleJoinGame}
+        isVisible={true}
+        error={joinError || error || undefined}
+        rooms={[]} // Add rooms prop if available
+      />
     );
   }
 
+  // Main game interface
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Enhanced Header with User Info */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Hang Guy</h1>
-          <div className="flex justify-center items-center space-x-4 text-sm">
-            {/* Connection Status */}
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-3 h-3 rounded-full ${
-                  isConnected ? "bg-green-500" : "bg-red-500"
-                }`}
-              />
-              <span>{isConnected ? "Connected" : "Disconnected"}</span>
-            </div>
-
-            {/* Session Info */}
-            {sessionInfo && (
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                Session: {sessionInfo.id} | {users.length} player(s)
-              </span>
-            )}
-
-            {/* User Info */}
-            {userIdentification && (
-              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-                {currentUser?.avatar} {userIdentification.nickname}
-                {userIdentification.isHost && " (Host)"}
-              </span>
-            )}
-
-            {/* Leave Game Button */}
-            <button
-              onClick={handleLeaveGame}
-              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
-            >
-              Leave Game
-            </button>
-          </div>
-        </div>
-
-        {/* Session Sharing */}
-        {sessionInfo && userIdentification?.isHost && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
-            <p className="text-sm text-yellow-800 mb-2">
-              <strong>Share this session ID with friends:</strong>
-            </p>
-            <div className="flex items-center justify-center space-x-2">
-              <code className="bg-yellow-100 px-3 py-1 rounded text-lg font-mono">
-                {sessionInfo.id}
-              </code>
-              <button
-                onClick={() => navigator.clipboard.writeText(sessionInfo.id)}
-                className="bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded text-sm"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Error display */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center">
-            ⚠️ {error}
-          </div>
-        )}
-
-        {/* Rest of the game interface */}
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3 space-y-6">
-            {/* Game Status Banner */}
-            <div className="mb-8">
-              <GameStatus
-                status={gameState.status}
-                word={gameState.status === "lost" ? gameState.word : undefined}
-                remainingGuesses={gameState.remainingGuesses}
+          {/* Game Area */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              {/* Game Header */}
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold text-gray-800">Hang Guy</h1>
+                <div className="flex gap-4">
+                  <GameStatus status={gameState.status} />
+                  {currentUser && (
+                    <button
+                      onClick={handleLeaveGame}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Leave Game
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Hangman Display */}
+              <div className="flex justify-center mb-8">
+                <HangmanSVGs stage={incorrectGuessCount} />
+              </div>
+
+              {/* Word Display */}
+              <HangGuyWord
+                word={gameState.word}
+                correctGuesses={new Set(gameState.correctGuesses)}
               />
-            </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              {/* Left Column: Game Visual */}
-              <div className="flex flex-col items-center space-y-6">
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <HangmanSVGs
-                    stage={incorrectGuessCount}
-                    className="w-48 h-60"
-                  />
-                </div>
+              {/* Guess Display */}
+              <GuessDisplay
+                correctGuesses={new Set(gameState.correctGuesses)}
+                incorrectGuesses={new Set(gameState.incorrectGuesses)}
+                remainingGuesses={0}
+                maxGuesses={0}
+              />
 
-                <div className="bg-white rounded-lg shadow-md p-6 w-full">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                    Word to Guess
-                  </h3>
-                  <div className="flex justify-center">
-                    <HangGuyWord
-                      word={gameState.word}
-                      correctGuesses={new Set(gameState.correctGuesses)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Middle Column: Guess Tracking */}
-              <div className="flex justify-center">
-                <GuessDisplay
-                  correctGuesses={new Set(gameState.correctGuesses)}
-                  incorrectGuesses={new Set(gameState.incorrectGuesses)}
-                  remainingGuesses={gameState.remainingGuesses}
-                  maxGuesses={gameState.maxGuesses}
+              {/* Letter Input */}
+              {isGameActive && (
+                <LetterInput
+                  onGuess={handleGuess}
+                  guessedLetters={
+                    new Set([
+                      ...gameState.correctGuesses,
+                      ...gameState.incorrectGuesses,
+                    ])
+                  }
                 />
-              </div>
+              )}
 
-              {/* Right Column: Input Controls & Game Controls */}
-              <div className="flex flex-col items-center space-y-6">
-                <div className="bg-white rounded-lg shadow-md p-6 w-full">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                    {isGameActive ? "Make Your Guess" : "Game Finished"}
-                  </h3>
-                  <LetterInput
-                    onGuess={handleGuess}
-                    disabled={!isGameActive || !isConnected}
-                    guessedLetters={
-                      new Set([
-                        ...gameState.correctGuesses,
-                        ...gameState.incorrectGuesses,
-                      ])
-                    }
-                  />
-                </div>
-
-                <GameControls
-                  onNewGame={handleNewGame}
-                  gameStatus={gameState.status}
-                  disabled={!isConnected}
-                />
-              </div>
+              {/* Game Controls */}
+              <GameControls
+                gameStatus={gameState.status}
+                onNewGame={handleNewGame}
+              />
             </div>
           </div>
 
-          <div className="space-y-4">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
             <UserList
               users={users}
               currentUserId={currentUser?.id}

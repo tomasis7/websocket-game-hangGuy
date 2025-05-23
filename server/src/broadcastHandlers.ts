@@ -39,76 +39,34 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
 
   // Enhanced join game handler with state synchronization
   socket.on("hangman:join-game", async (data) => {
+    console.log("Player attempting to join:", data);
+
     const playerName =
       data.playerName || `Player${Math.random().toString(36).substr(2, 4)}`;
     const sessionId = data.sessionId || "default";
 
     try {
-      // Join the appropriate room
+      // Join the socket to the session room
       socket.join(sessionId);
+
+      console.log(`Player ${playerName} joined session ${sessionId}`);
 
       // Handle player join with sync
       const joinResult = await gameSync.handlePlayerJoin(socket, playerName);
 
-      if (!joinResult.success) {
-        socket.emit("hangman:error", {
-          message: joinResult.error || "Failed to join game",
-          code: "JOIN_FAILED",
-          timestamp: Date.now(),
+      if (joinResult.success) {
+        // Emit success event
+        socket.emit("hangman:join-success", {
+          playerInfo: joinResult.playerInfo,
+          gameState: joinResult.gameState,
+          sessionId: sessionId,
         });
-        return;
+      } else {
+        socket.emit("hangman:join-error", joinResult.error);
       }
-
-      // Send comprehensive sync response to new player
-      const syncResponse = {
-        gameState: joinResult.gameState!,
-        playerInfo: joinResult.playerInfo!,
-        isGameInProgress: joinResult.isGameInProgress,
-        syncData: joinResult.syncData,
-        gameSummary: gameSync.getGameSummary(joinResult.gameState!),
-        timestamp: Date.now(),
-      };
-
-      socket.emit("hangman:join-success", syncResponse);
-
-      // If game is in progress, send special welcome message
-      if (joinResult.isGameInProgress) {
-        socket.emit("hangman:game-in-progress-welcome", {
-          message: `Welcome! You joined during an active game.`,
-          gameState: joinResult.gameState!,
-          helpText:
-            "The game is currently in progress. You can see the current state and start making guesses!",
-          timestamp: Date.now(),
-        });
-      }
-
-      // Broadcast to other players that someone joined
-      const joinBroadcast = {
-        action: "joined" as const,
-        playerId: socket.id,
-        playerName,
-        playerCount: gameManager.getPlayerCount(),
-        gameState: joinResult.gameState!,
-        isNewPlayer: true,
-        timestamp: Date.now(),
-      };
-
-      socket
-        .to(HANGMAN_ROOM)
-        .emit("hangman:player-action-broadcast", joinBroadcast);
-
-      console.log(
-        `✅ ${playerName} successfully joined ${
-          joinResult.isGameInProgress ? "ongoing" : "inactive"
-        } game`
-      );
     } catch (error) {
-      console.error("❌ Error in enhanced join-game handler:", error);
-      socket.emit("hangman:error", {
-        message: "Unexpected error joining game",
-        code: "JOIN_UNEXPECTED_ERROR",
-        timestamp: Date.now(),
-      });
+      console.error("Error joining game:", error);
+      socket.emit("hangman:join-error", "Failed to join game");
     }
   });
 
