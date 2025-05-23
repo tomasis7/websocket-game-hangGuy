@@ -3,10 +3,11 @@ import { HangmanSVGs } from "./hangman/HangmanSVGs";
 import { HangGuyWord } from "./HangGuyWord";
 import { GuessDisplay } from "./GuessDisplay";
 import { LetterInput } from "./LetterInput";
+import { GameStatus } from "./GameStatus";
 import { useHangGuyGame } from "../hooks/useHangGuyGame";
 
 export const HangGuyGame: React.FC = () => {
-  const { gameState, guessLetter } = useHangGuyGame();
+  const { gameState, guessLetter, resetGame } = useHangGuyGame();
 
   const incorrectGuessCount = gameState.incorrectGuesses.size;
   const isGameActive = gameState.status === "playing";
@@ -17,12 +18,25 @@ export const HangGuyGame: React.FC = () => {
     }
   };
 
+  const handleReset = () => {
+    resetGame();
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
           Hang Guy Game
         </h1>
+
+        {/* Game Status Banner */}
+        <div className="mb-8">
+          <GameStatus
+            status={gameState.status}
+            word={gameState.status === "lost" ? gameState.word : undefined}
+            remainingGuesses={gameState.remainingGuesses}
+          />
+        </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Left Column: Game Visual */}
@@ -45,24 +59,15 @@ export const HangGuyGame: React.FC = () => {
               </div>
             </div>
 
-            {/* Game status */}
-            <div className="text-center w-full">
-              {gameState.status === "won" && (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                  🎉 Congratulations! You won!
-                </div>
-              )}
-              {gameState.status === "lost" && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                  💀 Game over! The word was: <strong>{gameState.word}</strong>
-                </div>
-              )}
-              {gameState.status === "playing" && (
-                <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
-                  🤔 Guess a letter to continue...
-                </div>
-              )}
-            </div>
+            {/* Reset/New Game Button */}
+            {!isGameActive && (
+              <button
+                onClick={handleReset}
+                className="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 transition-colors"
+              >
+                🔄 Start New Game
+              </button>
+            )}
           </div>
 
           {/* Middle Column: Guess Tracking */}
@@ -79,13 +84,36 @@ export const HangGuyGame: React.FC = () => {
           <div className="flex flex-col items-center space-y-6">
             <div className="bg-white rounded-lg shadow-md p-6 w-full">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-                Make Your Guess
+                {isGameActive ? "Make Your Guess" : "Game Finished"}
               </h3>
               <LetterInput
                 onGuess={handleGuess}
                 disabled={!isGameActive}
                 guessedLetters={gameState.guessedLetters}
               />
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-white rounded-lg shadow-md p-4 w-full">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 text-center">
+                Quick Actions
+              </h4>
+              <div className="space-y-2">
+                <button
+                  onClick={handleReset}
+                  className="w-full bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 transition-colors"
+                >
+                  🔄 New Game
+                </button>
+                {gameState.status === "lost" && (
+                  <div className="text-xs text-center text-gray-500 mt-2">
+                    The word was:{" "}
+                    <span className="font-mono font-semibold">
+                      {gameState.word}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
