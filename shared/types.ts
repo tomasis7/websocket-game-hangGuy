@@ -1,8 +1,10 @@
 export interface User {
   id: string;
   nickname: string;
+  sessionId: string;
   joinedAt: Date;
   isActive: boolean;
+  avatar?: string;
 }
 
 export interface GameState {
@@ -20,7 +22,7 @@ export interface GameSession {
 }
 
 export interface ClientToServerEvents {
-  joinGame: (data: { nickname: string; sessionId?: string }) => void;
+  joinGame: (data: JoinGameRequest) => void;
   leaveGame: () => void;
   getUserList: () => void;
 }
@@ -29,5 +31,26 @@ export interface ServerToClientEvents {
   userJoined: (user: User) => void;
   userLeft: (userId: string) => void;
   userListUpdated: (users: User[]) => void;
-  sessionInfo: (session: { id: string; userCount: number }) => void;
+  sessionInfo: (session: SessionInfo) => void;
+}
+
+export interface SessionInfo {
+  id: string;
+  userCount: number;
+  createdAt: Date;
+  isPrivate: boolean;
+  hostUserId?: string;
+}
+
+export interface JoinGameRequest {
+  nickname: string;
+  sessionId?: string;
+  avatar?: string;
+}
+
+export interface UserIdentification {
+  userId: string;
+  nickname: string;
+  sessionId: string;
+  isHost: boolean;
 }

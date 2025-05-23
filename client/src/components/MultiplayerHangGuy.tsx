@@ -11,27 +11,33 @@ import { UserJoinDialog } from "./UserJoinDialog";
 import { UserList } from "./UserList";
 import type { User } from "../../../shared/types";
 import { socket } from "../socket";
+import { useUserIdentification } from "../hooks/useUserIdentification";
 
 export const MultiplayerHangGuy: React.FC = () => {
+  const [showJoinDialog, setShowJoinDialog] = useState(true);
+
   const {
     gameState,
     players,
     playerInfo,
     isConnected,
-    isJoining,
+    isJoining: gameJoining,
     error,
     notifications,
     joinWelcome,
     actions,
   } = useMultiplayerGame();
 
-  const [users, setUsers] = useState<User[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [sessionInfo, setSessionInfo] = useState<{
-    id: string;
-    userCount: number;
-  } | null>(null);
-  const [showJoinDialog, setShowJoinDialog] = useState(true);
+  const {
+    currentUser,
+    users,
+    sessionInfo,
+    userIdentification,
+    joinError,
+    isJoining: userJoining,
+    joinGame,
+    leaveGame,
+  } = useUserIdentification();
 
   const incorrectGuessCount = gameState?.incorrectGuesses.length || 0;
   const isGameActive = gameState?.status === "playing";
@@ -51,16 +57,17 @@ export const MultiplayerHangGuy: React.FC = () => {
     }
   };
 
-  const joinGame = (nickname: string, sessionId?: string) => {
-    socket?.emit("joinGame", { nickname, sessionId });
+  const handleJoinGame = (
+    nickname: string,
+    sessionId?: string,
+    avatar?: string
+  ) => {
+    joinGame(nickname, sessionId, avatar);
     setShowJoinDialog(false);
   };
 
-  const leaveGame = () => {
-    socket?.emit("leaveGame");
-    setCurrentUser(null);
-    setUsers([]);
-    setSessionInfo(null);
+  const handleLeaveGame = () => {
+    leaveGame();
     setShowJoinDialog(true);
   };
 
@@ -184,33 +191,91 @@ export const MultiplayerHangGuy: React.FC = () => {
     );
   }
 
+  // Show join dialog if no current user
+  if (!currentUser || showJoinDialog) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <UserJoinDialog
+          onJoin={handleJoinGame}
+          isVisible={true}
+          error={joinError}
+        />
+        {(userJoining || gameJoining) && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+            <div className="bg-white rounded-lg p-6 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p>Joining game...</p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <UserJoinDialog onJoin={joinGame} isVisible={showJoinDialog} />
-
       <div className="max-w-6xl mx-auto">
+        {/* Enhanced Header with User Info */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">Hang Guy</h1>
           <div className="flex justify-center items-center space-x-4 text-sm">
-            <ConnectionStatus isConnected={isConnected} />
+            {/* Connection Status */}
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  isConnected ? "bg-green-500" : "bg-red-500"
+                }`}
+              ></div>
+              <span>{isConnected ? "Connected" : "Disconnected"}</span>
+            </div>
+
+            {/* Session Info */}
             {sessionInfo && (
               <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                Session: {sessionInfo.id} | {sessionInfo.userCount} player(s)
+                Session: {sessionInfo.id} | {users.length} player(s)
               </span>
             )}
-            {currentUser && (
-              <button
-                onClick={leaveGame}
-                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
-              >
-                Leave Game
-              </button>
+
+            {/* User Info */}
+            {userIdentification && (
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                {currentUser?.avatar} {userIdentification.nickname}
+                {userIdentification.isHost && " (Host)"}
+              </span>
             )}
+
+            {/* Leave Game Button */}
+            <button
+              onClick={handleLeaveGame}
+              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
+            >
+              Leave Game
+            </button>
           </div>
         </div>
 
+        {/* Session Sharing */}
+        {sessionInfo && userIdentification?.isHost && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+            <p className="text-sm text-yellow-800 mb-2">
+              <strong>Share this session ID with friends:</strong>
+            </p>
+            <div className="flex items-center justify-center space-x-2">
+              <code className="bg-yellow-100 px-3 py-1 rounded text-lg font-mono">
+                {sessionInfo.id}
+              </code>
+              <button
+                onClick={() => navigator.clipboard.writeText(sessionInfo.id)}
+                className="bg-yellow-200 hover:bg-yellow-300 px-2 py-1 rounded text-sm"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Rest of the game interface */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Game Area */}
           <div className="lg:col-span-3 space-y-6">
             {/* Header with multiplayer info */}
             <div className="text-center mb-6">
@@ -398,10 +463,12 @@ export const MultiplayerHangGuy: React.FC = () => {
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-4">
-            <UserList users={users} currentUserId={currentUser?.id} />
-            {/* ...existing sidebar components... */}
+            <UserList
+              users={users}
+              currentUserId={currentUser?.id}
+              sessionInfo={sessionInfo}
+            />
           </div>
         </div>
       </div>
