@@ -96,8 +96,9 @@ export const MultiplayerHangGuy: React.FC = () => {
       setIsJoining(true);
 
       if (socket && socket.connected) {
+        // Generate a 6-character session ID to match the validation pattern
         const targetSessionId =
-          sessionId || `GAME_${Date.now().toString(36).toUpperCase()}`;
+          sessionId || Date.now().toString(36).toUpperCase().slice(-6);
 
         console.log(
           "Emitting hangman:join-game with sessionId:",
@@ -114,7 +115,7 @@ export const MultiplayerHangGuy: React.FC = () => {
         setIsJoining(false);
       }
     },
-    [socket] // Dependency is correct
+    [socket]
   );
 
   const handleLeaveGame = useCallback((): void => {
