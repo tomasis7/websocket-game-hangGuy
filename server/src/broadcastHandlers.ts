@@ -41,8 +41,12 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
   socket.on("hangman:join-game", async (data) => {
     const playerName =
       data.playerName || `Player${Math.random().toString(36).substr(2, 4)}`;
+    const sessionId = data.sessionId || "default";
 
     try {
+      // Join the appropriate room
+      socket.join(sessionId);
+
       // Handle player join with sync
       const joinResult = await gameSync.handlePlayerJoin(socket, playerName);
 

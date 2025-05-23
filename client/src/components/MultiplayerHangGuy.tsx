@@ -10,6 +10,7 @@ import { useMultiplayerGame } from "../hooks/useMultiplayerGame";
 import { UserJoinDialog } from "./UserJoinDialog";
 import { UserList } from "./UserList";
 import { useUserIdentification } from "../hooks/useUserIdentification";
+import { socket } from "../socket";
 
 interface GameOptions {
   category?: string;
@@ -18,6 +19,7 @@ interface GameOptions {
 
 export const MultiplayerHangGuy: React.FC = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(true);
+  const [, setIsJoining] = useState(false);
 
   const {
     gameState,
@@ -35,7 +37,6 @@ export const MultiplayerHangGuy: React.FC = () => {
     userIdentification,
     joinError,
     isJoining: userJoining,
-    joinGame,
     leaveGame,
   } = useUserIdentification();
 
@@ -65,10 +66,20 @@ export const MultiplayerHangGuy: React.FC = () => {
 
   const handleJoinGame = useCallback(
     (nickname: string, sessionId?: string, avatar?: string): void => {
-      joinGame(nickname, sessionId, avatar);
-      setShowJoinDialog(false);
+      // Use the hangman game system instead of the user identification system
+      if (socket && socket.connected) {
+        socket.emit("hangman:join-game", {
+          playerName: nickname,
+          sessionId: sessionId || "default",
+          avatar,
+        });
+        setIsJoining(true);
+      } else {
+        console.error("Not connected to server");
+        // Handle the error appropriately - could use actions.setError or similar
+      }
     },
-    [joinGame]
+    [socket]
   );
 
   const handleLeaveGame = useCallback((): void => {
@@ -166,6 +177,7 @@ export const MultiplayerHangGuy: React.FC = () => {
           onJoin={handleJoinGame}
           isVisible={true}
           error={joinError}
+          rooms={[]}
         />
         {isJoining && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">

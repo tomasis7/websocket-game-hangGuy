@@ -55,8 +55,11 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
 
   if (!isVisible) return null;
 
-  function handleRoomSelect(_room: { id?: string; name: string }): void {
-    throw new Error("Function not implemented.");
+  function handleRoomSelect(room: { id?: string; name: string }): void {
+    if (room.id) {
+      setSessionId(room.id);
+      setJoinMode("existing");
+    }
   }
 
   return (
