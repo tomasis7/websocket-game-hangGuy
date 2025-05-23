@@ -60,7 +60,25 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
           playerInfo: joinResult.playerInfo,
           gameState: joinResult.gameState,
           sessionId: sessionId,
+          isGameInProgress: joinResult.isGameInProgress,
+          gameSummary: gameSync.getGameSummary(joinResult.gameState!),
         });
+
+        // Broadcast player join to other players
+        const joinBroadcast = {
+          action: "joined" as const,
+          playerId: socket.id,
+          playerName: playerName,
+          playerCount: gameManager.getPlayerCount(),
+          gameState: joinResult.gameState,
+          isNewPlayer: true,
+          timestamp: Date.now(),
+        };
+
+        socket
+          .to(HANGMAN_ROOM)
+          .emit("hangman:player-action-broadcast", joinBroadcast);
+        console.log(`📢 Broadcasted player join for ${playerName}`);
       } else {
         socket.emit("hangman:join-error", joinResult.error);
       }

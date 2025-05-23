@@ -14,6 +14,7 @@ export interface GameStateEvent {
 }
 
 export interface PlayerInfo {
+  avatar: any;
   id: string;
   name: string;
   joinedAt: number;

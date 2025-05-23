@@ -32,7 +32,6 @@ export const MultiplayerHangGuy: React.FC = () => {
 
   const {
     currentUser,
-    users,
     sessionInfo,
     joinError,
     isJoining: userJoining,
@@ -269,11 +268,22 @@ export const MultiplayerHangGuy: React.FC = () => {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <UserList
-              users={users}
+              users={
+                gameState?.players?.map((player) => ({
+                  id: player.id,
+                  nickname: player.name,
+                  avatar: player.avatar,
+                  isActive: player.isActive,
+                  joinedAt: player.joinedAt,
+                })) || []
+              } // Transform PlayerInfo to User format
               currentUserId={currentUser?.id}
               sessionInfo={
                 sessionInfo
-                  ? { ...sessionInfo, userCount: users.length }
+                  ? {
+                      ...sessionInfo,
+                      userCount: gameState?.players?.length || 0,
+                    } // Update count from game players
                   : undefined
               }
             />
