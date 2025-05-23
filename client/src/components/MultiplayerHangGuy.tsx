@@ -9,6 +9,7 @@ import { JoinGameWelcome } from "./JoinGameWelcome";
 import { useMultiplayerGame } from "../hooks/useMultiplayerGame";
 import { UserJoinDialog } from "./UserJoinDialog";
 import { UserList } from "./UserList";
+import type { User } from "../../../shared/types";
 import { useUserIdentification } from "../hooks/useUserIdentification";
 
 interface GameOptions {

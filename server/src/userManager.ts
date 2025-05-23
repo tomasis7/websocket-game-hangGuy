@@ -1,4 +1,20 @@
-import { User, GameSession } from "../../shared/types";
+import { User } from "../../shared/types";
+
+interface GameSession {
+  id: string;
+  users: User[];
+  gameState: {
+    currentWord: string;
+    guessedLetters: string[];
+    incorrectGuesses: number;
+    maxIncorrectGuesses: number;
+    gameStatus: "waiting" | "playing" | "won" | "lost";
+    displayWord: string;
+    remainingGuesses: number;
+  };
+  createdAt: Date;
+  lastActivity: Date;
+}
 
 export class UserManager {
   private users = new Map<string, User>();
@@ -7,9 +23,9 @@ export class UserManager {
 
   createUser(socketId: string, nickname: string): User {
     const user: User = {
-      id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `user_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       nickname: nickname.trim() || `Player${Math.floor(Math.random() * 1000)}`,
-      joinedAt: new Date(),
+      joinedAt: Date.now(),
       isActive: true,
     };
 
@@ -60,7 +76,7 @@ export class UserManager {
         },
         createdAt: new Date(),
         lastActivity: new Date(),
-      } as unknown as GameSession;
+      };
       this.sessions.set(sessionId, session);
     }
 
