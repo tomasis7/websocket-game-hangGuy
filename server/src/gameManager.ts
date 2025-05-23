@@ -22,6 +22,7 @@ export class GameManager {
       name: playerName,
       joinedAt: Date.now(),
       isActive: true,
+      avatar: undefined,
     };
 
     this.players.set(playerId, playerInfo);
@@ -76,6 +77,33 @@ export class GameManager {
     return this.players.size;
   }
 
+  startNewGame(
+    options?: { category?: string; difficulty?: "easy" | "medium" | "hard" },
+    startedBy?: string
+  ): GameStateEvent {
+    // Create a completely new game instance instead of just resetting
+    this.game = new HangGuyGame();
+
+    const player = startedBy ? this.players.get(startedBy) : undefined;
+
+    this.lastAction = {
+      type: "new_game",
+      playerId: startedBy || "system",
+      playerName: player?.name || "System",
+      timestamp: Date.now(),
+      data: options,
+    };
+
+    console.log(`New game started by ${player?.name || "System"}`);
+    console.log(
+      `Game state after reset: remaining guesses = ${
+        this.game.getState().remainingGuesses
+      }`
+    );
+
+    return this.getGameState();
+  }
+
   processGuess(
     letter: string,
     playerId: string
@@ -92,6 +120,17 @@ export class GameManager {
         isCorrect: false,
         gameState: this.getGameState(),
         error: "Player not found in game",
+      };
+    }
+
+    // Check if game is already over
+    const currentState = this.game.getState();
+    if (currentState.status !== "playing") {
+      return {
+        success: false,
+        isCorrect: false,
+        gameState: this.getGameState(),
+        error: "Game is not in playing state",
       };
     }
 
@@ -126,32 +165,13 @@ export class GameManager {
         guessResult.isCorrect ? "Correct" : "Incorrect"
       }`
     );
+    console.log(`Remaining guesses: ${this.game.getState().remainingGuesses}`);
 
     return {
       success: true,
       isCorrect: guessResult.isCorrect,
       gameState: this.getGameState(),
     };
-  }
-
-  startNewGame(
-    options?: { category?: string; difficulty?: "easy" | "medium" | "hard" },
-    startedBy?: string
-  ): GameStateEvent {
-    this.game.resetGame();
-
-    const player = startedBy ? this.players.get(startedBy) : undefined;
-
-    this.lastAction = {
-      type: "new_game",
-      playerId: startedBy || "system",
-      playerName: player?.name || "System",
-      timestamp: Date.now(),
-      data: options,
-    };
-
-    console.log(`New game started by ${player?.name || "System"}`);
-    return this.getGameState();
   }
 
   getGameState(): GameStateEvent {
