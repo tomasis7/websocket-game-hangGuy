@@ -72,7 +72,7 @@ export class UserManager {
           maxIncorrectGuesses: 8,
           gameStatus: "waiting",
           displayWord: "",
-          remainingGuesses: 8,
+          remainingGuesses: 8, // This should already be correct
         },
         createdAt: new Date(),
         lastActivity: new Date(),

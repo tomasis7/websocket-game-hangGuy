@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface GuessDisplayProps {
-  correctGuesses: Set<string>;
-  incorrectGuesses: Set<string>;
+  correctGuesses: string[]; // ✅ Should be array, not Set
+  incorrectGuesses: string[]; // ✅ Should be array, not Set
   remainingGuesses: number;
   maxGuesses: number;
 }
@@ -13,8 +13,9 @@ export const GuessDisplay: React.FC<GuessDisplayProps> = ({
   remainingGuesses, 
   maxGuesses 
 }) => {
-  const correctLetters = Array.from(correctGuesses).sort();
-  const incorrectLetters = Array.from(incorrectGuesses).sort();
+  // ✅ Remove Array.from() since these are already arrays
+  const correctLetters = correctGuesses.sort();
+  const incorrectLetters = incorrectGuesses.sort();
   const totalGuesses = correctLetters.length + incorrectLetters.length;
   
   return (
