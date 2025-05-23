@@ -138,24 +138,24 @@ export class HangGuyGame {
     };
   }
 
-  // Legacy methods for compatibility
-  public getIncorrectGuessCount(): number {
-    return this.state.incorrectGuesses.size;
-  }
+  // // Legacy methods for compatibility
+  // public getIncorrectGuessCount(): number {
+  //   return this.state.incorrectGuesses.size;
+  // }
 
-  public getHangmanStage(): number {
-    return Math.min(this.state.incorrectGuesses.size, MAX_INCORRECT_GUESSES);
-  }
+  // public getHangmanStage(): number {
+  //   return Math.min(this.state.incorrectGuesses.size, MAX_INCORRECT_GUESSES);
+  // }
 
-  public isGameOver(): boolean {
-    return this.state.status === "won" || this.state.status === "lost";
-  }
+  // public isGameOver(): boolean {
+  //   return this.state.status === "won" || this.state.status === "lost";
+  // }
 
-  public getGuessedLettersArray(): string[] {
-    return Array.from(this.state.guessedLetters).sort();
-  }
+  // public getGuessedLettersArray(): string[] {
+  //   return Array.from(this.state.guessedLetters).sort();
+  // }
 
-  public getWord(): string {
-    return this.state.word;
-  }
+  // public getWord(): string {
+  //   return this.state.word;
+  // }
 }

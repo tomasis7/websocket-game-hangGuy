@@ -23,14 +23,6 @@ export const useMultiplayerGame = () => {
     gameSummary: "",
   });
 
-  // Player information
-  const [playerInfo] = useState({
-    id: `temp_${Math.random().toString(36).substr(2, 9)}`,
-    name: `Player${Math.random().toString(36).substr(2, 4)}`,
-    joinedAt: Date.now(),
-    isActive: true,
-  });
-
   // Connection events
   useEffect(() => {
     const onConnect = () => {
@@ -158,14 +150,12 @@ export const useMultiplayerGame = () => {
   const actions = {
     joinGame: () => {
       setIsJoining(true);
-      socket.emit("hangman:join-game", { playerName: playerInfo.name });
+      socket.emit("hangman:join-game", { playerName: "Player" });
     },
 
     guessLetter: (letter: string) => {
       socket.emit("hangman:guess-letter", {
         letter: letter.toUpperCase(),
-        playerId: playerInfo.id,
-        playerName: playerInfo.name,
         timestamp: Date.now(),
       });
     },
@@ -176,7 +166,6 @@ export const useMultiplayerGame = () => {
     }) => {
       socket.emit("hangman:new-game", {
         ...options,
-        startedBy: playerInfo.id,
       });
     },
 
@@ -192,7 +181,6 @@ export const useMultiplayerGame = () => {
   return {
     gameState,
     players,
-    playerInfo,
     isConnected,
     isJoining,
     error,

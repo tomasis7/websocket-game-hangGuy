@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { HangmanSVGs } from "./hangman/HangmanSVGs";
 import { HangGuyWord } from "./HangGuyWord";
-import { GuessDisplay } from "./GuessDisplay";
+// import { GuessDisplay } from "./GuessDisplay";
 import { LetterInput } from "./LetterInput";
 import { GameStatus } from "./GameStatus";
 import { GameControls } from "./GameControls";
@@ -191,7 +191,7 @@ export const MultiplayerHangGuy: React.FC = () => {
           >
             Sync Game State
           </button>
-          <button
+          {/* <button
             onClick={() => {
               console.log("Game history request feature not yet implemented");
               // TODO: Implement game history request functionality
@@ -199,7 +199,7 @@ export const MultiplayerHangGuy: React.FC = () => {
             className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 ml-2"
           >
             Get Game History
-          </button>
+          </button> */}
         </div>
       </div>
     );
@@ -255,13 +255,15 @@ export const MultiplayerHangGuy: React.FC = () => {
                 correctGuesses={new Set(gameState.correctGuesses)}
               />
 
-              {/* Guess Display */}
+              {/* Guess Display
               <GuessDisplay
                 correctGuesses={new Set(gameState.correctGuesses)}
                 incorrectGuesses={new Set(gameState.incorrectGuesses)}
-                remainingGuesses={0}
-                maxGuesses={0}
-              />
+                remainingGuesses={
+                  gameState.maxGuesses - gameState.incorrectGuesses.length
+                }
+                maxGuesses={gameState.maxGuesses}
+              /> */}
 
               {/* Letter Input */}
               {isGameActive && (

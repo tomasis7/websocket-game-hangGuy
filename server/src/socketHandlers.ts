@@ -127,11 +127,6 @@ export class SocketHandlers {
         }
       });
 
-      // Sync request
-      socket.on("hangman:sync-request", () => {
-        socket.emit("hangman:game-state", hangmanGame.getGameState());
-      });
-
       // Handle disconnect
       socket.on("disconnect", () => {
         this.handleUserDisconnect(socket);

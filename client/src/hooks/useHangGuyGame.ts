@@ -53,9 +53,9 @@ export const useHangGuyGame = (initialWord?: string) => {
     getGuessSummary,
     getLastGuessResult,
     // Legacy methods for compatibility
-    getHangmanStage: () => game.getHangmanStage(),
-    isGameOver: () => game.isGameOver(),
-    getGuessedLettersArray: () => game.getGuessedLettersArray(),
+    // getHangmanStage: () => game.getHangmanStage(), // ❌ Method doesn't exist
+    // isGameOver: () => game.isGameOver(),           // ❌ Method doesn't exist  
+    // getGuessedLettersArray: () => game.getGuessedLettersArray(), // ❌ Method doesn't exist
     game,
   };
 };
