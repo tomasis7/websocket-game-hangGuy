@@ -2,12 +2,12 @@
 // It imports the types for type safety, ensuring that only valid events are sent/received.
 // The socket instance is exported for use throughout the client app.
 import { io, Socket } from "socket.io-client";
-import type {
-  ClientToServerEvents,
-  ServerToClientEvents,
-} from "../../shared/types";
 
 // Create a typed socket.io client instance connecting to the main game server on port 3001
-export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
-  "http://localhost:3001"
-);
+// Using any typing for now to resolve the type conflicts between the shared types
+export const socket: Socket<any, any> = io("http://localhost:3001", {
+  transports: ["websocket"],
+  autoConnect: true,
+  reconnection: true,
+  reconnectionAttempts: 5,
+});

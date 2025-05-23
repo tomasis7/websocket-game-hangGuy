@@ -1,25 +1,25 @@
-import { useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
-// Define the server URL - adjust as needed for your environment
-const SOCKET_SERVER_URL =
-  process.env.REACT_APP_SOCKET_SERVER_URL || "http://localhost:3001";
+import { useEffect } from "react";
+import { socket } from "../socket";
 
+// We're now using the single socket instance from socket.ts
 export const useSocket = () => {
-  const [socket, setSocket] = useState<Socket | null>(null);
-
   useEffect(() => {
-    // Initialize socket connection
-    const socketIo = io(SOCKET_SERVER_URL, {
-      transports: ["websocket"],
-      autoConnect: true,
-    });
+    // Set up listeners for connection events
+    const onConnect = () => {
+      console.log("Socket connected ✅");
+    };
 
-    // Set socket in state
-    setSocket(socketIo);
+    const onDisconnect = () => {
+      console.log("Socket disconnected ❌");
+    };
 
-    // Clean up on unmount
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+
+    // Clean up listeners on unmount
     return () => {
-      socketIo.disconnect();
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
     };
   }, []);
 
