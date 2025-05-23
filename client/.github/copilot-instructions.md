@@ -40,10 +40,10 @@
 
 1. **Game Logic**
 
-   - [ ] Implement "Hang Guy" game logic (word selection, guesses, win/loss state, reset).
-   - [ ] Create logic for random word/letter selection from a predefined list.
-   - [ ] Track guessed letters and remaining guesses.
-   - [ ] Handle correct and incorrect guesses, update game state accordingly.
+   - [x] Implement "Hang Guy" game logic (word selection, guesses, win/loss state, reset).
+   - [x] Create logic for random word/letter selection from a predefined list.
+   - [x] Track guessed letters and remaining guesses.
+   - [x] Handle correct and incorrect guesses, update game state accordingly.
 
 2. **SVG Images**
 
