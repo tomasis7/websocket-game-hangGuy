@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { HangmanSVGs } from "./hangman/HangmanSVGs";
 import { HangGuyWord } from "./HangGuyWord";
 import { GuessDisplay } from "./GuessDisplay";
@@ -19,7 +19,7 @@ interface GameOptions {
 
 export const MultiplayerHangGuy: React.FC = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(true);
-  const [, setIsJoining] = useState(false);
+  const [isJoiningLocal, setIsJoining] = useState(false);
 
   const {
     gameState,
@@ -43,7 +43,7 @@ export const MultiplayerHangGuy: React.FC = () => {
   // Memoized calculations
   const incorrectGuessCount = gameState?.incorrectGuesses.length || 0;
   const isGameActive = gameState?.status === "playing";
-  const isJoining = userJoining || gameJoining;
+  const isJoining = userJoining || gameJoining || isJoiningLocal;
 
   // Event handlers with proper typing
   const handleGuess = useCallback(
@@ -64,19 +64,47 @@ export const MultiplayerHangGuy: React.FC = () => {
     [isConnected, actions]
   );
 
+  // Listen for successful join events
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleJoinSuccess = (data: any) => {
+      console.log("Successfully joined game:", data);
+      setIsJoining(false);
+      setShowJoinDialog(false);
+    };
+
+    const handleJoinError = (error: any) => {
+      console.error("Failed to join game:", error);
+      setIsJoining(false);
+      setShowJoinDialog(true);
+    };
+
+    socket.on("hangman:join-success", handleJoinSuccess);
+    socket.on("hangman:join-error", handleJoinError);
+    socket.on("hangman:game-state", handleJoinSuccess); // Also treat game state as join success
+
+    return () => {
+      socket.off("hangman:join-success", handleJoinSuccess);
+      socket.off("hangman:join-error", handleJoinError);
+      socket.off("hangman:game-state", handleJoinSuccess);
+    };
+  }, [socket]);
+
   const handleJoinGame = useCallback(
     (nickname: string, sessionId?: string, avatar?: string): void => {
-      // Use the hangman game system instead of the user identification system
+      console.log("Attempting to join game:", { nickname, sessionId, avatar });
+      setIsJoining(true);
+
       if (socket && socket.connected) {
         socket.emit("hangman:join-game", {
           playerName: nickname,
           sessionId: sessionId || "default",
           avatar,
         });
-        setIsJoining(true);
       } else {
-        console.error("Not connected to server");
-        // Handle the error appropriately - could use actions.setError or similar
+        console.error("Socket not connected");
+        setIsJoining(false);
       }
     },
     [socket]
