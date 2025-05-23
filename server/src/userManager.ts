@@ -60,7 +60,7 @@ export class UserManager {
         },
         createdAt: new Date(),
         lastActivity: new Date(),
-      };
+      } as unknown as GameSession;
       this.sessions.set(sessionId, session);
     }
 
