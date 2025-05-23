@@ -320,7 +320,11 @@ export const MultiplayerHangGuy: React.FC = () => {
             <UserList
               users={users}
               currentUserId={currentUser?.id}
-              sessionInfo={sessionInfo}
+              sessionInfo={
+                sessionInfo
+                  ? { ...sessionInfo, userCount: users.length }
+                  : undefined
+              }
             />
           </div>
         </div>
