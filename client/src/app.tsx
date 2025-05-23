@@ -2,8 +2,8 @@
 // It imports UI components and a custom hook to manage the number of likes.
 // The App component renders a centered UI with a connection label and a clickable droplet.
 
-import { HangGuyGame } from "./components/HangGuyGame";
+import { MultiplayerHangGuy } from "./components/MultiplayerHangGuy";
 
 export default function App() {
-  return <HangGuyGame />;
+  return <MultiplayerHangGuy />;
 }

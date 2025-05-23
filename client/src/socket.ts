@@ -7,5 +7,7 @@ import type {
   ServerToClientEvents,
 } from "../../shared/types";
 
-// Create a typed socket.io client instance
-export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io();
+// Create a typed socket.io client instance connecting to the main game server on port 3001
+export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
+  "http://localhost:3001"
+);
