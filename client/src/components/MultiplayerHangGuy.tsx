@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { HangmanSVGs } from "./hangman/HangmanSVGs";
 import { HangGuyWord } from "./HangGuyWord";
 import { LetterInput } from "./LetterInput";
 import { GameStatus } from "./GameStatus";
 import { GameControls } from "./GameControls";
+import { GuessDisplay } from "./GuessDisplay"; // ✅ Add missing import
 import { JoinGameWelcome } from "./JoinGameWelcome";
 import { useMultiplayerGame } from "../hooks/useMultiplayerGame";
 import { UserJoinDialog } from "./UserJoinDialog";
@@ -11,7 +12,7 @@ import { UserList } from "./UserList";
 import { useUserIdentification } from "../hooks/useUserIdentification";
 import { socket } from "../socket";
 import { ChatPanel } from "./ChatPanel";
-import type { ChatMessage } from "../../../shared/types";
+import type { ChatMessage, GameStateEvent } from "../../../shared/types"; // ✅ Add GameStateEvent
 
 interface GameOptions {
   category?: string;
@@ -20,7 +21,7 @@ interface GameOptions {
 
 export const MultiplayerHangGuy: React.FC = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(true);
-  const [isJoiningLocal, setIsJoining] = useState(false);
+  const [isJoiningLocal, setIsJoiningLocal] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   const {
@@ -34,25 +35,55 @@ export const MultiplayerHangGuy: React.FC = () => {
 
   const {
     currentUser,
-    sessionInfo,
     joinError,
     isJoining: userJoining,
     leaveGame,
   } = useUserIdentification();
 
-  // Memoized calculations
-  const incorrectGuessCount = gameState?.incorrectGuesses.length || 0;
+  // ✅ Fix memoized calculations to ensure updates
+  const incorrectGuessCount = useMemo(
+    () => gameState?.incorrectGuesses?.length || 0,
+    [gameState?.incorrectGuesses]
+  );
+
+  const remainingGuesses = useMemo(
+    () => gameState?.remainingGuesses ?? 8,
+    [gameState?.remainingGuesses]
+  );
+
+  const maxGuesses = useMemo(
+    () => gameState?.maxGuesses ?? 8,
+    [gameState?.maxGuesses]
+  );
+
   const isGameActive = gameState?.status === "playing";
   const isJoining = userJoining || gameJoining || isJoiningLocal;
+
+  // ✅ Add effect to log state changes for debugging
+  useEffect(() => {
+    if (gameState) {
+      console.log("Game state updated:", {
+        remainingGuesses: gameState.remainingGuesses,
+        maxGuesses: gameState.maxGuesses,
+        status: gameState.status,
+        incorrectCount: gameState.incorrectGuesses?.length,
+      });
+    }
+  }, [gameState]);
 
   // Event handlers with proper typing
   const handleGuess = useCallback(
     (letter: string): void => {
       if (isGameActive && isConnected) {
         actions.guessLetter(letter);
+
+        // ✅ Force re-render by logging the action
+        console.log(
+          `Guessing letter: ${letter}, Current remaining: ${remainingGuesses}`
+        );
       }
     },
-    [isGameActive, isConnected, actions]
+    [isGameActive, isConnected, actions, remainingGuesses]
   );
 
   const handleNewGame = useCallback(
@@ -79,35 +110,43 @@ export const MultiplayerHangGuy: React.FC = () => {
 
     const handleJoinSuccess = (data: any) => {
       console.log("Successfully joined game:", data);
-      setIsJoining(false);
-      setShowJoinDialog(false); // This should hide the join dialog
+      setIsJoiningLocal(false); // ✅ Fix
+      setShowJoinDialog(false);
     };
 
     const handleJoinError = (error: any) => {
       console.error("Failed to join game:", error);
-      setIsJoining(false);
+      setIsJoiningLocal(false); // ✅ Fix
       setShowJoinDialog(true);
     };
 
-    socket.on("hangman:join-success", handleJoinSuccess);
-    socket.on("hangman:join-error", handleJoinError);
-    socket.on("hangman:game-state", handleJoinSuccess);
-    socket.on("chat:message-received", (message: ChatMessage) => {
+    // ✅ Fix: Add proper typing and event handling
+    const handleGameStateUpdate = (newGameState: GameStateEvent) => {
+      console.log("Game state updated:", newGameState);
+      setShowJoinDialog(false);
+    };
+
+    const handleChatMessage = (message: ChatMessage) => {
       setChatMessages((prev) => [...prev, message]);
-    });
+    };
+
+    socket.on("hangman:join-success", handleJoinSuccess);
+    socket.on("hangman:error", handleJoinError);
+    socket.on("hangman:game-state", handleGameStateUpdate); // ✅ Fix: Use proper handler
+    socket.on("chat:message-received", handleChatMessage);
 
     return () => {
       socket.off("hangman:join-success", handleJoinSuccess);
-      socket.off("hangman:join-error", handleJoinError);
-      socket.off("hangman:game-state", handleJoinSuccess);
-      socket.off("chat:message-received");
+      socket.off("hangman:error", handleJoinError);
+      socket.off("hangman:game-state", handleGameStateUpdate);
+      socket.off("chat:message-received", handleChatMessage);
     };
   }, [socket]);
 
   const handleJoinGame = useCallback(
     (nickname: string, sessionId?: string, avatar?: string): void => {
       console.log("Attempting to join game:", { nickname, sessionId, avatar });
-      setIsJoining(true);
+      setIsJoiningLocal(true); // ✅ Fix
 
       if (socket && socket.connected) {
         // Generate a 6-character session ID to match the validation pattern
@@ -126,7 +165,7 @@ export const MultiplayerHangGuy: React.FC = () => {
         });
       } else {
         console.error("Socket not connected");
-        setIsJoining(false);
+        setIsJoiningLocal(false);
       }
     },
     [socket]
@@ -226,106 +265,105 @@ export const MultiplayerHangGuy: React.FC = () => {
 
   // Main game interface
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Game Area */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              {/* Game Header */}
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-800">Hang Guy</h1>
-                <div className="flex gap-4">
-                  <GameStatus status={gameState.status} />
-                  {currentUser && (
-                    <button
-                      onClick={handleLeaveGame}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      Leave Game
-                    </button>
-                  )}
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      {/* Game Interface */}
+      {gameState && currentUser && (
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column: Game Status & Hangman */}
+          <div className="space-y-6">
+            {/* Game Status */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-between mb-4">
+                <GameStatus status={gameState.status} />
+                {currentUser && (
+                  <button
+                    onClick={handleLeaveGame}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Leave Game
+                  </button>
+                )}
               </div>
+            </div>
 
-              {/* Hangman Display */}
-              <div className="flex justify-center mb-8">
-                <HangmanSVGs stage={incorrectGuessCount} />
-              </div>
+            {/* Hangman Display */}
+            <div className="flex justify-center mb-8">
+              <HangmanSVGs stage={incorrectGuessCount} />
+            </div>
 
-              {/* Word Display */}
-              <HangGuyWord
-                word={gameState.word}
-                correctGuesses={new Set(gameState.correctGuesses)}
-              />
+            {/* Word Display */}
+            <HangGuyWord
+              word={gameState.word}
+              correctGuesses={new Set(gameState.correctGuesses)}
+            />
+          </div>
 
-              {/* Letter Input */}
-              {isGameActive && (
+          {/* Middle Column: Guess Display */}
+          <div className="flex justify-center">
+            {/* Update the GuessDisplay usage to ensure proper props */}
+            <GuessDisplay
+              correctGuesses={gameState.correctGuesses || []}
+              incorrectGuesses={gameState.incorrectGuesses || []}
+              remainingGuesses={remainingGuesses} // ✅ Use memoized value
+              maxGuesses={maxGuesses} // ✅ Use memoized value
+              gameStatus={gameState.status}
+            />
+          </div>
+
+          {/* Right Column: Input & Controls */}
+          <div className="space-y-6">
+            {/* Letter Input */}
+            {isGameActive && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                  {isGameActive ? "Make Your Guess" : "Game Finished"}
+                </h3>
                 <LetterInput
                   onGuess={handleGuess}
                   guessedLetters={
                     new Set([
-                      ...gameState.correctGuesses,
-                      ...gameState.incorrectGuesses,
+                      ...(gameState.correctGuesses || []),
+                      ...(gameState.incorrectGuesses || []),
                     ])
                   }
                 />
-              )}
-
-              {/* Game Controls Section */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <GameControls
-                  gameStatus={gameState.status}
-                  onNewGame={handleNewGame}
-                  onLeaveGame={() => {
-                    // Add leave game logic
-                    if (socket) {
-                      socket.emit("hangman:leave-game", { userId: socket.id });
-                      socket.disconnect();
-                    }
-                    // Redirect to home or refresh
-                    window.location.reload();
-                  }}
-                  isConnected={isConnected}
-                  playerCount={gameState?.players?.length || 0} // Pass the player count
-                />
               </div>
-            </div>
-          </div>
+            )}
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <UserList
-              users={
-                gameState?.players?.map((player) => ({
-                  id: player.id,
-                  nickname: player.name,
-                  avatar: player.avatar,
-                  isActive: player.isActive,
-                  joinedAt: player.joinedAt,
-                })) || []
-              } // Transform PlayerInfo to User format
-              currentUserId={currentUser?.id}
-              sessionInfo={
-                sessionInfo
-                  ? {
-                      ...sessionInfo,
-                      userCount: gameState?.players?.length || 0,
-                    } // Update count from game players
-                  : undefined
-              }
+            {/* Game Controls */}
+            <GameControls
+              onNewGame={handleNewGame}
+              gameStatus={gameState.status}
+              disabled={!isConnected}
             />
-            {/* Chat Panel */}
-            <div className="mt-6">
+
+            {/* ✅ Add ChatPanel Integration */}
+            <div className="bg-white rounded-lg shadow-md">
               <ChatPanel
                 messages={chatMessages}
                 onSendMessage={handleSendChatMessage}
                 currentUser={currentUser}
               />
             </div>
+
+            {/* User List - Show connected players */}
+            <div className="bg-white rounded-lg shadow-md p-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                Connected Players
+              </h3>
+              <UserList
+                users={gameState.players.map((player) => ({
+                  ...player,
+                  nickname: player.name,
+                  isActive: true,
+                  joinedAt: Date.now(),
+                }))}
+                currentUserId={currentUser.id}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

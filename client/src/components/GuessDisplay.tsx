@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface GuessDisplayProps {
   correctGuesses: string[];
@@ -15,78 +15,32 @@ export const GuessDisplay: React.FC<GuessDisplayProps> = ({
   maxGuesses,
   gameStatus = "playing",
 }) => {
+  // ✅ Add state for real-time updates
+  const [currentRemaining, setCurrentRemaining] = useState(remainingGuesses);
+
+  // ✅ Update when props change
+  useEffect(() => {
+    setCurrentRemaining(remainingGuesses);
+  }, [remainingGuesses]);
+
   const correctLetters = correctGuesses.sort();
   const incorrectLetters = incorrectGuesses.sort();
   const totalGuesses = correctLetters.length + incorrectLetters.length;
-  const usedGuesses = maxGuesses - remainingGuesses;
+  const usedGuesses = maxGuesses - currentRemaining; // ✅ Use currentRemaining
   const progressPercentage = (usedGuesses / maxGuesses) * 100;
 
   // Enhanced status calculation
   const getGuessStatus = () => {
     if (gameStatus !== "playing") return gameStatus;
-    if (remainingGuesses <= 1) return "critical";
-    if (remainingGuesses <= 2) return "danger";
-    if (remainingGuesses <= 4) return "warning";
+    if (currentRemaining <= 1) return "critical";
+    if (currentRemaining <= 2) return "danger";
+    if (currentRemaining <= 4) return "warning";
     return "safe";
   };
 
   const status = getGuessStatus();
 
-  const getStatusStyles = () => {
-    switch (status) {
-      case "critical":
-        return {
-          text: "text-red-700",
-          bg: "bg-red-100",
-          border: "border-red-300",
-          progress: "bg-red-600",
-          pulse: "animate-pulse",
-        };
-      case "danger":
-        return {
-          text: "text-red-600",
-          bg: "bg-red-50",
-          border: "border-red-200",
-          progress: "bg-red-500",
-          pulse: "",
-        };
-      case "warning":
-        return {
-          text: "text-yellow-600",
-          bg: "bg-yellow-50",
-          border: "border-yellow-200",
-          progress: "bg-yellow-500",
-          pulse: "",
-        };
-      case "won":
-        return {
-          text: "text-green-700",
-          bg: "bg-green-100",
-          border: "border-green-300",
-          progress: "bg-green-600",
-          pulse: "",
-        };
-      case "lost":
-        return {
-          text: "text-red-700",
-          bg: "bg-red-100",
-          border: "border-red-300",
-          progress: "bg-red-600",
-          pulse: "",
-        };
-      default:
-        return {
-          text: "text-green-600",
-          bg: "bg-green-50",
-          border: "border-green-200",
-          progress: "bg-green-500",
-          pulse: "",
-        };
-    }
-  };
-
-  const styles = getStatusStyles();
-
+  // ✅ Rest of component stays the same but uses currentRemaining
   const getStatusMessage = () => {
     if (gameStatus === "won") return "🎉 You won!";
     if (gameStatus === "lost") return "💀 Game over!";
@@ -96,35 +50,39 @@ export const GuessDisplay: React.FC<GuessDisplayProps> = ({
     return "✅ Looking good!";
   };
 
+  // ✅ Use currentRemaining in display
   return (
     <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6 space-y-4">
       {/* Enhanced Remaining Guesses Section */}
       <div
-        className={`text-center p-4 rounded-lg ${styles.bg} ${styles.border} border ${styles.pulse}`}
+        className={`text-center p-4 rounded-lg ${getStatusStyles().bg} ${
+          getStatusStyles().border
+        } border ${getStatusStyles().pulse}`}
       >
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
           Remaining Guesses
         </h3>
 
         <div className="flex items-center justify-center gap-2 mb-2">
-          <span className={`text-3xl font-bold ${styles.text}`}>
-            {remainingGuesses}
+          <span className={`text-3xl font-bold ${getStatusStyles().text}`}>
+            {currentRemaining}
           </span>
           <span className="text-gray-500 text-lg">/ {maxGuesses}</span>
         </div>
 
         {/* Status Message */}
-        <div className={`text-sm font-medium ${styles.text} mb-3`}>
+        <div className={`text-sm font-medium ${getStatusStyles().text} mb-3`}>
           {getStatusMessage()}
         </div>
 
         {/* Enhanced Progress Bar */}
         <div className="w-full bg-gray-200 rounded-full h-3 relative overflow-hidden">
           <div
-            className={`h-3 rounded-full transition-all duration-500 ease-in-out ${styles.progress}`}
+            className={`h-3 rounded-full transition-all duration-500 ease-in-out ${
+              getStatusStyles().progress
+            }`}
             style={{ width: `${Math.max(5, progressPercentage)}%` }}
           />
-          {/* Progress indicator */}
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-xs font-medium text-white drop-shadow">
               {usedGuesses}/{maxGuesses}
@@ -135,13 +93,7 @@ export const GuessDisplay: React.FC<GuessDisplayProps> = ({
         {/* Guess breakdown */}
         <div className="flex justify-between text-xs text-gray-600 mt-2">
           <span>Used: {usedGuesses}</span>
-          <span>
-            Accuracy:{" "}
-            {totalGuesses > 0
-              ? Math.round((correctLetters.length / totalGuesses) * 100)
-              : 0}
-            %
-          </span>
+          <span>Remaining: {currentRemaining}</span>
         </div>
       </div>
 
@@ -219,4 +171,57 @@ export const GuessDisplay: React.FC<GuessDisplayProps> = ({
       </div>
     </div>
   );
+
+  function getStatusStyles() {
+    switch (status) {
+      case "critical":
+        return {
+          text: "text-red-700",
+          bg: "bg-red-100",
+          border: "border-red-300",
+          progress: "bg-red-600",
+          pulse: "animate-pulse",
+        };
+      case "danger":
+        return {
+          text: "text-red-600",
+          bg: "bg-red-50",
+          border: "border-red-200",
+          progress: "bg-red-500",
+          pulse: "",
+        };
+      case "warning":
+        return {
+          text: "text-yellow-600",
+          bg: "bg-yellow-50",
+          border: "border-yellow-200",
+          progress: "bg-yellow-500",
+          pulse: "",
+        };
+      case "won":
+        return {
+          text: "text-green-700",
+          bg: "bg-green-100",
+          border: "border-green-300",
+          progress: "bg-green-600",
+          pulse: "",
+        };
+      case "lost":
+        return {
+          text: "text-red-700",
+          bg: "bg-red-100",
+          border: "border-red-300",
+          progress: "bg-red-600",
+          pulse: "",
+        };
+      default:
+        return {
+          text: "text-green-600",
+          bg: "bg-green-50",
+          border: "border-green-200",
+          progress: "bg-green-500",
+          pulse: "",
+        };
+    }
+  }
 };

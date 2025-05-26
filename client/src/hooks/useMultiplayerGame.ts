@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { socket } from "../socket";
 import type { GameStateEvent, PlayerInfo } from "../types/socketTypes";
 
+// Ensure game state updates trigger re-renders
 export const useMultiplayerGame = () => {
   // Game state
   const [gameState, setGameState] = useState<GameStateEvent | null>(null);
@@ -146,6 +147,46 @@ export const useMultiplayerGame = () => {
       socket.off("notification", handleNotification);
     };
   }, [addNotification]);
+
+  // Ensure game state updates trigger re-renders
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleGameStateUpdate = (newGameState: GameStateEvent) => {
+      console.log("Received game state update:", newGameState);
+
+      // ✅ Force state update by creating new object
+      setGameState((prevState) => {
+        if (
+          !prevState ||
+          prevState.remainingGuesses !== newGameState.remainingGuesses ||
+          prevState.incorrectGuesses.length !==
+            newGameState.incorrectGuesses.length
+        ) {
+          return { ...newGameState };
+        }
+        return prevState;
+      });
+    };
+
+    const handleGuessResult = (result: any) => {
+      console.log("Guess result received:", result);
+
+      // ✅ Update game state from guess result
+      if (result.gameState) {
+        setGameState({ ...result.gameState });
+      }
+    };
+
+    socket.on("hangman:game-state", handleGameStateUpdate);
+    socket.on("hangman:guess-result", handleGuessResult);
+
+    return () => {
+      socket.off("hangman:game-state", handleGameStateUpdate);
+      socket.off("hangman:guess-result", handleGuessResult);
+    };
+  }, [socket]);
+
   // Game actions
   const actions = {
     joinGame: () => {
