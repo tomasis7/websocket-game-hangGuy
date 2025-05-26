@@ -40,6 +40,7 @@ export interface ReconnectResponse {
   error?: string;
 }
 
+// ✅ Enhanced GameStateEvent for full compatibility
 export interface GameStateEvent {
   word: string;
   correctGuesses: string[];
@@ -48,11 +49,34 @@ export interface GameStateEvent {
   maxGuesses: number;
   status: "playing" | "won" | "lost";
   displayWord: string;
-  guessedLetters?: string[]; // ✅ Add this for compatibility
+  guessedLetters?: string[];
+  players?: PlayerInfo[];
+  gameId?: string;
+  lastAction?: GameAction;
 }
 
+// ✅ Add missing request types
+export interface GuessLetterRequest {
+  letter: string;
+  playerName?: string;
+  timestamp?: number;
+}
+
+export interface NewGameRequest {
+  category?: string;
+  difficulty?: "easy" | "medium" | "hard";
+  startedBy?: string;
+}
+
+export interface HangmanErrorResponse {
+  message: string;
+  code: string;
+  timestamp?: number;
+}
+
+// ✅ Complete ClientToServerEvents
 export interface ClientToServerEvents {
-  joinGame: (request: JoinGameRequest & { userId: string }) => void;
+  joinGame: (request: JoinGameRequest & { userId?: string }) => void;
   leaveGame: (data: { userId: string }) => void;
   reconnectToSession: (data: {
     userId: string;
@@ -66,8 +90,16 @@ export interface ClientToServerEvents {
   }) => void;
   requestSync: () => void;
   requestGameHistory: () => void;
+
+  // Hangman-specific events
+  "hangman:join-game": (data: { playerName: string }) => void;
+  "hangman:leave-game": (data: { userId: string }) => void;
+  "hangman:guess-letter": (data: GuessLetterRequest) => void;
+  "hangman:new-game": (data?: NewGameRequest) => void;
+  getUserList: () => void;
 }
 
+// ✅ Complete ServerToClientEvents
 export interface ServerToClientEvents {
   joinGameResponse: (response: JoinGameResponse) => void;
   reconnectResponse: (response: ReconnectResponse) => void;
@@ -84,6 +116,26 @@ export interface ServerToClientEvents {
   gameEnded: (data: { status: "won" | "lost"; word: string }) => void;
   notification: (message: string) => void;
   error: (error: string) => void;
+
+  // Hangman-specific events
+  "hangman:game-started": (data: {
+    startedBy: string;
+    gameState: GameStateEvent;
+  }) => void;
+  "hangman:guess-result": (data: {
+    letter: string;
+    isCorrect: boolean;
+    playerId: string;
+    playerName: string;
+    gameState: GameStateEvent;
+  }) => void;
+  "hangman:player-left": (data: {
+    playerId: string;
+    playerCount: number;
+    timestamp: number;
+  }) => void;
+  "hangman:error": (data: HangmanErrorResponse) => void;
+  sessionInfo: (data: { id: string; userCount: number }) => void;
 }
 
 export interface PlayerInfo {

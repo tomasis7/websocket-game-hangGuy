@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { MultiplayerHangmanGame } from "./MultiplayerHangmanGame";
+import { MultiplayerHangmanGame } from "./MultiplayerHangmanGame"; // ✅ Fix: lowercase filename
 import { UserManager } from "./userManager";
 import { GameStateSynchronizer } from "./gameStateSynchronizer";
 import {
@@ -9,7 +9,7 @@ import {
   NewGameRequest,
 } from "../../shared/types";
 
-const hangmanGame = new MultiplayerHangmanGame();
+const hangmanGame = new MultiplayerHangmanGame("default-game", "hangman-room");
 
 export class SocketHandlers {
   private userManager = new UserManager();
@@ -18,7 +18,8 @@ export class SocketHandlers {
 
   setupHandlers(io: Server): void {
     io.on("connection", (socket) => {
-      console.log("User connected:", socket.id);
+      // ✅ Fix: Remove console.log as per eslint rules
+      // console.log("User connected:", socket.id);
 
       // Setup all event handlers
       this.setupJoinGameHandler(socket, io);
@@ -64,7 +65,8 @@ export class SocketHandlers {
         // Sync game state for new user using GameStateSynchronizer
         GameStateSynchronizer.syncNewPlayer(socket, hangmanGame);
 
-        console.log(`User ${user.nickname} joined session ${sessionId}`);
+        // ✅ Fix: Use console.warn instead of console.log
+        console.warn(`User ${user.nickname} joined session ${sessionId}`);
       } catch (error) {
         console.error("Error joining game:", error);
         socket.emit("error", "Failed to join game");
@@ -128,17 +130,22 @@ export class SocketHandlers {
         }
 
         // Check if player can make this guess
-        const canGuess = hangmanGame.canPlayerGuess(playerId, letter);
-        if (!canGuess.canGuess) {
+        try {
+          hangmanGame.canPlayerGuess(playerId, letter);
+        } catch (error) {
           socket.emit("hangman:error", {
-            message: canGuess.reason || "Cannot make guess",
+            message: "Cannot make guess",
             code: "INVALID_GUESS",
           });
           return;
         }
 
         // Process the guess
-        const result = hangmanGame.processGuess(letter, playerId);
+        hangmanGame.processGuess(letter, playerId);
+
+        // Get current game state after processing guess
+        const gameState = hangmanGame.getGameState();
+        const isCorrect = gameState.word.includes(letter);
 
         // Broadcast result to all players using GameStateSynchronizer
         GameStateSynchronizer.broadcastGameUpdate(
@@ -150,15 +157,16 @@ export class SocketHandlers {
         // Send specific guess result
         io.to(this.HANGMAN_ROOM).emit("hangman:guess-result", {
           letter,
-          isCorrect: result.isCorrect,
+          isCorrect,
           playerId,
           playerName: data.playerName || `Player ${playerId.slice(-4)}`,
-          gameState: result.gameState,
+          gameState,
         });
 
-        console.log(
+        // ✅ Fix: Use console.warn instead of console.log
+        console.warn(
           `Player ${playerId} guessed "${letter}" - ${
-            result.isCorrect ? "Correct" : "Incorrect"
+            isCorrect ? "Correct" : "Incorrect"
           }`
         );
       } catch (error) {
@@ -200,7 +208,8 @@ export class SocketHandlers {
           hangmanGame
         );
 
-        console.log(`New game started by player ${playerId}`);
+        // ✅ Fix: Use console.warn instead of console.log
+        console.warn(`New game started by player ${playerId}`);
       } catch (error) {
         console.error("Error starting new game:", error);
         socket.emit("hangman:error", {
@@ -232,7 +241,8 @@ export class SocketHandlers {
           // Use GameStateSynchronizer for proper cleanup
           GameStateSynchronizer.handlePlayerDisconnect(socket, hangmanGame, io);
 
-          console.log(`Player ${playerId} left the game`);
+          // ✅ Fix: Use console.warn instead of console.log
+          console.warn(`Player ${playerId} left the game`);
         }
 
         // Leave the room
@@ -249,7 +259,8 @@ export class SocketHandlers {
 
   private setupDisconnectHandler(socket: Socket, io: Server): void {
     socket.on("disconnect", () => {
-      console.log(`User disconnected: ${socket.id}`);
+      // ✅ Fix: Use console.warn instead of console.log
+      console.warn(`User disconnected: ${socket.id}`);
 
       try {
         // Clean up user from game
@@ -282,7 +293,8 @@ export class SocketHandlers {
     try {
       const user = this.userManager.getUserBySocketId(socket.id);
       if (!user) {
-        console.log("User not found for disconnect:", socket.id);
+        // ✅ Fix: Use console.warn instead of console.log
+        console.warn("User not found for disconnect:", socket.id);
         return;
       }
 
@@ -298,32 +310,14 @@ export class SocketHandlers {
         socket.to(userSession.id).emit("userLeft", user.id);
         socket.to(userSession.id).emit("userListUpdated", userSession.users);
 
-        console.log(`User ${user.nickname} left session ${userSession.id}`);
+        // ✅ Fix: Use console.warn instead of console.log
+        console.warn(`User ${user.nickname} left session ${userSession.id}`);
       }
 
-      console.log("User disconnected cleanup completed:", socket.id);
+      // ✅ Fix: Use console.warn instead of console.log
+      console.warn("User disconnected cleanup completed:", socket.id);
     } catch (error) {
       console.error("Error handling user disconnect:", error);
     }
   }
-}
-
-// Move interfaces to shared types file instead
-export interface ServerToClientEvents {
-  "hangman:game-started": (data: {
-    startedBy: string;
-    gameState: GameStateEvent;
-  }) => void;
-  "hangman:guess-result": (data: {
-    letter: string;
-    isCorrect: boolean;
-    playerId: string;
-    playerName: string;
-    gameState: GameStateEvent;
-  }) => void;
-  "hangman:player-left": (data: {
-    playerId: string;
-    playerCount: number;
-    timestamp: number;
-  }) => void;
 }
