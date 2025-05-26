@@ -1,12 +1,13 @@
 import { Server, Socket } from "socket.io";
-import { MultiplayerHangmanGame } from "./MultiplayerHangmanGame"; // ✅ Fix: lowercase filename
+import { MultiplayerHangmanGame } from "./MultiplayerHangmanGame";
 import { UserManager } from "./userManager";
-import { ChatMessage, GameStateSynchronizer } from "./gameStateSynchronizer";
+import { GameStateSynchronizer } from "./gameStateSynchronizer";
 import {
   GameStateEvent,
   JoinGameRequest,
   GuessLetterRequest,
   NewGameRequest,
+  ChatMessage,
 } from "../../shared/types";
 
 const hangmanGame = new MultiplayerHangmanGame("default-game", "hangman-room");

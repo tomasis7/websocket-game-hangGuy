@@ -65,8 +65,8 @@ export const HangGuyGame: React.FC = () => {
           {/* Middle Column: Guess Tracking */}
           <div className="flex justify-center">
             <GuessDisplay
-              correctGuesses={gameState.correctGuesses}
-              incorrectGuesses={gameState.incorrectGuesses}
+              correctGuesses={Array.from(gameState.correctGuesses)}
+              incorrectGuesses={Array.from(gameState.incorrectGuesses)}
               remainingGuesses={gameState.remainingGuesses}
               maxGuesses={gameState.maxGuesses}
             />
