@@ -1,12 +1,12 @@
-import { Socket } from "socket.io";
+import { Server, Socket } from "socket.io";
+import { MultiplayerHangmanGame } from "./MultiplayerHangmanGame"; // ✅ Fix: lowercase
+import { UserManager } from "./userManager";
 import {
-  GameStatus,
   GameStateEvent,
   PlayerInfo,
-  GameAction, // ✅ Use only shared types
+  GameAction,
+  GameStatus,
 } from "../../shared/types";
-import { MultiplayerHangmanGame } from "./MultiplayerHangmanGame";
-import { UserManager } from "./userManager"; // Import UserManager
 
 export class GameStateSynchronizer {
   private static userManager = new UserManager(); // Integrate UserManager
@@ -98,13 +98,12 @@ export class GameStateSynchronizer {
    * Gets a summary of active players for game state
    */
   private static getActivePlayers(game: MultiplayerHangmanGame): PlayerInfo[] {
+    const userManager = new UserManager();
     return Array.from(game.getPlayers()).map((playerId) => {
-      // ✅ Get real user data instead of placeholder
-      const user = this.userManager.getUserBySocketId(playerId);
-
+      const user = userManager.getUserBySocketId(playerId);
       return {
         id: playerId,
-        name: user?.nickname || `Player ${playerId.slice(-4)}`, // Real nickname
+        name: user?.nickname || `Player ${playerId.slice(-4)}`,
         joinedAt: user?.joinedAt || Date.now(),
         isActive: true,
         avatar: user?.avatar,

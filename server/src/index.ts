@@ -3,6 +3,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import { setupHangmanBroadcasters } from "./broadcastHandlers";
+import { SocketHandlers } from "./socketHandlers";
 
 const app = express();
 const server = createServer(app);
@@ -40,6 +41,9 @@ io.on("connection", (socket) => {
     console.log(`User disconnected: ${socket.id}`);
   });
 });
+
+const socketHandlers = new SocketHandlers();
+socketHandlers.setupHandlers(io);
 
 const PORT = process.env.PORT || 3000;
 

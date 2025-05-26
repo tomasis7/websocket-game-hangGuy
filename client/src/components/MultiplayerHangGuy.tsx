@@ -10,6 +10,8 @@ import { UserJoinDialog } from "./UserJoinDialog";
 import { UserList } from "./UserList";
 import { useUserIdentification } from "../hooks/useUserIdentification";
 import { socket } from "../socket";
+import { ChatPanel } from "./ChatPanel";
+import type { ChatMessage } from "../../../shared/types";
 
 interface GameOptions {
   category?: string;
@@ -19,6 +21,7 @@ interface GameOptions {
 export const MultiplayerHangGuy: React.FC = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(true);
   const [isJoiningLocal, setIsJoining] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   const {
     gameState,
@@ -61,6 +64,15 @@ export const MultiplayerHangGuy: React.FC = () => {
     [isConnected, actions]
   );
 
+  const handleSendChatMessage = useCallback(
+    (message: string) => {
+      if (socket && currentUser) {
+        socket.emit("chat:send-message", { message });
+      }
+    },
+    [socket, currentUser]
+  );
+
   // Listen for successful join events
   useEffect(() => {
     if (!socket) return;
@@ -80,11 +92,15 @@ export const MultiplayerHangGuy: React.FC = () => {
     socket.on("hangman:join-success", handleJoinSuccess);
     socket.on("hangman:join-error", handleJoinError);
     socket.on("hangman:game-state", handleJoinSuccess);
+    socket.on("chat:message-received", (message: ChatMessage) => {
+      setChatMessages((prev) => [...prev, message]);
+    });
 
     return () => {
       socket.off("hangman:join-success", handleJoinSuccess);
       socket.off("hangman:join-error", handleJoinError);
       socket.off("hangman:game-state", handleJoinSuccess);
+      socket.off("chat:message-received");
     };
   }, [socket]);
 
@@ -299,6 +315,14 @@ export const MultiplayerHangGuy: React.FC = () => {
                   : undefined
               }
             />
+            {/* Chat Panel */}
+            <div className="mt-6">
+              <ChatPanel
+                messages={chatMessages}
+                onSendMessage={handleSendChatMessage}
+                currentUser={currentUser}
+              />
+            </div>
           </div>
         </div>
       </div>
