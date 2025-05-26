@@ -97,6 +97,9 @@ export interface ClientToServerEvents {
   "hangman:guess-letter": (data: GuessLetterRequest) => void;
   "hangman:new-game": (data?: NewGameRequest) => void;
   getUserList: () => void;
+
+  // ✅ Chat events
+  "chat:send-message": (data: { message: string }) => void;
 }
 
 // ✅ Complete ServerToClientEvents
@@ -136,6 +139,10 @@ export interface ServerToClientEvents {
   }) => void;
   "hangman:error": (data: HangmanErrorResponse) => void;
   sessionInfo: (data: { id: string; userCount: number }) => void;
+
+  // ✅ Chat events
+  "chat:message-received": (message: ChatMessage) => void;
+  "chat:system-message": (message: string) => void;
 }
 
 export interface PlayerInfo {
@@ -169,3 +176,13 @@ export interface WordCategory {
 }
 
 export type GameStatus = "playing" | "won" | "lost";
+
+// ✅ Add missing chat types to complete the implementation
+export interface ChatMessage {
+  id: string;
+  userId: string;
+  playerName: string;
+  message: string;
+  timestamp: number;
+  type: "chat" | "system" | "game";
+}

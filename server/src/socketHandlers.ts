@@ -1,7 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { MultiplayerHangmanGame } from "./MultiplayerHangmanGame"; // ✅ Fix: lowercase filename
 import { UserManager } from "./userManager";
-import { GameStateSynchronizer } from "./gameStateSynchronizer";
+import { ChatMessage, GameStateSynchronizer } from "./gameStateSynchronizer";
 import {
   GameStateEvent,
   JoinGameRequest,
@@ -18,9 +18,6 @@ export class SocketHandlers {
 
   setupHandlers(io: Server): void {
     io.on("connection", (socket) => {
-      // ✅ Fix: Remove console.log as per eslint rules
-      // console.log("User connected:", socket.id);
-
       // Setup all event handlers
       this.setupJoinGameHandler(socket, io);
       this.setupLeaveGameHandler(socket);
@@ -28,11 +25,48 @@ export class SocketHandlers {
       this.setupGuessLetterHandler(socket, io);
       this.setupNewGameHandler(socket, io);
       this.setupHangmanLeaveHandler(socket, io);
+      this.setupChatHandler(socket, io); // ✅ Add chat handler
       this.setupDisconnectHandler(socket, io);
     });
 
     // Cleanup inactive sessions periodically
     this.startSessionCleanup();
+  }
+
+  // ✅ Add chat handler method
+  private setupChatHandler(socket: Socket, io: Server): void {
+    socket.on("chat:send-message", (data: { message: string }) => {
+      try {
+        const user = this.userManager.getUserBySocketId(socket.id);
+        if (!user) {
+          socket.emit("error", "User not found");
+          return;
+        }
+
+        // Validate message
+        if (!data?.message?.trim() || data.message.length > 100) {
+          socket.emit("error", "Invalid message");
+          return;
+        }
+
+        const chatMessage: ChatMessage = {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+          userId: user.id,
+          playerName: user.nickname,
+          message: data.message.trim(),
+          timestamp: Date.now(),
+          type: "chat",
+        };
+
+        // Broadcast to all users in hangman room
+        io.to(this.HANGMAN_ROOM).emit("chat:message-received", chatMessage);
+
+        console.warn(`Chat message from ${user.nickname}: ${data.message}`);
+      } catch (error) {
+        console.error("Error handling chat message:", error);
+        socket.emit("error", "Failed to send message");
+      }
+    });
   }
 
   private setupJoinGameHandler(socket: Socket, io: Server): void {
@@ -49,6 +83,7 @@ export class SocketHandlers {
         const session = this.userManager.addUserToSession(user.id, sessionId);
 
         socket.join(sessionId);
+        socket.join(this.HANGMAN_ROOM); // ✅ Join hangman room for chat
 
         // Send session info to new user
         socket.emit("sessionInfo", {
@@ -65,7 +100,17 @@ export class SocketHandlers {
         // Sync game state for new user using GameStateSynchronizer
         GameStateSynchronizer.syncNewPlayer(socket, hangmanGame);
 
-        // ✅ Fix: Use console.warn instead of console.log
+        // ✅ Send system chat message
+        const systemMessage: ChatMessage = {
+          id: `sys_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+          userId: "system",
+          playerName: "System",
+          message: `${user.nickname} joined the game!`,
+          timestamp: Date.now(),
+          type: "system",
+        };
+        io.to(this.HANGMAN_ROOM).emit("chat:message-received", systemMessage);
+
         console.warn(`User ${user.nickname} joined session ${sessionId}`);
       } catch (error) {
         console.error("Error joining game:", error);

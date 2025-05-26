@@ -3,16 +3,14 @@ import {
   GameStatus,
   GameStateEvent,
   PlayerInfo,
-  GameAction as SharedGameAction,
+  GameAction, // ✅ Use only shared types
 } from "../../shared/types";
-import {
-  GameAction as LocalGameAction,
-  GameState,
-  MultiplayerHangmanGame,
-} from "./MultiplayerHangmanGame";
-import { UserManager } from "./userManager";
+import { MultiplayerHangmanGame } from "./MultiplayerHangmanGame";
+import { UserManager } from "./userManager"; // Import UserManager
 
 export class GameStateSynchronizer {
+  private static userManager = new UserManager(); // Integrate UserManager
+
   /**
    * Synchronizes game state to a newly joined player
    */
@@ -58,12 +56,9 @@ export class GameStateSynchronizer {
    * Enhanced sync data preparation
    */
   static prepareSyncData(
-    gameState: GameState,
+    gameState: any, // Use proper GameState type from shared
     game: MultiplayerHangmanGame
-  ): GameStateEvent & {
-    players: PlayerInfo[];
-    lastAction?: SharedGameAction;
-  } {
+  ): GameStateEvent {
     return {
       word: gameState.word,
       correctGuesses: gameState.correctGuesses,
@@ -73,17 +68,7 @@ export class GameStateSynchronizer {
       status: gameState.status,
       displayWord: gameState.displayWord,
       players: this.getActivePlayers(game),
-      lastAction: game.getLastAction()
-        ? {
-            ...game.getLastAction()!,
-            playerName: `Player ${game.getLastAction()!.playerId.slice(-4)}`,
-            type: game.getLastAction()!.type as
-              | "player_join"
-              | "player_leave"
-              | "guess"
-              | "new_game",
-          }
-        : undefined,
+      lastAction: this.enrichLastAction(game.getLastAction(), game),
       guessedLetters: [
         ...gameState.correctGuesses,
         ...gameState.incorrectGuesses,
@@ -92,15 +77,39 @@ export class GameStateSynchronizer {
   }
 
   /**
+   * Enriches the last action with player name data
+   */
+  private static enrichLastAction(
+    action: any,
+    game: MultiplayerHangmanGame
+  ): GameAction | undefined {
+    if (!action) return undefined;
+
+    const user = this.userManager.getUserBySocketId(action.playerId);
+    const playerName = user?.nickname || `Player ${action.playerId.slice(-4)}`;
+
+    return {
+      ...action,
+      playerName,
+    };
+  }
+
+  /**
    * Gets a summary of active players for game state
    */
   private static getActivePlayers(game: MultiplayerHangmanGame): PlayerInfo[] {
-    return Array.from(game.getPlayers()).map((playerId) => ({
-      id: playerId,
-      name: `Player ${playerId.slice(-4)}`, // Use last 4 chars as display name
-      joinedAt: Date.now(), // This should come from actual player data
-      isActive: true,
-    }));
+    return Array.from(game.getPlayers()).map((playerId) => {
+      // ✅ Get real user data instead of placeholder
+      const user = this.userManager.getUserBySocketId(playerId);
+
+      return {
+        id: playerId,
+        name: user?.nickname || `Player ${playerId.slice(-4)}`, // Real nickname
+        joinedAt: user?.joinedAt || Date.now(),
+        isActive: true,
+        avatar: user?.avatar,
+      };
+    });
   }
 
   /**
@@ -166,12 +175,25 @@ export class GameStateSynchronizer {
   }
 }
 
-export class SocketHandlers {
-  private userManager = new UserManager();
-  // Fix: Remove any type and properly initialize
-  private gameStateSynchronizer = GameStateSynchronizer; // Static class
+// Add missing chat types
+export interface ChatMessage {
+  id: string;
+  userId: string;
+  playerName: string;
+  message: string;
+  timestamp: number;
+  type: "chat" | "system" | "game";
+}
 
-  // Fix the usage in setupHandlers:
-  // Current: const gameSummary = this.gameStateSynchronizer.getGameSummary(); ❌
-  // Should be: const gameSummary = GameStateSynchronizer.getGameSummary(hangmanGame); ✅
+// Add to ClientToServerEvents
+export interface ClientToServerEvents {
+  // ...existing events...
+  "chat:send-message": (data: { message: string }) => void;
+}
+
+// Add to ServerToClientEvents
+export interface ServerToClientEvents {
+  // ...existing events...
+  "chat:message-received": (message: ChatMessage) => void;
+  "chat:system-message": (message: string) => void;
 }
