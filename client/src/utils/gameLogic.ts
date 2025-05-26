@@ -2,7 +2,7 @@ import type { GameState, GuessResult } from "../types/gameTypes";
 import { GuessHandler } from "./guessHandler";
 import { getRandomWord } from "./wordSelection";
 
-const MAX_INCORRECT_GUESSES = 8; // Changed from 9 back to 8
+const MAX_INCORRECT_GUESSES = 8; // Standard hangman allows 8 wrong guesses
 
 export class HangGuyGame {
   private state: GameState;
@@ -60,12 +60,49 @@ export class HangGuyGame {
   }
 
   /**
-   * Get game statistics including guess accuracy
+   * Get remaining guesses with additional context
+   */
+  public getRemainingGuessesInfo() {
+    const used = this.state.maxGuesses - this.state.remainingGuesses;
+    const percentage = (used / this.state.maxGuesses) * 100;
+
+    return {
+      remaining: this.state.remainingGuesses,
+      used,
+      total: this.state.maxGuesses,
+      percentage,
+      status: this.getGuessStatus(),
+      isLowGuesses: this.state.remainingGuesses <= 2,
+      isCritical: this.state.remainingGuesses <= 1,
+    };
+  }
+
+  /**
+   * Get guess status indicator
+   */
+  private getGuessStatus(): "safe" | "warning" | "danger" | "critical" {
+    const remaining = this.state.remainingGuesses;
+    if (remaining <= 1) return "critical";
+    if (remaining <= 2) return "danger";
+    if (remaining <= 4) return "warning";
+    return "safe";
+  }
+
+  /**
+   * Check if game is close to ending
+   */
+  public isCloseToGameOver(): boolean {
+    return this.state.remainingGuesses <= 2;
+  }
+
+  /**
+   * Get game statistics including enhanced guess info
    */
   public getGameStats() {
     const totalGuesses = this.state.guessedLetters.size;
     const correctCount = this.state.correctGuesses.size;
     const incorrectCount = this.state.incorrectGuesses.size;
+    const remainingInfo = this.getRemainingGuessesInfo();
 
     return {
       totalGuesses,
@@ -74,10 +111,10 @@ export class HangGuyGame {
       accuracy: totalGuesses > 0 ? (correctCount / totalGuesses) * 100 : 0,
       remainingGuesses: this.state.remainingGuesses,
       maxGuesses: this.state.maxGuesses,
-      progressPercentage:
-        ((this.state.maxGuesses - this.state.remainingGuesses) /
-          this.state.maxGuesses) *
-        100,
+      progressPercentage: remainingInfo.percentage,
+      guessStatus: remainingInfo.status,
+      isLowGuesses: remainingInfo.isLowGuesses,
+      isCritical: remainingInfo.isCritical,
     };
   }
 

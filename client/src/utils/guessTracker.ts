@@ -99,9 +99,81 @@ export class GuessTrackingSystem {
   }
 
   /**
+   * Enhanced remaining guesses info
+   */
+  public getRemainingGuessesInfo() {
+    const used = this.tracker.maxGuesses - this.tracker.remainingGuesses;
+    const percentage = (used / this.tracker.maxGuesses) * 100;
+
+    return {
+      remaining: this.tracker.remainingGuesses,
+      used,
+      total: this.tracker.maxGuesses,
+      percentage,
+      isLow: this.tracker.remainingGuesses <= 2,
+      isCritical: this.tracker.remainingGuesses <= 1,
+      status: this.getGuessStatus(),
+      progressBar: {
+        width: `${percentage}%`,
+        color: this.getProgressColor(),
+      },
+    };
+  }
+
+  /**
+   * Get guess status for UI styling
+   */
+  private getGuessStatus(): "safe" | "warning" | "danger" | "critical" {
+    const remaining = this.tracker.remainingGuesses;
+    if (remaining <= 1) return "critical";
+    if (remaining <= 2) return "danger";
+    if (remaining <= 4) return "warning";
+    return "safe";
+  }
+
+  /**
+   * Get progress bar color based on remaining guesses
+   */
+  private getProgressColor(): string {
+    const status = this.getGuessStatus();
+    switch (status) {
+      case "critical":
+        return "bg-red-600";
+      case "danger":
+        return "bg-red-500";
+      case "warning":
+        return "bg-yellow-500";
+      default:
+        return "bg-green-500";
+    }
+  }
+
+  /**
+   * Check if player should be warned about low guesses
+   */
+  public shouldShowWarning(): boolean {
+    return (
+      this.tracker.remainingGuesses <= 3 && this.tracker.remainingGuesses > 0
+    );
+  }
+
+  /**
+   * Get warning message based on remaining guesses
+   */
+  public getWarningMessage(): string | null {
+    const remaining = this.tracker.remainingGuesses;
+    if (remaining === 1) return "⚠️ Last chance! Choose carefully!";
+    if (remaining === 2) return "🚨 Only 2 guesses left!";
+    if (remaining === 3) return "⚡ Running low on guesses...";
+    return null;
+  }
+
+  /**
    * Get guess statistics
    */
   public getGuessStats() {
+    const remainingInfo = this.getRemainingGuessesInfo();
+
     return {
       totalGuesses: this.tracker.allGuesses.length,
       correctCount: this.tracker.correctGuesses.length,
@@ -114,6 +186,10 @@ export class GuessTrackingSystem {
               this.tracker.allGuesses.length) *
             100
           : 0,
+      // Enhanced remaining guess info
+      ...remainingInfo,
+      warningMessage: this.getWarningMessage(),
+      shouldShowWarning: this.shouldShowWarning(),
     };
   }
 
@@ -189,14 +265,39 @@ export const createGuessTracker = (
 
 export const formatRemainingGuesses = (
   remaining: number,
-  max: number
+  max: number,
+  includeEmoji: boolean = false
 ): string => {
-  return `${remaining}/${max} guesses remaining`;
+  const emoji = includeEmoji
+    ? remaining <= 1
+      ? " ⚠️"
+      : remaining <= 2
+      ? " 🚨"
+      : " ✅"
+    : "";
+  return `${remaining}/${max} guesses remaining${emoji}`;
 };
 
 export const calculateGuessProgress = (
   remaining: number,
   max: number
-): number => {
-  return ((max - remaining) / max) * 100;
+): { percentage: number; status: string; color: string } => {
+  const used = max - remaining;
+  const percentage = (used / max) * 100;
+
+  let status = "safe";
+  let color = "green";
+
+  if (remaining <= 1) {
+    status = "critical";
+    color = "red";
+  } else if (remaining <= 2) {
+    status = "danger";
+    color = "red";
+  } else if (remaining <= 4) {
+    status = "warning";
+    color = "yellow";
+  }
+
+  return { percentage, status, color };
 };

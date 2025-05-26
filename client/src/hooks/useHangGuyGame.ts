@@ -44,6 +44,15 @@ export const useHangGuyGame = (initialWord?: string) => {
     return game.getLastGuessResult();
   }, [game]);
 
+  // Add enhanced remaining guesses methods to the hook return
+  const getRemainingGuessesInfo = useCallback(() => {
+    return game.getRemainingGuessesInfo();
+  }, [game]);
+
+  const isCloseToGameOver = useCallback(() => {
+    return game.isCloseToGameOver();
+  }, [game]);
+
   return {
     gameState,
     guessLetter,
@@ -52,9 +61,11 @@ export const useHangGuyGame = (initialWord?: string) => {
     getGameStats,
     getGuessSummary,
     getLastGuessResult,
+    getRemainingGuessesInfo, // ✅ New enhanced method
+    isCloseToGameOver, // ✅ New warning method
     // Legacy methods for compatibility
     // getHangmanStage: () => game.getHangmanStage(), // ❌ Method doesn't exist
-    // isGameOver: () => game.isGameOver(),           // ❌ Method doesn't exist  
+    // isGameOver: () => game.isGameOver(),           // ❌ Method doesn't exist
     // getGuessedLettersArray: () => game.getGuessedLettersArray(), // ❌ Method doesn't exist
     game,
   };
