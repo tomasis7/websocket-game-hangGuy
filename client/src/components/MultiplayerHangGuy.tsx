@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { HangmanSVGs } from "./hangman/HangmanSVGs";
 import { HangGuyWord } from "./HangGuyWord";
-// import { GuessDisplay } from "./GuessDisplay";
 import { LetterInput } from "./LetterInput";
 import { GameStatus } from "./GameStatus";
 import { GameControls } from "./GameControls";
@@ -257,11 +256,24 @@ export const MultiplayerHangGuy: React.FC = () => {
                 />
               )}
 
-              {/* Game Controls */}
-              <GameControls
-                gameStatus={gameState.status}
-                onNewGame={handleNewGame}
-              />
+              {/* Game Controls Section */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <GameControls
+                  gameStatus={gameState.status}
+                  onNewGame={handleNewGame}
+                  onLeaveGame={() => {
+                    // Add leave game logic
+                    if (socket) {
+                      socket.emit("hangman:leave-game", { userId: socket.id });
+                      socket.disconnect();
+                    }
+                    // Redirect to home or refresh
+                    window.location.reload();
+                  }}
+                  isConnected={isConnected}
+                  playerCount={gameState?.players?.length || 0} // Pass the player count
+                />
+              </div>
             </div>
           </div>
 

@@ -47,6 +47,8 @@ export interface GameStateEvent {
   remainingGuesses: number;
   maxGuesses: number;
   status: "playing" | "won" | "lost";
+  displayWord: string;
+  guessedLetters?: string[]; // ✅ Add this for compatibility
 }
 
 export interface ClientToServerEvents {
@@ -83,3 +85,35 @@ export interface ServerToClientEvents {
   notification: (message: string) => void;
   error: (error: string) => void;
 }
+
+export interface PlayerInfo {
+  id: string;
+  name: string;
+  joinedAt: number;
+  isActive: boolean;
+  avatar?: string;
+}
+
+export interface GameAction {
+  type: "player_join" | "player_leave" | "guess" | "new_game";
+  playerId: string;
+  playerName: string;
+  timestamp: number;
+  data?: any;
+}
+
+export interface GuessResult {
+  letter: string;
+  isCorrect: boolean;
+  isGameOver: boolean;
+  gameStatus: "playing" | "won" | "lost";
+  alreadyGuessed: boolean;
+  wordRevealed?: string;
+}
+
+export interface WordCategory {
+  name: string;
+  words: string[];
+}
+
+export type GameStatus = "playing" | "won" | "lost";
