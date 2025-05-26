@@ -1,7 +1,12 @@
 import { Socket } from "socket.io";
-import { GameStatus, GameStateEvent, PlayerInfo } from "../../shared/types";
 import {
-  GameAction,
+  GameStatus,
+  GameStateEvent,
+  PlayerInfo,
+  GameAction as SharedGameAction,
+} from "../../shared/types";
+import {
+  GameAction as LocalGameAction,
   GameState,
   MultiplayerHangmanGame,
 } from "./MultiplayerHangmanGame";
@@ -57,7 +62,7 @@ export class GameStateSynchronizer {
     game: MultiplayerHangmanGame
   ): GameStateEvent & {
     players: PlayerInfo[];
-    lastAction?: GameAction;
+    lastAction?: SharedGameAction;
   } {
     return {
       word: gameState.word,
@@ -68,7 +73,17 @@ export class GameStateSynchronizer {
       status: gameState.status,
       displayWord: gameState.displayWord,
       players: this.getActivePlayers(game),
-      lastAction: game.getLastAction(),
+      lastAction: game.getLastAction()
+        ? {
+            ...game.getLastAction()!,
+            playerName: `Player ${game.getLastAction()!.playerId.slice(-4)}`,
+            type: game.getLastAction()!.type as
+              | "player_join"
+              | "player_leave"
+              | "guess"
+              | "new_game",
+          }
+        : undefined,
       guessedLetters: [
         ...gameState.correctGuesses,
         ...gameState.incorrectGuesses,
