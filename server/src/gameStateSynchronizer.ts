@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { MultiplayerHangmanGame } from "./MultiplayerHangmanGame"; // ✅ Fix: lowercase
+import { MultiplayerHangmanGame } from "./multiplayerHangmanGame";
 import { UserManager } from "./userManager";
 import {
   GameStateEvent,
@@ -54,12 +54,14 @@ export class GameStateSynchronizer {
 
   /**
    * Enhanced sync data preparation
-   */
-  static prepareSyncData(
+   */ static prepareSyncData(
     gameState: any, // Use proper GameState type from shared
     game: MultiplayerHangmanGame
   ): GameStateEvent {
+    const now = Date.now();
     return {
+      gameId: game.getGameId(),
+      sessionId: game.getGameId(), // Use game ID as session ID for now
       word: gameState.word,
       correctGuesses: gameState.correctGuesses,
       incorrectGuesses: gameState.incorrectGuesses,
@@ -73,6 +75,8 @@ export class GameStateSynchronizer {
         ...gameState.correctGuesses,
         ...gameState.incorrectGuesses,
       ],
+      createdAt: now,
+      updatedAt: now,
     };
   }
 

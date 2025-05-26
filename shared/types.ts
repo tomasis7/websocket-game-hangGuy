@@ -1,188 +1,53 @@
-export interface User {
-  id: string;
-  nickname: string;
-  avatar?: string;
-  isActive: boolean;
-  joinedAt: number;
-}
+/**
+ * Legacy shared types file - now re-exports from organized type modules
+ * @deprecated Use individual type imports from shared/types/ instead
+ */
 
-export interface SessionInfo {
-  id: string;
-  hostUserId: string;
-  createdAt: number;
-  playerCount: number;
-}
+// Re-export all types from the new organized structure
+export * from "./types/index";
 
-export interface JoinGameRequest {
-  nickname: string;
-  sessionId?: string;
-  avatar?: string;
-}
+// Keep legacy exports for backward compatibility during transition
+import type {
+  User as _User,
+  SessionInfo as _SessionInfo,
+  JoinGameRequest as _JoinGameRequest,
+  JoinGameResponse as _JoinGameResponse,
+  ReconnectResponse as _ReconnectResponse,
+  UserIdentification as _UserIdentification,
+  GameStateEvent as _GameStateEvent,
+  GuessLetterRequest as _GuessLetterRequest,
+  NewGameRequest as _NewGameRequest,
+  ClientToServerEvents as _ClientToServerEvents,
+  ServerToClientEvents as _ServerToClientEvents,
+  PlayerInfo as _PlayerInfo,
+  GameAction as _GameAction,
+  GuessResult as _GuessResult,
+  WordCategory as _WordCategory,
+  GameStatus as _GameStatus,
+  ChatMessage as _ChatMessage,
+} from "./types/index";
 
-export interface UserIdentification {
-  userId: string;
-  nickname: string;
-  sessionId: string;
-  isHost: boolean;
-}
+// Legacy type aliases for backward compatibility
+export type User = _User;
+export type SessionInfo = _SessionInfo;
+export type JoinGameRequest = _JoinGameRequest;
+export type JoinGameResponse = _JoinGameResponse;
+export type ReconnectResponse = _ReconnectResponse;
+export type UserIdentification = _UserIdentification;
+export type GameStateEvent = _GameStateEvent;
+export type GuessLetterRequest = _GuessLetterRequest;
+export type NewGameRequest = _NewGameRequest;
+export type ClientToServerEvents = _ClientToServerEvents;
+export type ServerToClientEvents = _ServerToClientEvents;
+export type PlayerInfo = _PlayerInfo;
+export type GameAction = _GameAction;
+export type GuessResult = _GuessResult;
+export type WordCategory = _WordCategory;
+export type GameStatus = _GameStatus;
+export type ChatMessage = _ChatMessage;
 
-export interface JoinGameResponse {
-  success: boolean;
-  user?: User;
-  session?: SessionInfo;
-  error?: string;
-}
-
-export interface ReconnectResponse {
-  success: boolean;
-  user?: User;
-  session?: SessionInfo;
-  error?: string;
-}
-
-// ✅ Enhanced GameStateEvent for full compatibility
-export interface GameStateEvent {
-  word: string;
-  correctGuesses: string[];
-  incorrectGuesses: string[];
-  remainingGuesses: number;
-  maxGuesses: number;
-  status: "playing" | "won" | "lost";
-  displayWord: string;
-  guessedLetters?: string[];
-  players?: PlayerInfo[];
-  gameId?: string;
-  lastAction?: GameAction;
-}
-
-// ✅ Add missing request types
-export interface GuessLetterRequest {
-  letter: string;
-  playerName?: string;
-  timestamp?: number;
-}
-
-export interface NewGameRequest {
-  category?: string;
-  difficulty?: "easy" | "medium" | "hard";
-  startedBy?: string;
-}
-
+// Legacy interface for error responses
 export interface HangmanErrorResponse {
   message: string;
   code: string;
-  timestamp?: number;
-}
-
-// ✅ Complete ClientToServerEvents
-export interface ClientToServerEvents {
-  joinGame: (request: JoinGameRequest & { userId?: string }) => void;
-  leaveGame: (data: { userId: string }) => void;
-  reconnectToSession: (data: {
-    userId: string;
-    sessionId: string;
-    nickname: string;
-  }) => void;
-  guessLetter: (data: { letter: string; playerId: string }) => void;
-  startNewGame: (options?: {
-    category?: string;
-    difficulty?: "easy" | "medium" | "hard";
-  }) => void;
-  requestSync: () => void;
-  requestGameHistory: () => void;
-
-  // Hangman-specific events
-  "hangman:join-game": (data: { playerName: string }) => void;
-  "hangman:leave-game": (data: { userId: string }) => void;
-  "hangman:guess-letter": (data: GuessLetterRequest) => void;
-  "hangman:new-game": (data?: NewGameRequest) => void;
-  getUserList: () => void;
-
-  // ✅ Chat events
-  "chat:send-message": (data: { message: string }) => void;
-}
-
-// ✅ Complete ServerToClientEvents
-export interface ServerToClientEvents {
-  joinGameResponse: (response: JoinGameResponse) => void;
-  reconnectResponse: (response: ReconnectResponse) => void;
-  userJoined: (user: User) => void;
-  userLeft: (userId: string) => void;
-  userListUpdated: (users: User[]) => void;
-  sessionUpdated: (session: SessionInfo) => void;
-  gameStateUpdated: (gameState: GameStateEvent) => void;
-  playerGuessed: (data: {
-    playerId: string;
-    letter: string;
-    isCorrect: boolean;
-  }) => void;
-  gameEnded: (data: { status: "won" | "lost"; word: string }) => void;
-  notification: (message: string) => void;
-  error: (error: string) => void;
-
-  // Hangman-specific events
-  "hangman:game-started": (data: {
-    startedBy: string;
-    gameState: GameStateEvent;
-  }) => void;
-  "hangman:guess-result": (data: {
-    letter: string;
-    isCorrect: boolean;
-    playerId: string;
-    playerName: string;
-    gameState: GameStateEvent;
-  }) => void;
-  "hangman:player-left": (data: {
-    playerId: string;
-    playerCount: number;
-    timestamp: number;
-  }) => void;
-  "hangman:error": (data: HangmanErrorResponse) => void;
-  sessionInfo: (data: { id: string; userCount: number }) => void;
-
-  // ✅ Chat events
-  "chat:message-received": (message: ChatMessage) => void;
-  "chat:system-message": (message: string) => void;
-}
-
-export interface PlayerInfo {
-  id: string;
-  name: string;
-  joinedAt: number;
-  isActive: boolean;
-  avatar?: string;
-}
-
-export interface GameAction {
-  type: "player_join" | "player_leave" | "guess" | "new_game";
-  playerId: string;
-  playerName: string;
-  timestamp: number;
-  data?: any;
-}
-
-export interface GuessResult {
-  letter: string;
-  isCorrect: boolean;
-  isGameOver: boolean;
-  gameStatus: "playing" | "won" | "lost";
-  alreadyGuessed: boolean;
-  wordRevealed?: string;
-}
-
-export interface WordCategory {
-  name: string;
-  words: string[];
-}
-
-export type GameStatus = "playing" | "won" | "lost";
-
-// ✅ Add missing chat types to complete the implementation
-export interface ChatMessage {
-  id: string;
-  userId: string;
-  playerName: string;
-  message: string;
-  timestamp: number;
-  type: "chat" | "system" | "game";
 }

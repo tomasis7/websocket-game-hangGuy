@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { MultiplayerHangmanGame } from "./MultiplayerHangmanGame";
+import { MultiplayerHangmanGame } from "./multiplayerHangmanGame";
 import { UserManager } from "./userManager";
 import { GameStateSynchronizer } from "./gameStateSynchronizer";
 import {
