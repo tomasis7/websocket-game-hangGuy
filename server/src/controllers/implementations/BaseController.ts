@@ -61,7 +61,7 @@ export abstract class BaseController implements IBaseController {
                 userResult.data.id
               );              await this.socketService.emitToRoom(
                 `game:${game.id}`,
-                "game:player-left",
+                "game:player-left" as any,
                 {
                   gameId: game.id,
                   userId: userResult.data.id,
@@ -105,7 +105,7 @@ export abstract class BaseController implements IBaseController {
         : "An unexpected error occurred";
     const errorCode =
       error instanceof ApplicationError ? error.code : "INTERNAL_ERROR";    console.error(`${this.getName()} - ${context}:`, error);
-    await this.emitToSocket(socket, "error", errorMessage);
+    await this.emitToSocket(socket, "error" as any, errorMessage);
   }
 
   protected async emitToSocket<
