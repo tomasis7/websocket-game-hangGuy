@@ -11,6 +11,7 @@ import {
   IChatController,
 } from "./interfaces";
 import { ApplicationError } from "../../../shared/errors";
+import { container } from "../services/container";
 
 export class SocketOrchestrator {
   private userController: IUserController;
@@ -75,20 +76,24 @@ export class SocketOrchestrator {
       });
     }
   }
-
   private setupUserEventHandlers(socket: Socket): void {
     // User identification
     socket.on("users:identify", async (data: { nickname: string }) => {
       await this.userController.handleUserIdentification(socket, data);
     });
 
-    // Join game
-    socket.on("game:join", async (data) => {
-      await this.userController.handleJoinGame(socket, data);
+    // Join game - listen for hangman:join-game event
+    socket.on("hangman:join-game", async (data) => {
+      // Convert hangman event data to expected JoinGameRequest format
+      const joinRequest = {
+        gameId: data.sessionId || "default-game",
+        nickname: data.playerName || "Player",
+      };
+      await this.userController.handleJoinGame(socket, joinRequest);
     });
 
-    // Leave game
-    socket.on("game:leave", async () => {
+    // Leave game - listen for hangman:leave-game event
+    socket.on("hangman:leave-game", async () => {
       await this.userController.handleLeaveGame(socket);
     });
 
@@ -97,16 +102,41 @@ export class SocketOrchestrator {
       await this.userController.handleGetUserList(socket);
     });
   }
-
   private setupGameEventHandlers(socket: Socket): void {
-    // Guess letter
-    socket.on("game:guess-letter", async (data) => {
-      await this.gameController.handleGuessLetter(socket, data);
+    // Guess letter - listen for hangman:guess-letter event
+    socket.on("hangman:guess-letter", async (data) => {
+      // Get user information to construct complete request
+      const userService = container.getUserService();
+      const userResult = await userService.getUserBySocketId(socket.id);
+      if (!userResult.success) {
+        socket.emit("hangman:error", {
+          message: "User not found",
+          code: "USER_NOT_FOUND",
+          timestamp: Date.now(),
+        });
+        return;
+      }
+
+      const user = userResult.data;
+
+      // Convert hangman event data to expected GuessLetterRequest format
+      const guessRequest = {
+        gameId: data.gameId || "default-game",
+        letter: data.letter,
+        playerId: user.id,
+        playerName: user.nickname,
+        timestamp: Date.now(),
+      };
+      await this.gameController.handleGuessLetter(socket, guessRequest);
     });
 
-    // New game
-    socket.on("game:new", async (data) => {
-      await this.gameController.handleNewGame(socket, data);
+    // New game - listen for hangman:new-game event
+    socket.on("hangman:new-game", async (data) => {
+      // Convert hangman event data to expected NewGameRequest format
+      const newGameRequest = {
+        gameId: "default-game", // Use default for now
+      };
+      await this.gameController.handleNewGame(socket, newGameRequest);
     });
 
     // Get game state
