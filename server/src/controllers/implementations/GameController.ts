@@ -64,24 +64,23 @@ export class GameController extends BaseController implements IGameController {
         return guessResult;
       }
 
-      const game = guessResult.data;
-
-      // Emit to all players in the game
+      const game = guessResult.data;      // Emit to all players in the game
       await this.emitToRoom(`game:${data.gameId}`, "game:guess-made", {
         gameId: data.gameId,
-        user,
-        letter: data.letter.toLowerCase(),
+        result: {
+          user,
+          letter: data.letter.toLowerCase(),
+          isCorrect: game.state.currentWord.includes(data.letter.toLowerCase()),
+        },
         gameState: game.state,
-        isCorrect: game.state.currentWord.includes(data.letter.toLowerCase()),
-      });
+      } as any);
 
       // If game ended, emit game over event
-      if (game.state.status === "won" || game.state.status === "lost") {
-        await this.emitToRoom(`game:${data.gameId}`, "game:ended", {
+      if (game.state.status === "won" || game.state.status === "lost") {        await this.emitToRoom(`game:${data.gameId}`, "game:ended", {
           gameId: data.gameId,
           gameState: game.state,
-          winner: game.state.status === "won" ? user : null,
-        });
+          winner: game.state.status === "won" ? user.id : undefined,
+        } as any);
       }
 
       console.log(
@@ -138,14 +137,11 @@ export class GameController extends BaseController implements IGameController {
       }
 
       // Join socket to game room
-      await this.socketService.joinRoom(socket.id, `game:${data.gameId}`);
-
-      // Emit success
+      await this.socketService.joinRoom(socket.id, `game:${data.gameId}`);      // Emit success
       await this.emitToSocket(socket, "game:created", {
         gameId: data.gameId,
         game: addPlayerResult.data,
-        creator: user,
-      });
+      } as any);
 
       console.log(`New game created: ${data.gameId} by ${user.nickname}`);
       return createSuccess(undefined);
@@ -175,13 +171,10 @@ export class GameController extends BaseController implements IGameController {
         return gameResult;
       }
 
-      const game = gameResult.data;
-
-      await this.emitToSocket(socket, "game:state", {
+      const game = gameResult.data;      await this.emitToSocket(socket, "game:state", {
         gameId: data.gameId,
         gameState: game.state,
-        players: game.players,
-      });
+      } as any);
 
       return createSuccess(undefined);
     } catch (error) {
@@ -220,14 +213,11 @@ export class GameController extends BaseController implements IGameController {
         return gameResult;
       }
 
-      const game = gameResult.data;
-
-      // Emit to all players in the game
+      const game = gameResult.data;      // Emit to all players in the game
       await this.emitToRoom(`game:${data.gameId}`, "game:started", {
         gameId: data.gameId,
         gameState: game.state,
-        startedBy: user,
-      });
+      } as any);
 
       console.log(`Game ${data.gameId} started by ${user.nickname}`);
       return createSuccess(undefined);
@@ -267,14 +257,12 @@ export class GameController extends BaseController implements IGameController {
         return gameResult;
       }
 
-      const game = gameResult.data;
-
-      // Emit to all players in the game
+      const game = gameResult.data;      // Emit to all players in the game
       await this.emitToRoom(`game:${data.gameId}`, "game:ended", {
         gameId: data.gameId,
         gameState: game.state,
-        endedBy: user,
-      });
+        winner: undefined,
+      } as any);
 
       console.log(`Game ${data.gameId} ended by ${user.nickname}`);
       return createSuccess(undefined);
@@ -314,14 +302,11 @@ export class GameController extends BaseController implements IGameController {
         return gameResult;
       }
 
-      const game = gameResult.data;
-
-      // Emit to all players in the game
+      const game = gameResult.data;      // Emit to all players in the game
       await this.emitToRoom(`game:${data.gameId}`, "game:reset", {
         gameId: data.gameId,
         gameState: game.state,
-        resetBy: user,
-      });
+      } as any);
 
       console.log(`Game ${data.gameId} reset by ${user.nickname}`);
       return createSuccess(undefined);

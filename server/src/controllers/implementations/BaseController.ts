@@ -59,8 +59,7 @@ export abstract class BaseController implements IBaseController {
               await this.gameService.removePlayerFromGame(
                 game.id,
                 userResult.data.id
-              );
-              await this.socketService.emitToRoom(
+              );              await this.socketService.emitToRoom(
                 `game:${game.id}`,
                 "game:player-left",
                 {
@@ -105,12 +104,8 @@ export abstract class BaseController implements IBaseController {
         ? error.message
         : "An unexpected error occurred";
     const errorCode =
-      error instanceof ApplicationError ? error.code : "INTERNAL_ERROR";
-
-    console.error(`${this.getName()} - ${context}:`, error);
-    await this.socketService.emitToSocket(socket.id, "error", {
-      message: errorMessage,
-    });
+      error instanceof ApplicationError ? error.code : "INTERNAL_ERROR";    console.error(`${this.getName()} - ${context}:`, error);
+    await this.emitToSocket(socket, "error", errorMessage);
   }
 
   protected async emitToSocket<

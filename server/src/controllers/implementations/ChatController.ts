@@ -87,7 +87,7 @@ export class ChatController extends BaseController implements IChatController {
       };
 
       // Store message
-      this.storeMessage(roomId, chatMessage); // Emit to room
+      this.storeMessage(roomId, chatMessage);      // Emit to room
       await this.emitToRoom(roomId, "chat:message", {
         message: {
           id: chatMessage.id,
@@ -98,7 +98,7 @@ export class ChatController extends BaseController implements IChatController {
           type: chatMessage.type,
         },
         roomId,
-      });
+      } as any);
 
       console.log(
         `Chat message sent by ${user.nickname} in ${roomId}: ${data.message}`
@@ -118,20 +118,21 @@ export class ChatController extends BaseController implements IChatController {
   ): AsyncResult<void> {
     try {
       const limit = Math.min(data?.limit || 50, 100); // Max 100 messages
-      const roomId = data?.gameId ? `game:${data.gameId}` : "global";
-
-      // Get messages for room
+      const roomId = data?.gameId ? `game:${data.gameId}` : "global";      // Get messages for room
       const roomMessages = this.messages.get(roomId) || [];
       const recentMessages = roomMessages.slice(-limit).map((msg) => ({
+        id: msg.id,
+        userId: msg.userId,
+        playerName: msg.playerName,
         message: msg.message,
-        user: msg.user,
         timestamp: msg.timestamp,
+        type: msg.type,
       }));
 
       await this.emitToSocket(socket, "chat:history", {
         messages: recentMessages,
         roomId: data?.gameId ? data.gameId : undefined,
-      });
+      } as any);
 
       return createSuccess(undefined);
     } catch (error) {
@@ -166,12 +167,11 @@ export class ChatController extends BaseController implements IChatController {
 
       // Get user
       const userResult = await this.userService.getUserBySocketId(socket.id);
-      if (userResult.success) {
-        // Notify room that user joined
+      if (userResult.success) {        // Notify room that user joined
         await this.emitToRoom(data.roomId, "chat:user-joined", {
           user: userResult.data,
           roomId: data.roomId,
-        });
+        } as any);
       }
 
       console.log(`Socket ${socket.id} joined chat room ${data.roomId}`);
@@ -209,12 +209,12 @@ export class ChatController extends BaseController implements IChatController {
         return leaveResult;
       }
 
-      if (userResult.success) {
-        // Notify room that user left
+      if (userResult.success) {        // Notify room that user left
         await this.emitToRoom(data.roomId, "chat:user-left", {
           user: userResult.data,
+          userId: userResult.data.id,
           roomId: data.roomId,
-        });
+        } as any);
       }
       console.log(`Socket ${socket.id} left chat room ${data.roomId}`);
       return createSuccess(undefined);

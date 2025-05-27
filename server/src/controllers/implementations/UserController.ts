@@ -89,23 +89,16 @@ export class UserController extends BaseController implements IUserController {
       if (!joinRoomResult.success) {
         await this.handleError(socket, joinRoomResult.error, "joinGame");
         return joinRoomResult;
-      }
-
-      // Emit success to joining user
+      }      // Emit success to joining user
       await this.emitToSocket(socket, "game:join-success", {
         gameId: data.gameId,
         user,
-        gameState: game.state,
-        players: game.players,
-      });
-
-      // Notify other players in the game
+      } as any);      // Notify other players in the game
       await this.emitToRoom(`game:${data.gameId}`, "game:player-joined", {
         gameId: data.gameId,
         user,
-        gameState: game.state,
-        players: game.players,
-      });
+        playerCount: game.players ? game.players.length : 0,
+      } as any);
       console.log(`User ${user.nickname} joined game ${data.gameId}`);
       return createSuccess(undefined);
     } catch (error) {
@@ -151,22 +144,19 @@ export class UserController extends BaseController implements IUserController {
         }
 
         // Leave socket room
-        await this.socketService.leaveRoom(socket.id, `game:${game.id}`);
-
-        // Notify other players
+        await this.socketService.leaveRoom(socket.id, `game:${game.id}`);        // Notify other players
         await this.emitToRoom(`game:${game.id}`, "game:player-left", {
           gameId: game.id,
-          user,
-          gameState: removeResult.data.state,
-        });
+          userId: user.id,
+          playerCount: removeResult.data.players ? removeResult.data.players.length : 0,
+        } as any);
 
         console.log(`User ${user.nickname} left game ${game.id}`);
-      }
-
-      // Emit success to user
+      }      // Emit success to user
       await this.emitToSocket(socket, "game:leave-success", {
+        gameId: "all", // Since user left all games
         message: "Successfully left all games",
-      });
+      } as any);
       return createSuccess(undefined);
     } catch (error) {
       await this.handleError(socket, error as Error, "leaveGame");
@@ -180,11 +170,9 @@ export class UserController extends BaseController implements IUserController {
       if (!usersResult.success) {
         await this.handleError(socket, usersResult.error, "getUserList");
         return usersResult;
-      }
-
-      await this.emitToSocket(socket, "users:list", {
+      }      await this.emitToSocket(socket, "users:list", {
         users: usersResult.data,
-      });
+      } as any);
 
       return createSuccess(undefined);
     } catch (error) {
