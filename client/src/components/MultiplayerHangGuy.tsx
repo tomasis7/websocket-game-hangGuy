@@ -333,14 +333,18 @@ export const MultiplayerHangGuy: React.FC = () => {
               onNewGame={handleNewGame}
               gameStatus={gameState.status}
               disabled={!isConnected}
-            />
-
-            {/* ✅ Add ChatPanel Integration */}
+            />            {/* ✅ Add ChatPanel Integration */}
             <div className="bg-white rounded-lg shadow-md">
               <ChatPanel
                 messages={chatMessages}
                 onSendMessage={handleSendChatMessage}
-                currentUser={currentUser}
+                currentUser={currentUser ? {
+                  id: currentUser.id,
+                  nickname: currentUser.name, // Convert name to nickname
+                  avatar: currentUser.avatar,
+                  isActive: currentUser.isActive,
+                  joinedAt: currentUser.joinedAt
+                } : null}
               />
             </div>
 
