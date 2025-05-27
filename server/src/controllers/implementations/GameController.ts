@@ -63,25 +63,49 @@ export class GameController extends BaseController implements IGameController {
         await this.handleError(socket, guessResult.error, "guessLetter");
         return guessResult;
       }
-
-      const game = guessResult.data; // Emit to all players in the game
-      await this.emitToRoom(`game:${data.gameId}`, "game:guess-made", {
-        gameId: data.gameId,
-        result: {
-          user,
+      const game = guessResult.data; // Emit to all players in the game using hangman events
+      await this.emitToRoom(
+        `game:${data.gameId}`,
+        "hangman:guess-broadcast" as any,
+        {
+          gameId: data.gameId,
+          playerName: user.nickname,
           letter: data.letter.toLowerCase(),
           isCorrect: game.state.currentWord.includes(data.letter.toLowerCase()),
-        },
-        gameState: game.state,
-      } as any);
+          gameState: game.state,
+          timestamp: Date.now(),
+        }
+      );
+
+      // Also emit game state update
+      await this.emitToRoom(
+        `game:${data.gameId}`,
+        "hangman:game-state" as any,
+        {
+          gameId: data.gameId,
+          ...game.state,
+          players: game.players.map((p) => ({
+            id: p.id,
+            name: p.name,
+            joinedAt: Date.now(),
+            isActive: true,
+            avatar: p.avatar,
+          })),
+        }
+      );
 
       // If game ended, emit game over event
       if (game.state.status === "won" || game.state.status === "lost") {
-        await this.emitToRoom(`game:${data.gameId}`, "game:ended", {
-          gameId: data.gameId,
-          gameState: game.state,
-          winner: game.state.status === "won" ? user.id : undefined,
-        } as any);
+        await this.emitToRoom(
+          `game:${data.gameId}`,
+          "hangman:game-end-broadcast" as any,
+          {
+            gameId: data.gameId,
+            gameState: game.state,
+            winner: game.state.status === "won" ? user.nickname : undefined,
+            timestamp: Date.now(),
+          }
+        );
       }
 
       console.log(
@@ -135,14 +159,18 @@ export class GameController extends BaseController implements IGameController {
       if (!addPlayerResult.success) {
         await this.handleError(socket, addPlayerResult.error, "newGame");
         return addPlayerResult;
-      }
-
-      // Join socket to game room
-      await this.socketService.joinRoom(socket.id, `game:${data.gameId}`); // Emit success
-      await this.emitToSocket(socket, "game:created", {
+      } // Join socket to game room
+      await this.socketService.joinRoom(socket.id, `game:${data.gameId}`); // Emit success using hangman events
+      await this.emitToSocket(socket, "hangman:game-created" as any, {
         gameId: data.gameId,
-        game: addPlayerResult.data,
-      } as any);
+        gameState: addPlayerResult.data.state,
+        playerInfo: {
+          id: user.id,
+          name: user.nickname,
+          isHost: true,
+        },
+        timestamp: Date.now(),
+      });
 
       console.log(`New game created: ${data.gameId} by ${user.nickname}`);
       return createSuccess(undefined);
@@ -171,12 +199,18 @@ export class GameController extends BaseController implements IGameController {
         await this.handleError(socket, gameResult.error, "getGameState");
         return gameResult;
       }
-
       const game = gameResult.data;
-      await this.emitToSocket(socket, "game:state", {
+      await this.emitToSocket(socket, "hangman:game-state" as any, {
         gameId: data.gameId,
-        gameState: game.state,
-      } as any);
+        ...game.state,
+        players: game.players.map((p) => ({
+          id: p.id,
+          name: p.name,
+          joinedAt: Date.now(),
+          isActive: true,
+          avatar: p.avatar,
+        })),
+      });
 
       return createSuccess(undefined);
     } catch (error) {
@@ -214,12 +248,17 @@ export class GameController extends BaseController implements IGameController {
         await this.handleError(socket, gameResult.error, "startGame");
         return gameResult;
       }
-
-      const game = gameResult.data; // Emit to all players in the game
-      await this.emitToRoom(`game:${data.gameId}`, "game:started", {
-        gameId: data.gameId,
-        gameState: game.state,
-      } as any);
+      const game = gameResult.data; // Emit to all players in the game using hangman events
+      await this.emitToRoom(
+        `game:${data.gameId}`,
+        "hangman:game-start-broadcast" as any,
+        {
+          gameId: data.gameId,
+          gameState: game.state,
+          startedByName: user.nickname,
+          timestamp: Date.now(),
+        }
+      );
 
       console.log(`Game ${data.gameId} started by ${user.nickname}`);
       return createSuccess(undefined);

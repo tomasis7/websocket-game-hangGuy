@@ -89,16 +89,90 @@ export class UserController extends BaseController implements IUserController {
       if (!joinRoomResult.success) {
         await this.handleError(socket, joinRoomResult.error, "joinGame");
         return joinRoomResult;
-      } // Emit success to joining user
-      await this.emitToSocket(socket, "game:join-success", {
-        gameId: data.gameId,
-        user,
-      } as any); // Notify other players in the game
-      await this.emitToRoom(`game:${data.gameId}`, "game:player-joined", {
-        gameId: data.gameId,
-        user,
-        playerCount: game.players ? game.players.length : 0,
-      } as any);
+      } // Get the current game state for the joined player
+      const gameStateResult = await this.gameService.getGameState(data.gameId);
+      if (!gameStateResult.success) {
+        console.warn("Could not retrieve game state:", gameStateResult.error);
+      }
+
+      const gameState = gameStateResult.success ? gameStateResult.data : null; // Emit success to joining user with expected hangman event structure
+      await this.emitToSocket(socket, "hangman:join-success" as any, {
+        gameState: gameState
+          ? {
+              word: gameState.word,
+              guessedLetters: gameState.guessedLetters || [],
+              correctGuesses: gameState.correctGuesses || [],
+              incorrectGuesses: gameState.incorrectGuesses || [],
+              remainingGuesses:
+                gameState.remainingGuesses || gameState.maxGuesses || 6,
+              maxGuesses: gameState.maxGuesses || 6,
+              status: gameState.status || "playing",
+              displayWord:
+                gameState.displayWord ||
+                gameState.word.replace(/[a-z]/gi, "_").split("").join(" "),
+              players: game.players.map((p) => ({
+                id: p.id,
+                name: p.name,
+                joinedAt: Date.now(),
+                isActive: true,
+                avatar: p.avatar,
+              })),
+              gameId: data.gameId,
+              lastAction: gameState.lastAction,
+            }
+          : null,
+        playerInfo: {
+          id: user.id,
+          name: user.nickname,
+          joinedAt: Date.now(),
+          isActive: true,
+          avatar: user.avatar,
+        },
+        isGameInProgress: gameState ? gameState.status === "playing" : false,
+        gameSummary: gameState
+          ? `Game ${gameState.status}. ${gameState.remainingGuesses} guesses remaining.`
+          : "Game ready to start",
+        sessionId: data.gameId,
+        timestamp: Date.now(),
+      });
+
+      // Notify other players in the game using hangman events
+      await this.emitToRoom(
+        `game:${data.gameId}`,
+        "hangman:player-action-broadcast" as any,
+        {
+          action: "joined",
+          playerId: user.id,
+          playerName: user.nickname,
+          playerCount: game.players ? game.players.length : 0,
+          gameState: gameState
+            ? {
+                word: gameState.word,
+                guessedLetters: gameState.guessedLetters || [],
+                correctGuesses: gameState.correctGuesses || [],
+                incorrectGuesses: gameState.incorrectGuesses || [],
+                remainingGuesses:
+                  gameState.remainingGuesses || gameState.maxGuesses || 6,
+                maxGuesses: gameState.maxGuesses || 6,
+                status: gameState.status || "playing",
+                displayWord:
+                  gameState.displayWord ||
+                  gameState.word.replace(/[a-z]/gi, "_").split("").join(" "),
+                players: game.players.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  joinedAt: Date.now(),
+                  isActive: true,
+                  avatar: p.avatar,
+                })),
+                gameId: data.gameId,
+                lastAction: gameState.lastAction,
+              }
+            : null,
+          isNewPlayer: true,
+          timestamp: Date.now(),
+        }
+      );
       console.log(`User ${user.nickname} joined game ${data.gameId}`);
       return createSuccess(undefined);
     } catch (error) {
