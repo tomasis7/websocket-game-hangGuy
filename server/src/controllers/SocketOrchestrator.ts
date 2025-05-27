@@ -80,7 +80,7 @@ export class SocketOrchestrator {
     // User identification
     socket.on("users:identify", async (data: { nickname: string }) => {
       await this.userController.handleUserIdentification(socket, data);
-    });    // Join game - listen for hangman:join-game event
+    }); // Join game - listen for hangman:join-game event
     socket.on("hangman:join-game", async (data) => {
       console.log(`🎮 Received hangman:join-game from ${socket.id}:`, data);
       // Convert hangman event data to expected JoinGameRequest format

@@ -55,13 +55,14 @@ export const useMultiplayerGame = () => {
   }, []);
 
   // Game state event handlers
-  useEffect(() => {    // Handle join success
+  useEffect(() => {
+    // Handle join success
     const handleJoinSuccess = (data: any) => {
       console.log("Join success:", data);
       setIsJoining(false);
       setGameState(data.gameState);
       setPlayers(data.gameState?.players || []);
-      
+
       // Set current user from the playerInfo
       if (data.playerInfo) {
         setCurrentUser(data.playerInfo);
