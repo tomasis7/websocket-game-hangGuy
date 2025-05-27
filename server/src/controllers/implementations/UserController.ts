@@ -95,7 +95,8 @@ export class UserController extends BaseController implements IUserController {
         console.warn("Could not retrieve game state:", gameStateResult.error);
       }
 
-      const gameState = gameStateResult.success ? gameStateResult.data : null; // Emit success to joining user with expected hangman event structure
+      const gameState = gameStateResult.success ? gameStateResult.data : null;      // Emit success to joining user with expected hangman event structure
+      console.log(`🎯 Emitting hangman:join-success to socket ${socket.id} for user ${user.nickname}`);
       await this.emitToSocket(socket, "hangman:join-success" as any, {
         gameState: gameState
           ? {
@@ -135,6 +136,7 @@ export class UserController extends BaseController implements IUserController {
         sessionId: data.gameId,
         timestamp: Date.now(),
       });
+      console.log(`✅ Successfully emitted hangman:join-success to ${user.nickname}`);
 
       // Notify other players in the game using hangman events
       await this.emitToRoom(

@@ -23,9 +23,9 @@ export const MultiplayerHangGuy: React.FC = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(true);
   const [isJoiningLocal, setIsJoiningLocal] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-
   const {
     gameState,
+    currentUser,
     isConnected,
     isJoining: gameJoining,
     error,
@@ -34,7 +34,6 @@ export const MultiplayerHangGuy: React.FC = () => {
   } = useMultiplayerGame();
 
   const {
-    currentUser,
     joinError,
     isJoining: userJoining,
     leaveGame,
@@ -142,7 +141,6 @@ export const MultiplayerHangGuy: React.FC = () => {
       socket.off("chat:message-received", handleChatMessage);
     };
   }, [socket]);
-
   const handleJoinGame = useCallback(
     (nickname: string, sessionId?: string, avatar?: string): void => {
       console.log("Attempting to join game:", { nickname, sessionId, avatar });

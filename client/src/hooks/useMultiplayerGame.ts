@@ -7,6 +7,7 @@ export const useMultiplayerGame = () => {
   // Game state
   const [gameState, setGameState] = useState<GameStateEvent | null>(null);
   const [players, setPlayers] = useState<PlayerInfo[]>([]);
+  const [currentUser, setCurrentUser] = useState<PlayerInfo | null>(null);
 
   // Connection state
   const [isConnected, setIsConnected] = useState(socket.connected);
@@ -54,13 +55,17 @@ export const useMultiplayerGame = () => {
   }, []);
 
   // Game state event handlers
-  useEffect(() => {
-    // Handle join success
+  useEffect(() => {    // Handle join success
     const handleJoinSuccess = (data: any) => {
       console.log("Join success:", data);
       setIsJoining(false);
       setGameState(data.gameState);
       setPlayers(data.gameState?.players || []);
+      
+      // Set current user from the playerInfo
+      if (data.playerInfo) {
+        setCurrentUser(data.playerInfo);
+      }
 
       // Show welcome message if provided
       if (data.isGameInProgress) {
@@ -218,10 +223,10 @@ export const useMultiplayerGame = () => {
       setJoinWelcome((prev) => ({ ...prev, show: false }));
     },
   };
-
   return {
     gameState,
     players,
+    currentUser,
     isConnected,
     isJoining,
     error,
