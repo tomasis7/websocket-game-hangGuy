@@ -177,7 +177,8 @@ export class UserController extends BaseController implements IUserController {
         users: usersResult.data,
       } as any);
 
-      return createSuccess(undefined);    } catch (error) {
+      return createSuccess(undefined);
+    } catch (error) {
       await this.handleError(socket, error as Error, "getUserList");
       return createError(toApplicationError(error as Error));
     }
@@ -208,13 +209,14 @@ export class UserController extends BaseController implements IUserController {
         return userResult;
       }
 
-      const user = userResult.data;      // Emit success
+      const user = userResult.data; // Emit success
       await this.emitToSocket(socket, "users:identification-success" as any, {
         user,
       });
 
       console.log(`User identified: ${user.nickname} (${user.id})`);
-      return createSuccess(undefined);    } catch (error) {
+      return createSuccess(undefined);
+    } catch (error) {
       await this.handleError(socket, error as Error, "userIdentification");
       return createError(toApplicationError(error as Error));
     }
