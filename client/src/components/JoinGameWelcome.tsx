@@ -58,7 +58,6 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
             {getWelcomeTitle()}
           </h3>
         </div>
-
         {/* Game Status */}
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="text-sm font-semibold text-gray-700 mb-2">
@@ -86,28 +85,26 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
               )}
             </div>
           )}
-        </div>
-
+        </div>{" "}
         {/* Player Count */}
         <div className="bg-blue-50 rounded-lg p-3">
           <div className="flex items-center justify-center gap-2 text-sm text-blue-700">
             <span>👥</span>
             <span>
-              {gameState.players.length} player
-              {gameState.players.length !== 1 ? "s" : ""} in game
+              {(gameState.players || []).length} player
+              {(gameState.players || []).length !== 1 ? "s" : ""} in game
             </span>
           </div>
-          {gameState.players.length > 1 && (
+          {(gameState.players || []).length > 1 && (
             <div className="mt-2 text-xs text-blue-600 text-center">
               Other players:{" "}
-              {gameState.players
+              {(gameState.players || [])
                 .filter((p) => p.id !== playerInfo.id)
                 .map((p) => p.name)
                 .join(", ")}
             </div>
           )}
         </div>
-
         {/* Instructions */}
         <div className="text-center space-y-2">
           <p className="text-sm text-gray-600">{getWelcomeMessage()}</p>
@@ -120,7 +117,6 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
             </div>
           )}
         </div>
-
         {/* Action Button */}
         <button
           onClick={onDismiss}

@@ -57,7 +57,6 @@ export const MultiplayerHangGuy: React.FC = () => {
 
   const isGameActive = gameState?.status === "playing";
   const isJoining = userJoining || gameJoining || isJoiningLocal;
-
   // ✅ Add effect to log state changes for debugging
   useEffect(() => {
     if (gameState) {
@@ -66,9 +65,22 @@ export const MultiplayerHangGuy: React.FC = () => {
         maxGuesses: gameState.maxGuesses,
         status: gameState.status,
         incorrectCount: gameState.incorrectGuesses?.length,
+        hasPlayers: !!gameState.players,
+        playersLength: gameState.players?.length,
       });
+    } else {
+      console.log("Game state is null/undefined");
     }
   }, [gameState]);
+
+  // ✅ Add effect to debug currentUser changes
+  useEffect(() => {
+    console.log("CurrentUser changed:", {
+      currentUser,
+      hasCurrentUser: !!currentUser,
+      currentUserId: currentUser?.id,
+    });
+  }, [currentUser]);
 
   // Event handlers with proper typing
   const handleGuess = useCallback(
@@ -260,12 +272,11 @@ export const MultiplayerHangGuy: React.FC = () => {
       />
     );
   }
-
   // Main game interface
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       {/* Game Interface */}
-      {gameState && currentUser && (
+      {gameState && currentUser && gameState.status && (
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Game Status & Hangman */}
           <div className="space-y-6">
@@ -290,11 +301,11 @@ export const MultiplayerHangGuy: React.FC = () => {
             {/* Hangman Display */}
             <div className="flex justify-center mb-8">
               <HangmanSVGs stage={incorrectGuessCount} />
-            </div>
+            </div>{" "}
             {/* Word Display */}
             <HangGuyWord
-              word={gameState.word}
-              correctGuesses={new Set(gameState.correctGuesses)}
+              word={gameState.word || ""}
+              correctGuesses={new Set(gameState.correctGuesses || [])}
             />
           </div>
 
@@ -355,20 +366,24 @@ export const MultiplayerHangGuy: React.FC = () => {
                     : null
                 }
               />
-            </div>
+            </div>{" "}
             {/* User List - Show connected players */}
             <div className="bg-white rounded-lg shadow-md p-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
                 Connected Players
               </h3>
               <UserList
-                users={gameState.players.map((player) => ({
-                  ...player,
-                  nickname: player.name,
-                  isActive: true,
-                  joinedAt: Date.now(),
-                }))}
-                currentUserId={currentUser.id}
+                users={
+                  gameState?.players
+                    ? gameState.players.map((player) => ({
+                        ...player,
+                        nickname: player.name,
+                        isActive: true,
+                        joinedAt: Date.now(),
+                      }))
+                    : []
+                }
+                currentUserId={currentUser?.id || ""}
               />
             </div>
           </div>

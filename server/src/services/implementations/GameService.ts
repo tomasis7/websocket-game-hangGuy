@@ -138,11 +138,13 @@ export class GameService implements IGameService {
         return createError(createNotFoundError("Game", gameId));
       }
 
-      const { game } = session;
-
-      // Check if player already in game
-      if (game.players.some((p) => p.id === user.id)) {
-        return createSuccess(game); // Player already in game
+      const { game } = session; // Check if player already in game
+      const existingPlayer = game.players.find((p) => p.id === user.id);
+      if (existingPlayer) {
+        // Player rejoining - update their active status
+        existingPlayer.isActive = true;
+        console.log(`Player ${user.nickname} rejoined game ${gameId}`);
+        return createSuccess(game);
       }
 
       // Check if game is full
@@ -150,11 +152,16 @@ export class GameService implements IGameService {
         return createError(createValidationError("Game is full"));
       }
 
-      // Check if game is in progress and doesn't allow new players
+      // Check if game is in progress and doesn't allow NEW players
+      // But allow the same player to rejoin if they were disconnected
       if (game.state.status === "playing" && game.players.length > 0) {
-        return createError(
-          createValidationError("Cannot join game in progress")
-        );
+        // Check if this user was previously in the game (by nickname as fallback)
+        const wasInGame = game.players.some((p) => p.name === user.nickname);
+        if (!wasInGame) {
+          return createError(
+            createValidationError("Cannot join game in progress")
+          );
+        }
       } // Add player - convert User to PlayerInfo
       const playerInfo: PlayerInfo = {
         id: user.id,
