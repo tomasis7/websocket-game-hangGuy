@@ -269,26 +269,28 @@ export const MultiplayerHangGuy: React.FC = () => {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Game Status & Hangman */}
           <div className="space-y-6">
-            {/* Game Status */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-4">
-                <GameStatus status={gameState.status} />
-                {currentUser && (
-                  <button
-                    onClick={handleLeaveGame}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    Leave Game
-                  </button>
-                )}
+            {" "}
+            {/* Game Status */} {/* Game Status */}
+            <GameStatus
+              status={gameState.status}
+              word={gameState.status === "lost" ? gameState.word : undefined}
+              remainingGuesses={remainingGuesses}
+            />
+            {/* Leave Game Button */}
+            {currentUser && (
+              <div className="text-center mt-4">
+                <button
+                  onClick={handleLeaveGame}
+                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                >
+                  Leave Game
+                </button>
               </div>
-            </div>
-
+            )}
             {/* Hangman Display */}
             <div className="flex justify-center mb-8">
               <HangmanSVGs stage={incorrectGuessCount} />
             </div>
-
             {/* Word Display */}
             <HangGuyWord
               word={gameState.word}
@@ -326,11 +328,14 @@ export const MultiplayerHangGuy: React.FC = () => {
                   }
                 />
               </div>
-            )}
+            )}{" "}
             {/* Game Controls */}
             <GameControls
-              onNewGame={handleNewGame}
               gameStatus={gameState.status}
+              onNewGame={handleNewGame}
+              onLeaveGame={handleLeaveGame}
+              isConnected={isConnected}
+              playerCount={gameState.players?.length || 0}
               disabled={!isConnected}
             />{" "}
             {/* ✅ Add ChatPanel Integration */}
