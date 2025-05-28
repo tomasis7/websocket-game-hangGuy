@@ -1,0 +1,315 @@
+```text
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                            WEBSOCKET HANGMAN GAME - UML DIAGRAM                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+CLIENT SIDE (React/TypeScript)
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                                   COMPONENTS                                         │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐      │
+│  │   MultiplayerHangGuy│    │   HangGuyGame       │    │   JoinGameWelcome   │      │
+│  │  ─────────────────  │    │  ─────────────────  │    │  ─────────────────  │      │
+│  │ - showJoinDialog    │    │ - game: HangGuyGame │    │ - gameState         │      │
+│  │ - isJoiningLocal    │    │ - gameState         │    │ - playerInfo        │      │
+│  │ - chatMessages      │    │ ─────────────────   │    │ - isGameInProgress  │      │
+│  │ ─────────────────   │    │ + handleGuess()     │    │ - gameSummary       │      │
+│  │ + handleGuess()     │    │ + resetGame()       │    │ ─────────────────   │      │
+│  │ + handleNewGame()   │    │                     │    │ + onDismiss()       │      │
+│  │ + handleJoinGame()  │    │                     │    │                     │      │
+│  └─────────────────────┘    └─────────────────────┘    └─────────────────────┘      │
+│           │                           │                           │                  │
+│           │                           │                           │                  │
+│  ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐      │
+│  │   UserJoinDialog    │    │   UserList          │    │   HangGuyWord       │      │
+│  │  ─────────────────  │    │  ─────────────────  │    │  ─────────────────  │      │
+│  │ - nickname          │    │ - users             │    │ - word              │      │
+│  │ - joinMode          │    │ - currentUserId     │    │ - correctGuesses    │      │
+│  │ - selectedAvatar    │    │ - sessionInfo       │    │ ─────────────────   │      │
+│  │ ─────────────────   │    │ ─────────────────   │    │ + renderWord()      │      │
+│  │ + handleSubmit()    │    │ + renderUserList()  │    │                     │      │
+│  │ + onJoin()          │    │                     │    │                     │      │
+│  └─────────────────────┘    └─────────────────────┘    └─────────────────────┘      │
+│           │                           │                           │                  │
+│           │                           │                           │                  │
+│  ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐      │
+│  │   LetterInput       │    │   GameStatus        │    │   GameControls      │      │
+│  │  ─────────────────  │    │  ─────────────────  │    │  ─────────────────  │      │
+│  │ - inputValue        │    │ - status            │    │ - gameStatus        │      │
+│  │ - feedback          │    │ - remainingGuesses  │    │ ─────────────────   │      │
+│  │ - guessedLetters    │    │ ─────────────────   │    │ + onNewGame()       │      │
+│  │ ─────────────────   │    │ + renderStatus()    │    │                     │      │
+│  │ + onGuess()         │    │                     │    │                     │      │
+│  │ + handleInputChange()│    │                     │    │                     │      │
+│  │ + handleSubmit()    │    │                     │    │                     │      │
+│  └─────────────────────┘    └─────────────────────┘    └─────────────────────┘      │
+│           │                           │                           │                  │
+│           └───────────────┬───────────┴───────────────┬───────────┘                  │
+│                           │                           │                              │
+│  ┌─────────────────────┐  │                           │  ┌─────────────────────┐    │
+│  │   HangmanSVGs       │  │                           │  │   GuessDisplay      │    │
+│  │  ─────────────────  │  │                           │  │  ─────────────────  │    │
+│  │ - stage             │  │                           │  │ - correctGuesses    │    │
+│  │ - className         │  │                           │  │ - incorrectGuesses  │    │
+│  │ ─────────────────   │  │                           │  │ - remainingGuesses  │    │
+│  │ + renderSVG()       │  │                           │  │ ─────────────────   │    │
+│  └─────────────────────┘  │                           │  │ + renderDisplay()   │    │
+│                           │                           │  └─────────────────────┘    │
+│                           │                           │                             │
+│  ┌─────────────────────┐  │                           │  ┌─────────────────────┐    │
+│  │   SessionInfo       │  │                           │  │   ChatPanel         │    │
+│  │  ─────────────────  │  │                           │  │  ─────────────────  │    │
+│  │ - gameId            │  │                           │  │ - messages          │    │
+│  │ - sessionId         │  │                           │  │ - newMessage        │    │
+│  │ - playerCount       │  │                           │  │ ─────────────────   │    │
+│  │ - isConnected       │  │                           │  │ + handleSendMessage()│   │
+│  │ - socketId          │  │                           │  │ + scrollToBottom()  │    │
+│  │ - currentUser       │  │                           │  │                     │    │
+│  └─────────────────────┘  │                           │  └─────────────────────┘    │
+└───────────────────────────┼───────────────────────────┼──────────────────────────────┘
+                            │                           │
+┌───────────────────────────┼───────────────────────────┼──────────────────────────────┐
+│                           │        HOOKS              │                              │
+├───────────────────────────┼───────────────────────────┼──────────────────────────────┤
+│  ┌─────────────────────┐  │  ┌─────────────────────┐  │  ┌─────────────────────┐    │
+│  │ useMultiplayerGame  │──┼──│ useUserIdentification│──┼──│ useHangGuyGame      │    │
+│  │ ─────────────────── │  │  │ ─────────────────── │  │  │ ─────────────────── │    │
+│  │ - gameState         │  │  │ - currentUser       │  │  │ - gameState         │    │
+│  │ - isConnected       │  │  │ - users             │  │  │ - game              │    │
+│  │ - isJoining         │  │  │ - sessionInfo       │  │  │ ─────────────────── │    │
+│  │ - joinWelcome       │  │  │ - joinError         │  │  │ + guessLetter()     │    │
+│  │ - actions           │  │  │ - isJoining         │  │  │ + resetGame()       │    │
+│  │ ─────────────────── │  │  │ ─────────────────── │  │  │ + canGuessLetter()  │    │
+│  │ + guessLetter()     │  │  │ + joinGame()        │  │  │ + getGameStats()    │    │
+│  │ + startNewGame()    │  │  │ + leaveGame()       │  │  │                     │    │
+│  │ + dismissWelcome()  │  │  │ + attemptReconnect()│  │  │                     │    │
+│  └─────────────────────┘  │  └─────────────────────┘  │  └─────────────────────┘    │
+│                           │                           │                             │
+│  ┌─────────────────────┐  │  ┌─────────────────────┐  │                             │
+│  │ useSocket           │──┼──│ use-connection      │  │                             │
+│  │ ─────────────────── │  │  │ ─────────────────── │  │                             │
+│  │ - socket            │  │  │ - connected         │  │                             │
+│  │ - isConnected       │  │  │ - error             │  │                             │
+│  │ - connect           │  │  │ ─────────────────── │  │                             │
+│  │ - disconnect        │  │  │ + emit()            │  │                             │
+│  │ ─────────────────── │  │  │ + on()              │  │                             │
+│  │ + emit()            │  │  │ + off()             │  │                             │
+│  │ + on()              │  │  │                     │  │                             │
+│  │ + off()             │  │  │                     │  │                             │
+│  └─────────────────────┘  │  └─────────────────────┘  │                             │
+└───────────────────────────┼───────────────────────────┼──────────────────────────────┘
+                            │                           │
+┌───────────────────────────┼───────────────────────────┼──────────────────────────────┐
+│                           │       CORE LOGIC          │                              │
+├───────────────────────────┼───────────────────────────┼──────────────────────────────┤
+│  ┌─────────────────────┐  │                           │  ┌─────────────────────┐    │
+│  │   HangGuyGame       │──┼───────────────────────────┼──│  wordSelection      │    │
+│  │  ─────────────────  │  │                           │  │ ─────────────────── │    │
+│  │ - state: GameState  │  │                           │  │ + getRandomWord()   │    │
+│  │ ─────────────────   │  │                           │  │ + getWordByCategory()│   │
+│  │ + guessLetter()     │  │                           │  │ + getWordStats()    │    │
+│  │ + getState()        │  │                           │  │                     │    │
+│  │ + getGameStats()    │  │                           │  │                     │    │
+│  │ + resetGame()       │  │                           │  │                     │    │
+│  │ + canGuessLetter()  │  │                           │  │                     │    │
+│  └─────────────────────┘  │                           │  └─────────────────────┘    │
+│                           │                           │                             │
+│  ┌─────────────────────┐  │                           │  ┌─────────────────────┐    │
+│  │   guessHandler      │──┼───────────────────────────┼──│   guessTracker      │    │
+│  │  ─────────────────  │  │                           │  │ ─────────────────── │    │
+│  │ + processGuess()    │  │                           │  │ + addGuess()        │    │
+│  │ + isGuessCorrect()  │  │                           │  │ + getCorrectGuesses()│   │
+│  │ + updateGameState() │  │                           │  │ + getIncorrectGuesses()|  │
+│  │                     │  │                           │  │ + getAllGuesses()    │    │
+│  │                     │  │                           │  │                     │    │
+│  └─────────────────────┘  │                           │  └─────────────────────┘    │
+└───────────────────────────┼───────────────────────────┼──────────────────────────────┘
+                            │                           │
+                            │         SOCKET            │
+                  ┌─────────┼───────────────────────────┼─────────┐
+                  │         │                           │         │
+        ┌─────────┴─────────┴───────────────────────────┴─────────┴─────────┐
+        │                        WEBSOCKET                                  │
+        │  ┌─────────────────────┐            ┌─────────────────────┐       │
+        │  │      socket.ts      │ ←────────→ │    Socket.IO        │       │
+        │  │  ─────────────────  │            │  ─────────────────  │       │
+        │  │ + connect()         │            │ + on()              │       │
+        │  │ + emit()            │            │ + emit()            │       │
+        │  │ + on()              │            │ + broadcast()       │       │
+        │  │ + disconnect()      │            │                     │       │
+        │  └─────────────────────┘            └─────────────────────┘       │
+        └─────────────────────────────────────────────────────────────────────┘
+                            │                           │
+                            │                           │
+                            ▼                           ▼
+
+SERVER SIDE (Node.js/Express/Socket.IO)
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                                 SERVER MODULES                                       │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐      │
+│  │SocketOrchestrator   │    │   UserManager       │    │   GameManager       │      │
+│  │  ─────────────────  │    │  ─────────────────  │    │  ─────────────────  │      │
+│  │ - socketService     │    │ - users: Map        │    │ - game: HangGuyGame │      │
+│  │ - gameController    │    │ - sessions: Map     │    │ - players: Map      │      │
+│  │ - userController    │    │ - userSocketMap     │    │ - gameId            │      │
+│  │ - chatController    │    │ ─────────────────   │    │ - lastAction        │      │
+│  │ ─────────────────   │    │ + createUser()      │    │ ─────────────────   │      │
+│  │ + setupSocket()     │    │ + removeUser()      │    │ + addPlayer()       │      │
+│  │ + handleConnection()│    │ + getUserBySocketId()│    │ + removePlayer()    │      │
+│  │ + initialize()      │    │ + addUserToSession()│    │ + processGuess()    │      │
+│  │                     │    │ + getSession()      │    │ + startNewGame()    │      │
+│  └─────────────────────┘    └─────────────────────┘    │ + getGameState()    │      │
+│           │                           │                │ + getPlayerCount()  │      │
+│           │                           │                └─────────────────────┘      │
+│           │                           │                          │                  │
+│  ┌─────────────────────┐              │                          │                  │
+│  │   SocketHandlers    │              │                          │                  │
+│  │  ─────────────────  │              │                          │                  │
+│  │ - userManager       │──────────────┘                          │                  │
+│  │ - HANGMAN_ROOM      │                                         │                  │
+│  │ ─────────────────   │                                         │                  │
+│  │ + setupHandlers()   │                                         │                  │
+│  │ + setupChatHandler()│              ┌─────────────────────┐    │                  │
+│  │ + setupJoinGame()   │              │GameStateSynchronizer│    │                  │
+│  │ + setupLeaveGame()  │              │ ─────────────────── │    │                  │
+│  │ + setupGuessLetter()│              │ - gameManager       │    │                  │
+│  │ + setupNewGame()    │              │ ─────────────────── │────┘                  │
+│  └─────────────────────┘              │ + syncNewPlayer()   │                       │
+│                                       │ + prepareSyncData() │                       │
+│                                       │ + handlePlayerJoin()│                       │
+│                                       └─────────────────────┘                       │
+│                                                                                     │
+│  ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐      │
+│  │MultiplayerHangmanGame│    │   ServiceContainer  │    │   IGameService      │      │
+│  │ ─────────────────── │    │ ─────────────────── │    │ ─────────────────── │      │
+│  │ - game: HangGuyGame │    │ + getUserService()  │────│ + createGame()      │      │
+│  │ - players: Set      │    │ + getGameService()  │    │ + getGame()         │      │
+│  │ - gameId            │    │ + getSocketService()│    │ + addPlayerToGame() │      │
+│  │ ─────────────────── │    └─────────────────────┘    │ + makeGuess()       │      │
+│  │ + addPlayer()       │             │                 │ + startGame()       │      │
+│  │ + removePlayer()    │             │                 └─────────────────────┘      │
+│  │ + processGuess()    │             │                          │                  │
+│  │ + startNewGame()    │             │                          │                  │
+│  │ + getGameState()    │             │                          │                  │
+│  │ + canPlayerGuess()  │             │                 ┌─────────────────────┐      │
+│  └─────────────────────┘             │                 │    IUserService     │      │
+│                                      │                 │ ─────────────────── │      │
+│  ┌─────────────────────┐             │                 │ + createUser()      │      │
+│  │   GameController    │             └─────────────────│ + removeUser()      │      │
+│  │  ─────────────────  │                              │ + getUserBySocketId()│      │
+│  │ - gameService       │                              │ + getUserById()      │      │
+│  │ - userService       │                              │ + getAllUsers()      │      │
+│  │ ─────────────────   │                              └─────────────────────┘      │
+│  │ + handleJoinGame()  │                                        │                  │
+│  │ + handleLeaveGame() │                                        │                  │
+│  │ + handleGuessLetter()│                                       │                  │
+│  │ + handleNewGame()   │                              ┌─────────────────────┐      │
+│  │ + handleGetGameState()│                            │    UserService      │      │
+│  │ + handleStartGame() │                              │ ─────────────────── │      │
+│  │ + handleEndGame()   │                              │ - users: Map        │      │
+│  │ + handleResetGame() │                              │ - sessions: Map     │      │
+│  └─────────────────────┘                              │ - socketToUserMap   │      │
+│                                                       │ ─────────────────── │      │
+│                                                       │ + createUser()      │      │
+│                                                       │ + removeUser()      │      │
+│                                                       │ + getUserBySocketId()│      │
+│                                                       │ + getUserById()      │      │
+│                                                       │ + getAllUsers()      │      │
+│                                                       └─────────────────────┘      │
+│                                                                                     │
+│  ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐      │
+│  │  ChatController     │    │   UserController    │    │   ISocketService    │      │
+│  │  ─────────────────  │    │  ─────────────────  │    │  ─────────────────  │      │
+│  │ - messages: Map     │    │ - userService       │    │ + registerSocket()  │      │
+│  │ - MAX_MESSAGE_LENGTH│    │ ─────────────────   │    │ + unregisterSocket()│      │
+│  │ ─────────────────   │    │ + handleJoinGame()  │    │ + getSocket()       │      │
+│  │ + handleSendMessage()│    │ + handleLeaveGame() │    │ + emitToSocket()   │      │
+│  │ + storeMessage()    │    │ + handleGetUserList()│    │ + emitToRoom()     │      │
+│  │                     │    │ + handleUserIdent..()│    │ + joinRoom()       │      │
+│  └─────────────────────┘    └─────────────────────┘    └─────────────────────┘      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                                 SHARED TYPES                                         │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐      │
+│  │       User          │    │    SessionInfo      │    │   GameStateEvent    │      │
+│  │  ─────────────────  │    │  ─────────────────  │    │  ─────────────────  │      │
+│  │ + id: string        │    │ + id: string        │    │ + word: string      │      │
+│  │ + nickname: string  │    │ + hostUserId        │    │ + correctGuesses    │      │
+│  │ + avatar?: string   │    │ + createdAt         │    │ + incorrectGuesses  │      │
+│  │ + isActive: boolean │    │ + playerCount       │    │ + remainingGuesses  │      │
+│  │ + joinedAt: number  │    │                     │    │ + maxGuesses        │      │
+│  └─────────────────────┘    └─────────────────────┘    │ + status            │      │
+│                                                        │ + displayWord       │      │
+│  ┌─────────────────────┐    ┌─────────────────────┐    │ + players           │      │
+│  │  JoinGameRequest    │    │  JoinGameResponse   │    └─────────────────────┘      │
+│  │  ─────────────────  │    │  ─────────────────  │                                │
+│  │ + nickname: string  │    │ + success: boolean  │    ┌─────────────────────┐      │
+│  │ + sessionId?: string│    │ + user?: User       │    │    PlayerInfo       │      │
+│  │ + avatar?: string   │    │ + session?: Session │    │  ─────────────────  │      │
+│  └─────────────────────┘    │ + error?: string    │    │ + id: string        │      │
+│                             └─────────────────────┘    │ + name: string      │      │
+│  ┌─────────────────────┐                              │ + joinedAt: number  │      │
+│  │    GameState        │    ┌─────────────────────┐    │ + isActive: boolean │      │
+│  │  ─────────────────  │    │    GuessResult      │    │ + avatar?: string   │      │
+│  │ + word: string      │    │  ─────────────────  │    └─────────────────────┘      │
+│  │ + guessedLetters    │    │ + letter: string    │                                │
+│  │ + correctGuesses    │    │ + isCorrect: boolean│    ┌─────────────────────┐      │
+│  │ + incorrectGuesses  │    │ + isGameOver        │    │   ChatMessage       │      │
+│  │ + remainingGuesses  │    │ + gameStatus        │    │  ─────────────────  │      │
+│  │ + maxGuesses        │    │ + alreadyGuessed    │    │ + id: string        │      │
+│  │ + status            │    │ + wordRevealed      │    │ + userId: string    │      │
+│  │ + displayWord       │    └─────────────────────┘    │ + playerName: string│      │
+│  └─────────────────────┘                              │ + message: string   │      │
+│                                                       │ + timestamp: number │      │
+│  ┌─────────────────────┐    ┌─────────────────────┐    │ + type: string      │      │
+│  │   NewGameRequest    │    │   Result<T>         │    └─────────────────────┘      │
+│  │  ─────────────────  │    │  ─────────────────  │                                │
+│  │ + category?: string │    │ + success: boolean  │    ┌─────────────────────┐      │
+│  │ + difficulty?:string│    │ + data?: T          │    │   AsyncResult<T>    │      │
+│  │ + gameId?: string   │    │ + error?: string    │    │  ─────────────────  │      │
+│  └─────────────────────┘    └─────────────────────┘    │ + Promise<Result<T>>│      │
+│                                                        └─────────────────────┘      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                               DATA FLOW DIAGRAM                                      │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                     │
+│  Client Component          Socket Events           Server Handler                   │
+│  ┌──────────────┐         ┌──────────────┐         ┌──────────────┐                │
+│  │UserJoinDialog│────────→│hangman:join  │────────→│UserController│                │
+│  └──────────────┘         │    -game     │         └──────────────┘                │
+│                           └──────────────┘                │                        │
+│                                  │                        ▼                        │
+│  ┌──────────────┐                │               ┌──────────────┐                │
+│  │MultiplayerHG │◄───────────────┘               │ UserService  │                │
+│  └──────────────┘                                └──────────────┘                │
+│         │                                                │                        │
+│         │ ┌──────────────┐         ┌──────────────┐      ▼                        │
+│         └→│hangman:guess │────────→│GameController│ ┌──────────────┐                │
+│           │   -letter    │         │              │ │ GameService  │                │
+│           └──────────────┘         └──────────────┘ └──────────────┘                │
+│                  │                        │              │                        │
+│                  │                        ▼              ▼                        │
+│  ┌──────────────┐│               ┌──────────────┐ ┌──────────────┐                │
+│  │ Game Updates │◄───────────────│SocketService │ │HangGuyGame   │                │
+│  │   (Real-time)│                │              │ │  (Core Logic)│                │
+│  └──────────────┘                └──────────────┘ └──────────────┘                │
+│         │                                                                          │
+│         │ ┌──────────────┐         ┌──────────────┐                               │
+│         └→│chat:message  │────────→│ChatController│                               │
+│           │              │         │              │                               │
+│           └──────────────┘         └──────────────┘                               │
+│                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+RELATIONSHIPS LEGEND:
+──────► Uses/Depends on
+◄─────► Bidirectional Communication
+│││││││ Inheritance/Extension
+┌─────┐ Class/Module
+└─────┘ Interface/Type
+```

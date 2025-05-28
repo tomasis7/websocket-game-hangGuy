@@ -1,0 +1,64 @@
++---------------------+                 +------------------+
+|     UserManager     |<----------------|  SocketHandlers  |
++---------------------+                 +------------------+
+| - users: Map        |                 | - userManager    |
+| - sessions: Map     |                 | - HANGMAN_ROOM   |
+| - userSocketMap: Map|                 | + setupHandlers()|
+| + createUser()      |                 | - setupChat..()  |
+| + removeUser()      |                 | - setupJoin..()  |
+| + getUserBySocketId()|                | - setupLeave..() |
+| + addUserToSession()|                 | - setupGuess..() |
+| + getSession()      |                 | - setupNew..()   |
++---------------------+                 +------------------+
+          ^                                      |
+          |                                      |
+          |                                      v
++---------------------+                 +------------------+
+|  GameStateSynch-    |<----------------|   hangmanGame    |
+|     ronizer         |                 +------------------+
++---------------------+                 | - players: Set   |
+| - userManager       |                 | - gameState      |
+| + syncNewPlayer()   |                 | + startNewGame() |
+| + broadcastUpdate() |                 | + processGuess() |
+| + prepareSyncData() |                 | + getGameState() |
+| + getActivePlayers()|                 | + removePlayer() |
+| + enrichLastAction()|                 | + canPlayerGuess()|
++---------------------+                 +------------------+
+          |                                      ^
+          |                                      |
+          v                                      |
++---------------------+                 +------------------+
+| ServiceContainer    |---------------->|    IGameService  |
++---------------------+                 +------------------+
+| + getUserService()  |                 | + createGame()   |
+| + getGameService()  |                 | + getGame()      |
+| + getSocketService()|                 | + addPlayerToGame|
++---------------------+                 | + makeGuess()    |
+          |                             +------------------+
+          |                                      ^
+          |                                      |
+          v                                      |
++---------------------+                 +------------------+
+|    IUserService     |<----------------|  GameController  |
++---------------------+                 +------------------+
+| + createUser()      |                 | - gameService    |
+| + removeUser()      |                 | - userService    |
+| + getUserBySocketId()|                | + handleJoinGame()|
+| + getUserById()     |                 | + handleLeave()  |
+| + getAllUsers()     |                 | + handleGuess()  |
++---------------------+                 | + handleNewGame()|
+          ^                             +------------------+
+          |                                      ^
+          |                                      |
+          |                                      |
++---------------------+                 +------------------+
+|    UserService      |<----------------|SocketOrchestrator|
++---------------------+                 +------------------+
+| - users: Map        |                 | - socketService  |
+| + createUser()      |                 | - gameController |
+| + getUserBySocketId()|                | - userController |
+| + removeUser()      |                 | - chatController |
++---------------------+                 | + setupSocket()  |
+                                        | + handleConnect()|
+                                        +------------------+
+
