@@ -6,6 +6,7 @@ import { GameStatus } from "./GameStatus";
 import { GameControls } from "./GameControls";
 import { GuessDisplay } from "./GuessDisplay"; // ✅ Add missing import
 import { JoinGameWelcome } from "./JoinGameWelcome";
+import { SessionInfo } from "./SessionInfo";
 import { useMultiplayerGame } from "../hooks/useMultiplayerGame";
 import { UserJoinDialog } from "./UserJoinDialog";
 import { UserList } from "./UserList";
@@ -271,10 +272,29 @@ export const MultiplayerHangGuy: React.FC = () => {
         error={joinError || error || undefined}
       />
     );
-  }
-  // Main game interface
+  } // Main game interface
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      {" "}
+      {/* Session Information Bar */}
+      <div className="max-w-7xl mx-auto">
+        {" "}
+        <SessionInfo
+          gameId={gameState?.gameId}
+          sessionId={gameState?.gameId} // Using gameId as sessionId for now
+          playerCount={gameState?.players?.length || 0}
+          isConnected={isConnected}
+          socketId={socket.id}
+          currentUser={
+            currentUser
+              ? {
+                  id: currentUser.id,
+                  name: currentUser.name,
+                }
+              : undefined
+          }
+        />
+      </div>
       {/* Game Interface */}
       {gameState && currentUser && gameState.status && (
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
