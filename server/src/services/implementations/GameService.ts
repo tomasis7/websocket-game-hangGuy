@@ -225,18 +225,18 @@ export class GameService implements IGameService {
       }
 
       const { game } = session;
-
       if (game.players.length === 0) {
         return createError(
           createValidationError("Cannot start game with no players")
         );
       }
 
-      if (game.state.status === "playing") {
-        return createError(
-          createValidationError("Game is already in progress")
-        );
-      } // Reset game state
+      // Allow restarting games in any state
+      // if (game.state.status === "playing") {
+      //   return createError(
+      //     createValidationError("Game is already in progress")
+      //   );
+      // }// Reset game state
       const word = this.getRandomWord();
       game.state = {
         word: word,

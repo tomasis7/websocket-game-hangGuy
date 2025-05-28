@@ -128,10 +128,9 @@ export class SocketOrchestrator {
         timestamp: Date.now(),
       };
       await this.gameController.handleGuessLetter(socket, guessRequest);
-    });
-
-    // New game - listen for hangman:new-game event
+    }); // New game - listen for hangman:new-game event
     socket.on("hangman:new-game", async (data) => {
+      console.log(`🎮 Received hangman:new-game from ${socket.id}:`, data);
       // Convert hangman event data to expected NewGameRequest format
       const newGameRequest = {
         gameId: "default-game", // Use default for now

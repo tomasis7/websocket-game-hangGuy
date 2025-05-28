@@ -211,6 +211,7 @@ export const useMultiplayerGame = () => {
       category?: string;
       difficulty?: "easy" | "medium" | "hard";
     }) => {
+      console.log("🎮 Client: Starting new game with options:", options);
       socket.emit("hangman:new-game", {
         ...options,
       });
