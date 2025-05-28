@@ -198,15 +198,15 @@ export class SocketHandlers {
           io,
           this.HANGMAN_ROOM,
           hangmanGame
-        );
-
-        // Send specific guess result
+        ); // Send specific guess result
+        const cleanGameState = JSON.parse(JSON.stringify(gameState));
         io.to(this.HANGMAN_ROOM).emit("hangman:guess-result", {
           letter,
           isCorrect,
           playerId,
           playerName: data.playerName || `Player ${playerId.slice(-4)}`,
-          gameState,
+          gameState: cleanGameState,
+          timestamp: Date.now(),
         });
 
         // ✅ Fix: Use console.warn instead of console.log
@@ -238,14 +238,28 @@ export class SocketHandlers {
           });
           return;
         }
-
         const gameState = hangmanGame.startNewGame(data);
 
-        // Broadcast new game to all players
-        io.to(this.HANGMAN_ROOM).emit("hangman:game-started", {
-          startedBy: playerId,
+        // ✅ Fix: Create clean serialized data to prevent circular references
+        const cleanGameData = GameStateSynchronizer.prepareSyncData(
           gameState,
-        });
+          hangmanGame
+        );
+
+        // Get user info for proper player name
+        const user = this.userManager.getUserBySocketId(playerId);
+        const startedByName = user?.nickname || `Player ${playerId.slice(-4)}`;
+
+        // ✅ Create a plain object to avoid circular references
+        const gameStartData = {
+          startedBy: playerId,
+          startedByName,
+          gameState: JSON.parse(JSON.stringify(cleanGameData)), // Deep clone to remove any references
+          timestamp: Date.now(),
+        };
+
+        // Broadcast new game to all players
+        io.to(this.HANGMAN_ROOM).emit("hangman:game-started", gameStartData);
 
         // Sync game state to all players
         GameStateSynchronizer.broadcastGameUpdate(

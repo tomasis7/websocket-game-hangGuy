@@ -110,11 +110,9 @@ export const useMultiplayerGame = () => {
       addNotification(
         `${data.playerName} guessed "${data.letter}" - ${result}!`
       );
-    };
-
-    // Handle game start broadcast
+    }; // Handle game start broadcast
     const handleGameStartBroadcast = (data: any) => {
-      console.log("Game start broadcast:", data);
+      console.log("🎮 Game start broadcast received:", data);
       setGameState(data.gameState);
       addNotification(`${data.startedByName} started a new game!`);
     };
@@ -206,15 +204,23 @@ export const useMultiplayerGame = () => {
         timestamp: Date.now(),
       });
     },
-
     startNewGame: (options?: {
       category?: string;
       difficulty?: "easy" | "medium" | "hard";
     }) => {
       console.log("🎮 Client: Starting new game with options:", options);
+      console.log("🔌 Socket connected:", socket.connected);
+      console.log("🔗 Socket ID:", socket.id);
+
+      if (!socket.connected) {
+        console.error("❌ Socket not connected, cannot start game");
+        return;
+      }
+
       socket.emit("hangman:new-game", {
         ...options,
       });
+      console.log("✅ hangman:new-game event emitted");
     },
 
     leaveGame: () => {

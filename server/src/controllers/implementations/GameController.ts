@@ -63,7 +63,23 @@ export class GameController extends BaseController implements IGameController {
         await this.handleError(socket, guessResult.error, "guessLetter");
         return guessResult;
       }
-      const game = guessResult.data; // Emit to all players in the game using hangman events
+      const game = guessResult.data;
+
+      // Create clean, serializable game state to avoid circular references
+      const cleanGameState = {
+        word: game.state.word,
+        currentWord: game.state.currentWord,
+        correctGuesses: [...game.state.correctGuesses],
+        incorrectGuesses: [...game.state.incorrectGuesses],
+        guessedLetters: [...game.state.guessedLetters],
+        remainingGuesses: game.state.remainingGuesses,
+        maxGuesses: game.state.maxGuesses,
+        maxIncorrectGuesses: game.state.maxIncorrectGuesses,
+        status: game.state.status,
+        displayWord: game.state.displayWord,
+      };
+
+      // Emit to all players in the game using hangman events
       await this.emitToRoom(
         `game:${data.gameId}`,
         "hangman:guess-broadcast" as any,
@@ -72,7 +88,7 @@ export class GameController extends BaseController implements IGameController {
           playerName: user.nickname,
           letter: data.letter.toLowerCase(),
           isCorrect: game.state.currentWord.includes(data.letter.toLowerCase()),
-          gameState: game.state,
+          gameState: cleanGameState,
           timestamp: Date.now(),
         }
       );
@@ -83,25 +99,23 @@ export class GameController extends BaseController implements IGameController {
         "hangman:game-state" as any,
         {
           gameId: data.gameId,
-          ...game.state,
+          ...cleanGameState,
           players: game.players.map((p) => ({
             id: p.id,
             name: p.name,
-            joinedAt: Date.now(),
-            isActive: true,
+            joinedAt: p.joinedAt,
+            isActive: p.isActive,
             avatar: p.avatar,
           })),
         }
-      );
-
-      // If game ended, emit game over event
+      ); // If game ended, emit game over event
       if (game.state.status === "won" || game.state.status === "lost") {
         await this.emitToRoom(
           `game:${data.gameId}`,
           "hangman:game-end-broadcast" as any,
           {
             gameId: data.gameId,
-            gameState: game.state,
+            gameState: cleanGameState,
             winner: game.state.status === "won" ? user.nickname : undefined,
             timestamp: Date.now(),
           }
@@ -163,16 +177,35 @@ export class GameController extends BaseController implements IGameController {
       const updatedGame = startGameResult.data;
 
       // Join socket to game room (if not already in it)
-      await this.socketService.joinRoom(socket.id, `game:${data.gameId}`);
+      await this.socketService.joinRoom(socket.id, `game:${data.gameId}`); // Emit game start broadcast to all players in the room
+      // Create clean, serializable game state to avoid circular references
+      const cleanGameState = {
+        word: updatedGame.state.word,
+        currentWord: updatedGame.state.currentWord,
+        correctGuesses: [...updatedGame.state.correctGuesses],
+        incorrectGuesses: [...updatedGame.state.incorrectGuesses],
+        guessedLetters: [...updatedGame.state.guessedLetters],
+        remainingGuesses: updatedGame.state.remainingGuesses,
+        maxGuesses: updatedGame.state.maxGuesses,
+        maxIncorrectGuesses: updatedGame.state.maxIncorrectGuesses,
+        status: updatedGame.state.status,
+        displayWord: updatedGame.state.displayWord,
+        players: updatedGame.players.map((p) => ({
+          id: p.id,
+          name: p.name,
+          joinedAt: p.joinedAt,
+          isActive: p.isActive,
+          avatar: p.avatar,
+        })),
+      };
 
-      // Emit game start broadcast to all players in the room
       await this.emitToRoom(
         `game:${data.gameId}`,
         "hangman:game-start-broadcast" as any,
         {
           startedBy: user.id,
           startedByName: user.nickname,
-          gameState: updatedGame.state,
+          gameState: cleanGameState,
           timestamp: Date.now(),
         }
       );

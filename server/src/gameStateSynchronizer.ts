@@ -10,7 +10,6 @@ import {
 
 export class GameStateSynchronizer {
   private static userManager = new UserManager(); // Integrate UserManager
-
   /**
    * Synchronizes game state to a newly joined player
    */
@@ -18,12 +17,15 @@ export class GameStateSynchronizer {
     const gameState = game.getGameState();
     const syncData = this.prepareSyncData(gameState, game);
 
-    // Send comprehensive sync data to new player
-    socket.emit("hangman:game-state", {
-      ...syncData,
+    // ✅ Create clean data to prevent circular references
+    const cleanSyncData = {
+      ...JSON.parse(JSON.stringify(syncData)),
       isJoining: true,
       welcomeMessage: this.getWelcomeMessage(gameState.status),
-    });
+    };
+
+    // Send comprehensive sync data to new player
+    socket.emit("hangman:game-state", cleanSyncData);
 
     // Notify other players about the new player
     socket.to(game.getGameId()).emit("hangman:player-joined", {
@@ -32,7 +34,6 @@ export class GameStateSynchronizer {
       timestamp: Date.now(),
     });
   }
-
   /**
    * Broadcasts game state updates to all players in the session
    */
@@ -45,11 +46,14 @@ export class GameStateSynchronizer {
     const gameState = game.getGameState();
     const updateData = this.prepareSyncData(gameState, game);
 
+    // ✅ Create a clean copy to prevent circular references
+    const cleanUpdateData = JSON.parse(JSON.stringify(updateData));
+
     const broadcast = excludeSocketId
       ? io.to(gameId).except(excludeSocketId)
       : io.to(gameId);
 
-    broadcast.emit("hangman:game-state", updateData);
+    broadcast.emit("hangman:game-state", cleanUpdateData);
   }
 
   /**
