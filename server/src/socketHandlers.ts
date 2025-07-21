@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { MultiplayerHangmanGame } from "./hangmanGame";
-import { HangGuySocketEvents } from "../../client/src/types/socketTypes";
+import { HangGuySocketEvents } from "../../shared/types";
 import { UserManager } from "./userManager";
 
 const hangmanGame = new MultiplayerHangmanGame();
@@ -82,7 +82,7 @@ export class SocketHandlers {
           const result = hangmanGame.processGuess(data.letter, playerId);
 
           // Broadcast result to all players in the room
-          io.to("hangman-room").emit("hangman:guess-result", {
+          io.to("hangman-room").emit("hangman:guess-broadcast", {
             letter: data.letter,
             isCorrect: result.isCorrect,
             playerId,
@@ -112,7 +112,7 @@ export class SocketHandlers {
           const gameState = hangmanGame.startNewGame(data);
 
           // Broadcast new game to all players
-          io.to("hangman-room").emit("hangman:game-started", {
+          io.to("hangman-room").emit("hangman:game-start-broadcast", {
             startedBy: playerId,
             gameState,
           });

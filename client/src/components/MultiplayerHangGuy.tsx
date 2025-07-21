@@ -80,13 +80,11 @@ export const MultiplayerHangGuy: React.FC = () => {
     };
 
     socket.on("hangman:join-success", handleJoinSuccess);
-    socket.on("hangman:join-error", handleJoinError);
-    socket.on("hangman:game-state", handleJoinSuccess);
+    socket.on("hangman:error", handleJoinError); // Use consistent error event name
 
     return () => {
       socket.off("hangman:join-success", handleJoinSuccess);
-      socket.off("hangman:join-error", handleJoinError);
-      socket.off("hangman:game-state", handleJoinSuccess);
+      socket.off("hangman:error", handleJoinError);
     };
   }, [socket]);
 

@@ -1,11 +1,21 @@
 // This file defines the main App component for the client-side React application.
-// It imports UI components and a custom hook to manage the number of likes.
-// The App component renders a centered UI with a connection label and a clickable droplet.
+// It includes error boundaries and connection handling for a robust multiplayer experience.
 
 import { MultiplayerHangGuy } from "./components/MultiplayerHangGuy";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ConnectionStatus } from "./components/ConnectionStatus";
 
 export default function App() {
-  return <MultiplayerHangGuy />;
+  return (
+    <ErrorBoundary>
+      <div className="relative">
+        <ConnectionStatus />
+        <div className="pt-0">
+          <MultiplayerHangGuy />
+        </div>
+      </div>
+    </ErrorBoundary>
+  );
 }
 
 // import { HangGuyGame } from "./components/HangGuyGame";

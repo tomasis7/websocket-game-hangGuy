@@ -80,11 +80,19 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
           .emit("hangman:player-action-broadcast", joinBroadcast);
         console.log(`📢 Broadcasted player join for ${playerName}`);
       } else {
-        socket.emit("hangman:join-error", joinResult.error);
+        socket.emit("hangman:error", {
+          message: joinResult.error || "Failed to join game",
+          code: "JOIN_ERROR",
+          timestamp: Date.now(),
+        });
       }
     } catch (error) {
       console.error("Error joining game:", error);
-      socket.emit("hangman:join-error", "Failed to join game");
+      socket.emit("hangman:error", {
+        message: "Failed to join game",
+        code: "JOIN_EXCEPTION",
+        timestamp: Date.now(),
+      });
     }
   });
 
