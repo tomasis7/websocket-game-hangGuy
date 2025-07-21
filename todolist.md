@@ -1,50 +1,57 @@
 # Codebase Fix Priority List
 
-## 🔴 CRITICAL - Must Fix First (Blocking Application)
+## ✅ CRITICAL - COMPLETED
 
 ### 1. Fix TypeScript Build Failure
-**Priority**: 🔴 CRITICAL  
+**Priority**: ✅ COMPLETED  
 **File**: `client/src/components/HangGuyGame.tsx:68-69`  
 **Issue**: Passing `Set<string>` to components expecting `string[]`  
-**Fix**:
+**Fix Applied**:
 ```typescript
-// Change lines 68-69 from:
-correctGuesses={gameState.correctGuesses}
-incorrectGuesses={gameState.incorrectGuesses}
-
-// To:
+// Changed lines 68-69 to:
 correctGuesses={Array.from(gameState.correctGuesses)}
 incorrectGuesses={Array.from(gameState.incorrectGuesses)}
 ```
-**Impact**: Client build completely fails - app won't run
+**Result**: ✅ Client build now succeeds
 
 ### 2. Add Missing CORS Dependency
-**Priority**: 🔴 CRITICAL  
+**Priority**: ✅ COMPLETED  
 **File**: `server/package.json`  
 **Issue**: Server imports `cors` but it's not in dependencies  
-**Fix**:
+**Fix Applied**:
 ```bash
 cd server && npm install cors
 ```
-**Impact**: Server crashes on startup
+**Result**: ✅ CORS dependency added, server starts successfully
 
 ### 3. Fix Server Port Conflict
-**Priority**: 🔴 CRITICAL  
+**Priority**: ✅ COMPLETED  
 **File**: `server/src/index.ts:44`  
 **Issue**: Server and client both use port 3000  
-**Fix**:
+**Fix Applied**:
 ```typescript
-// Change from:
-const PORT = process.env.PORT || 3000;
-
-// To:
+// Changed to:
 const PORT = process.env.PORT || 3001;
 ```
-**Impact**: Port conflict prevents simultaneous dev server runs
+**Result**: ✅ Server now runs on port 3001, no port conflict
+
+### 4. Fix Client Socket Connection Port
+**Priority**: ✅ COMPLETED  
+**File**: `client/src/socket.ts:8`  
+**Issue**: Client connecting to port 3000 instead of 3001  
+**Fix Applied**:
+```typescript
+// Changed from:
+export const socket: Socket<any, any> = io("http://localhost:3000", {
+
+// To:
+export const socket: Socket<any, any> = io("http://localhost:3001", {
+```
+**Result**: ✅ Client now connects to correct server port
 
 ## 🟡 HIGH PRIORITY - Core Functionality Issues
 
-### 4. Fix Cross-Platform Import Paths
+### 5. Fix Cross-Platform Import Paths
 **Priority**: 🟡 HIGH  
 **Files**: 
 - `server/src/gameManager.ts:1`
@@ -60,7 +67,7 @@ import { GameStateEvent } from "../../client/src/types/socketTypes";
 import { GameStateEvent } from "../../shared/types";
 ```
 
-### 5. Standardize Data Types Across Client/Server
+### 6. Standardize Data Types Across Client/Server
 **Priority**: 🟡 HIGH  
 **Files**: Multiple game logic files  
 **Issue**: Server uses `Set<string>`, client expects `string[]`  
@@ -75,7 +82,7 @@ return {
 };
 ```
 
-### 6. Fix Player Name Logic
+### 7. Fix Player Name Logic
 **Priority**: 🟡 HIGH  
 **File**: `client/src/hooks/useMultiplayerGame.ts:153`  
 **Issue**: All players get hardcoded "Player" name  
