@@ -20,7 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 // Basic health check endpoint
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.json({
     message: "Hang Guy Game Server",
     timestamp: new Date().toISOString(),

@@ -123,7 +123,7 @@ export const useUserIdentification = (): UseUserIdentificationReturn => {
 
   // Leave game with proper cleanup
   const leaveGame = useCallback((): void => {
-    if (!socket || !currentUser) return;
+    if (!socket || !currentUser) {return;}
 
     socket.emit("leaveGame", { userId: currentUser.id });
 
@@ -161,7 +161,7 @@ export const useUserIdentification = (): UseUserIdentificationReturn => {
 
   // Socket event listeners with proper typing
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {return;}
 
     const handleUserJoined = (user: User): void => {
       setUsers((prev) => {

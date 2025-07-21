@@ -1,17 +1,14 @@
 import { Server, Socket } from "socket.io";
 import { GameManager } from "./gameManager";
 import { GameStateSynchronizer } from "./gameStateSync";
-import {
-  GameBroadcast,
-  HangGuySocketEvents,
-} from "../../shared/types";
 
 const gameManager = new GameManager();
 const gameSync = new GameStateSynchronizer(gameManager);
 const HANGMAN_ROOM = "hangman-room";
 
 export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
-  // Utility function to broadcast game state to all players
+  // Utility function to broadcast game state to all players (currently unused)
+  /*
   const broadcastGameState = (action: string, additionalData?: any) => {
     const gameState = gameManager.getGameState();
     const broadcast: GameBroadcast = {
@@ -36,6 +33,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
       } players`
     );
   };
+  */
 
   // Enhanced join game handler with state synchronization
   socket.on("hangman:join-game", async (data) => {

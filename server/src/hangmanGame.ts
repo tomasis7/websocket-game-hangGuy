@@ -1,8 +1,6 @@
 import { HangGuyGame } from "../../client/src/utils/gameLogic";
 import {
   GameStateEvent,
-  GuessEvent,
-  PlayerInfo,
 } from "../../client/src/types/socketTypes";
 
 export class MultiplayerHangmanGame {
@@ -33,7 +31,7 @@ export class MultiplayerHangmanGame {
 
   processGuess(
     letter: string,
-    playerId: string
+    _playerId: string
   ): {
     isCorrect: boolean;
     gameState: GameStateEvent;
@@ -47,7 +45,7 @@ export class MultiplayerHangmanGame {
     };
   }
 
-  startNewGame(options?: {
+  startNewGame(_options?: {
     category?: string;
     difficulty?: "easy" | "medium" | "hard";
   }): GameStateEvent {

@@ -51,7 +51,7 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
     setJoinMode("existing");
   };
 
-  if (!isVisible) return null;
+  if (!isVisible) {return null;}
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

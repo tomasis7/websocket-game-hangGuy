@@ -17,16 +17,16 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
   onDismiss,
 }) => {
   const getWelcomeIcon = () => {
-    if (gameState.status === "won") return "🎉";
-    if (gameState.status === "lost") return "💀";
-    if (isGameInProgress) return "🎯";
+    if (gameState.status === "won") {return "🎉";}
+    if (gameState.status === "lost") {return "💀";}
+    if (isGameInProgress) {return "🎯";}
     return "👋";
   };
 
   const getWelcomeTitle = () => {
-    if (gameState.status === "won") return "Game Already Won!";
-    if (gameState.status === "lost") return "Game Already Lost";
-    if (isGameInProgress) return "Game In Progress!";
+    if (gameState.status === "won") {return "Game Already Won!";}
+    if (gameState.status === "lost") {return "Game Already Lost";}
+    if (isGameInProgress) {return "Game In Progress!";}
     return "Welcome to Hang Guy!";
   };
 

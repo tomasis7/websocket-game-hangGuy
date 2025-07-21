@@ -65,7 +65,7 @@ export const MultiplayerHangGuy: React.FC = () => {
 
   // Listen for successful join events
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {return;}
 
     const handleJoinSuccess = (data: any) => {
       console.log("Successfully joined game:", data);

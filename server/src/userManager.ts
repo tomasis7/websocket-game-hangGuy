@@ -58,7 +58,9 @@ export class UserManager {
 
   addUserToSession(userId: string, sessionId: string = "default"): GameSession {
     const user = this.users.get(userId);
-    if (!user) throw new Error("User not found");
+    if (!user) {
+      throw new Error("User not found");
+    }
 
     let session = this.sessions.get(sessionId);
     if (!session) {

@@ -1,6 +1,5 @@
 import { Server, Socket } from "socket.io";
 import { MultiplayerHangmanGame } from "./hangmanGame";
-import { HangGuySocketEvents } from "../../shared/types";
 import { UserManager } from "./userManager";
 
 const hangmanGame = new MultiplayerHangmanGame();
