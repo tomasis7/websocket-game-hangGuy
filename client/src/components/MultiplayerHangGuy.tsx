@@ -20,6 +20,7 @@ interface GameOptions {
 export const MultiplayerHangGuy: React.FC = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(true);
   const [isJoiningLocal, setIsJoining] = useState(false);
+  const [lastUsedPlayerName, setLastUsedPlayerName] = useState<string | null>(null);
 
   const {
     gameState,
@@ -93,6 +94,7 @@ export const MultiplayerHangGuy: React.FC = () => {
     (nickname: string, sessionId?: string, avatar?: string): void => {
       console.log("Attempting to join game:", { nickname, sessionId, avatar });
       setIsJoining(true);
+      setLastUsedPlayerName(nickname); // Store for retries
 
       if (socket && socket.connected) {
         // Generate a 6-character session ID to match the validation pattern
@@ -146,15 +148,18 @@ export const MultiplayerHangGuy: React.FC = () => {
           )}
           <button
             onClick={() => {
-              // Call an existing method or implement retry functionality
-              if (actions.joinGame) {
-                actions.joinGame();
+              // Use stored player name for retry, or fallback to generated name
+              if (lastUsedPlayerName) {
+                actions.joinGame(lastUsedPlayerName);
+              } else {
+                // Show join dialog again if no stored name
+                setShowJoinDialog(true);
               }
             }}
             disabled={!isConnected}
             className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
           >
-            Retry Connection
+            {lastUsedPlayerName ? 'Retry Connection' : 'Join Game'}
           </button>
         </div>
       </div>

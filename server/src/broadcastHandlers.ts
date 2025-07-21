@@ -4,7 +4,7 @@ import { GameStateSynchronizer } from "./gameStateSync";
 import {
   GameBroadcast,
   HangGuySocketEvents,
-} from "../../client/src/types/socketTypes";
+} from "../../shared/types";
 
 const gameManager = new GameManager();
 const gameSync = new GameStateSynchronizer(gameManager);

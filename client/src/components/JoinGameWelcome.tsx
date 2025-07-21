@@ -1,5 +1,5 @@
 import React from "react";
-import type { GameStateEvent, PlayerInfo } from "../types/socketTypes";
+import type { GameStateEvent, PlayerInfo } from "../../../shared/types";
 
 interface JoinGameWelcomeProps {
   gameState: GameStateEvent;

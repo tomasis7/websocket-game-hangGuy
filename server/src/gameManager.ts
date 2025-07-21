@@ -3,7 +3,7 @@ import {
   GameStateEvent,
   PlayerInfo,
   GameAction,
-} from "../../client/src/types/socketTypes";
+} from "../../shared/types";
 
 export class GameManager {
   private game: HangGuyGame;

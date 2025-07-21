@@ -1,6 +1,6 @@
 import { GameManager } from './gameManager';
 import { Socket } from 'socket.io';
-import { GameStateEvent, PlayerInfo } from '../../client/src/types/socketTypes';
+import { GameStateEvent, PlayerInfo } from '../../shared/types';
 
 export interface JoinGameResponse {
   success: boolean;

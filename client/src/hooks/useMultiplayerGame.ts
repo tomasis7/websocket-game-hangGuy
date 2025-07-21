@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { socket } from "../socket";
-import type { GameStateEvent, PlayerInfo } from "../types/socketTypes";
+import type { GameStateEvent, PlayerInfo } from "../../../shared/types";
 
 export const useMultiplayerGame = () => {
   // Game state
@@ -148,9 +148,10 @@ export const useMultiplayerGame = () => {
   }, [addNotification]);
   // Game actions
   const actions = {
-    joinGame: () => {
+    joinGame: (playerName?: string) => {
       setIsJoining(true);
-      socket.emit("hangman:join-game", { playerName: "Player" });
+      const finalPlayerName = playerName || `Player${Math.random().toString(36).substr(2, 4)}`;
+      socket.emit("hangman:join-game", { playerName: finalPlayerName });
     },
 
     guessLetter: (letter: string) => {
