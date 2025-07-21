@@ -49,9 +49,28 @@ export const socket: Socket<any, any> = io("http://localhost:3001", {
 ```
 **Result**: ✅ Client now connects to correct server port
 
+### 5. Fix Remaining Guesses Display Issue
+**Priority**: ✅ COMPLETED  
+**File**: `client/src/components/MultiplayerHangGuy.tsx:224`  
+**Issue**: GameStatus component not receiving remainingGuesses prop, showing "0 guesses remaining"  
+**Fix Applied**:
+```typescript
+// Changed from:
+<GameStatus status={gameState.status} />
+
+// To:
+<GameStatus 
+  status={gameState.status} 
+  word={gameState.word}
+  remainingGuesses={gameState.remainingGuesses}
+/>
+```
+**Root Cause**: Missing prop caused `remainingGuesses || 0` to evaluate to 0
+**Result**: ✅ Game now shows correct remaining guesses (8 initially)
+
 ## 🟡 HIGH PRIORITY - Core Functionality Issues
 
-### 5. Fix Cross-Platform Import Paths
+### 6. Fix Cross-Platform Import Paths
 **Priority**: 🟡 HIGH  
 **Files**: 
 - `server/src/gameManager.ts:1`
@@ -67,7 +86,7 @@ import { GameStateEvent } from "../../client/src/types/socketTypes";
 import { GameStateEvent } from "../../shared/types";
 ```
 
-### 6. Standardize Data Types Across Client/Server
+### 7. Standardize Data Types Across Client/Server
 **Priority**: 🟡 HIGH  
 **Files**: Multiple game logic files  
 **Issue**: Server uses `Set<string>`, client expects `string[]`  
@@ -82,7 +101,7 @@ return {
 };
 ```
 
-### 7. Fix Player Name Logic
+### 8. Fix Player Name Logic
 **Priority**: 🟡 HIGH  
 **File**: `client/src/hooks/useMultiplayerGame.ts:153`  
 **Issue**: All players get hardcoded "Player" name  
