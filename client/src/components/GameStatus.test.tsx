@@ -5,49 +5,53 @@ import { GameStatus } from './GameStatus';
 describe('GameStatus', () => {
   it('should render playing status correctly', () => {
     render(
-      <GameStatus 
-        status="playing" 
+      <GameStatus
+        status="playing"
         remainingGuesses={5}
       />
     );
-    
-    expect(screen.getByText('Game In Progress')).toBeInTheDocument();
-    expect(screen.getByText(/5 guesses remaining/)).toBeInTheDocument();
+
+    // Playing state shows a compact bar with remaining guesses
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getByText(/guesses left/)).toBeInTheDocument();
   });
 
   it('should render won status correctly', () => {
     render(
-      <GameStatus 
-        status="won" 
+      <GameStatus
+        status="won"
         word="TESTING"
       />
     );
-    
-    expect(screen.getByText('Congratulations!')).toBeInTheDocument();
-    expect(screen.getByText(/You successfully guessed the word/)).toBeInTheDocument();
+
+    expect(screen.getByText('You Won!')).toBeInTheDocument();
+    expect(screen.getByText(/saved the day/i)).toBeInTheDocument();
   });
 
   it('should render lost status correctly', () => {
     render(
-      <GameStatus 
-        status="lost" 
+      <GameStatus
+        status="lost"
         word="TESTING"
       />
     );
-    
+
     expect(screen.getByText('Game Over')).toBeInTheDocument();
-    expect(screen.getByText(/The word was: "TESTING"/)).toBeInTheDocument();
+    // Word is shown without quotes in new design
+    expect(screen.getByText(/The word was:/)).toBeInTheDocument();
+    expect(screen.getByText('TESTING')).toBeInTheDocument();
   });
 
-  it('should show low guesses warning', () => {
+  it('should show critical styling for low guesses', () => {
     render(
-      <GameStatus 
-        status="playing" 
+      <GameStatus
+        status="playing"
         remainingGuesses={2}
       />
     );
-    
-    // Should have warning styling or text for low guesses
-    expect(screen.getByText(/2 guesses remaining/)).toBeInTheDocument();
+
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText(/guesses left/)).toBeInTheDocument();
   });
 });

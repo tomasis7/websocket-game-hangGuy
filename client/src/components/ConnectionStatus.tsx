@@ -15,6 +15,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   const [lastDisconnectReason, setLastDisconnectReason] = useState<string | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -22,6 +23,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
       setIsConnected(true);
       setIsReconnecting(false);
       setLastDisconnectReason(null);
+      setDismissed(false);
       if (reconnectAttempts > 0) {
         setShowSuccess(true);
         dismissTimerRef.current = setTimeout(() => {
@@ -33,29 +35,20 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
     };
 
     const handleDisconnect = (reason: string) => {
-      console.log('Socket disconnected:', reason);
       setIsConnected(false);
+      setDismissed(false);
       setLastDisconnectReason(reason);
       onConnectionLost?.();
     };
 
     const handleReconnectAttempt = (attemptNumber: number) => {
-      console.log(`Reconnection attempt #${attemptNumber}`);
       setReconnectAttempts(attemptNumber);
       setIsReconnecting(true);
     };
 
-    const handleReconnectError = (error: Error) => {
-      console.error('Reconnection error:', error);
-      setIsReconnecting(false);
-    };
+    const handleReconnectError = () => setIsReconnecting(false);
+    const handleReconnectFailed = () => setIsReconnecting(false);
 
-    const handleReconnectFailed = () => {
-      console.error('Reconnection failed after all attempts');
-      setIsReconnecting(false);
-    };
-
-    // Socket.IO event listeners
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('reconnect_attempt', handleReconnectAttempt);
@@ -73,54 +66,67 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   }, [onConnectionLost, onConnectionRestored, reconnectAttempts]);
 
   const handleManualReconnect = () => {
-    if (!socket.connected) {
-      socket.connect();
-    }
+    if (!socket.connected) socket.connect();
   };
 
-  // Show connection status banner when disconnected
+  if (dismissed) return null;
+
+  // Disconnected toast
   if (!isConnected) {
     return (
-      <div className="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white px-4 py-3 shadow-lg">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="animate-pulse" role="img" aria-label={isReconnecting ? 'Reconnecting' : 'Warning'}>
-              {isReconnecting ? '🔄' : '⚠️'}
-            </div>
-            <div>
-              <p className="font-semibold">
-                {isReconnecting ? 'Reconnecting...' : 'Connection Lost'}
-              </p>
-              <p className="text-sm opacity-90">
-                {isReconnecting 
-                  ? `Attempt ${reconnectAttempts} - Trying to reconnect to the server`
-                  : `Disconnected from server${lastDisconnectReason ? ` (${lastDisconnectReason})` : ''}`
-                }
-              </p>
-            </div>
-          </div>
-          
-          {!isReconnecting && (
-            <button
-              onClick={handleManualReconnect}
-              className="bg-white text-red-600 px-4 py-1 rounded hover:bg-gray-100 transition-colors text-sm font-medium"
-            >
-              Retry Connection
-            </button>
+      <div
+        role="alert"
+        className="fixed bottom-4 right-4 z-50 animate-slide-up max-w-sm rounded-2xl px-4 py-3 flex items-center gap-3"
+        style={{
+          background: 'var(--danger)',
+          color: '#fff',
+          boxShadow: '0 8px 32px rgba(244,63,94,0.4)',
+        }}
+      >
+        <span className="text-lg flex-shrink-0" aria-hidden="true">
+          {isReconnecting ? '↻' : '⚠'}
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm leading-tight">
+            {isReconnecting ? `Reconnecting… (${reconnectAttempts})` : 'Connection Lost'}
+          </p>
+          {!isReconnecting && lastDisconnectReason && (
+            <p className="text-xs opacity-80 truncate">{lastDisconnectReason}</p>
           )}
         </div>
+        {!isReconnecting && (
+          <button
+            onClick={handleManualReconnect}
+            className="flex-shrink-0 text-xs font-bold underline hover:no-underline focus:outline-none"
+          >
+            Retry
+          </button>
+        )}
+        <button
+          onClick={() => setDismissed(true)}
+          aria-label="Dismiss"
+          className="flex-shrink-0 opacity-70 hover:opacity-100 focus:outline-none text-lg leading-none"
+        >
+          ×
+        </button>
       </div>
     );
   }
 
-  // Show brief success message when reconnected (auto-dismisses after 3s)
+  // Reconnected success toast
   if (isConnected && showSuccess) {
     return (
-      <div className="fixed top-0 left-0 right-0 z-50 bg-green-600 text-white px-4 py-2 shadow-lg animate-slide-down">
-        <div className="max-w-6xl mx-auto flex items-center space-x-3">
-          <span role="img" aria-label="Connected">✅</span>
-          <p className="font-semibold">Connection Restored</p>
-        </div>
+      <div
+        role="status"
+        className="fixed bottom-4 right-4 z-50 animate-slide-up max-w-sm rounded-2xl px-4 py-3 flex items-center gap-3"
+        style={{
+          background: 'var(--success)',
+          color: '#fff',
+          boxShadow: '0 8px 32px rgba(132,204,22,0.4)',
+        }}
+      >
+        <span className="text-lg" aria-hidden="true">✓</span>
+        <p className="font-semibold text-sm">Connection Restored</p>
       </div>
     );
   }

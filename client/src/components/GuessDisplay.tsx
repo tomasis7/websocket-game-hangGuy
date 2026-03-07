@@ -1,104 +1,101 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 interface GuessDisplayProps {
-  correctGuesses: string[]; // ✅ Should be array, not Set
-  incorrectGuesses: string[]; // ✅ Should be array, not Set
+  correctGuesses: string[];
+  incorrectGuesses: string[];
   remainingGuesses: number;
   maxGuesses: number;
 }
 
-export const GuessDisplay: React.FC<GuessDisplayProps> = ({ 
-  correctGuesses, 
-  incorrectGuesses, 
-  remainingGuesses, 
-  maxGuesses 
-}) => {
-  const correctLetters = useMemo(() => [...correctGuesses].sort(), [correctGuesses]);
-  const incorrectLetters = useMemo(() => [...incorrectGuesses].sort(), [incorrectGuesses]);
-  const totalGuesses = correctLetters.length + incorrectLetters.length;
-  
+function HeartFilled() {
   return (
-    <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6 space-y-4">
-      {/* Remaining Guesses Section */}
-      <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Remaining Guesses</h3>
-        <div className="flex items-center justify-center gap-2">
-          <span className={`text-2xl font-bold ${
-            remainingGuesses <= 2 ? 'text-red-600' : 
-            remainingGuesses <= 4 ? 'text-yellow-600' : 
-            'text-green-600'
-          }`}>
-            {remainingGuesses}
-          </span>
-          <span className="text-gray-500">/ {maxGuesses}</span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+  );
+}
+
+function HeartEmpty() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+  );
+}
+
+export const GuessDisplay: React.FC<GuessDisplayProps> = ({
+  correctGuesses,
+  incorrectGuesses,
+  remainingGuesses,
+  maxGuesses,
+}) => {
+  const correctLetters = [...correctGuesses].sort();
+  const incorrectLetters = [...incorrectGuesses].sort();
+  const isCritical = remainingGuesses <= 2;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Lives strip */}
+      <div
+        className="flex flex-col items-center gap-2 py-3 px-4 rounded-2xl"
+        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+        aria-label={`${remainingGuesses} of ${maxGuesses} guesses remaining`}
+      >
+        <div className="flex gap-1.5">
+          {Array.from({ length: maxGuesses }).map((_, i) => {
+            const isAlive = i < remainingGuesses;
+            return (
+              <span
+                key={i}
+                style={{
+                  color: isAlive
+                    ? isCritical ? 'var(--danger)' : 'var(--success)'
+                    : 'var(--border)',
+                  transition: 'color 0.3s',
+                }}
+              >
+                {isAlive ? <HeartFilled /> : <HeartEmpty />}
+              </span>
+            );
+          })}
         </div>
-        
-        {/* Progress Bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-          <div 
-            className={`h-2 rounded-full transition-all duration-300 ${
-              remainingGuesses <= 2 ? 'bg-red-500' : 
-              remainingGuesses <= 4 ? 'bg-yellow-500' : 
-              'bg-green-500'
-            }`}
-            style={{ width: `${(remainingGuesses / maxGuesses) * 100}%` }}
-          />
-        </div>
+        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+          {remainingGuesses} / {maxGuesses} remaining
+        </span>
       </div>
 
-      {/* Correct Guesses Section */}
-      <div>
-        <h4 className="text-sm font-medium text-green-700 mb-2">
-          Correct Letters ({correctLetters.length})
-        </h4>
-        <div className="min-h-[2rem] p-2 bg-green-50 rounded border border-green-200">
-          {correctLetters.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {correctLetters.map(letter => (
-                <span 
-                  key={letter} 
-                  className="px-2 py-1 bg-green-200 text-green-800 rounded text-sm font-mono"
-                >
-                  {letter}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <span className="text-green-600 text-sm italic">No correct guesses yet</span>
-          )}
+      {/* Guessed letters chips */}
+      {(correctLetters.length > 0 || incorrectLetters.length > 0) && (
+        <div className="flex flex-wrap gap-1.5">
+          {correctLetters.map(letter => (
+            <span
+              key={letter}
+              className="px-2 py-0.5 rounded-full text-xs font-bold"
+              style={{
+                background: 'rgba(132,204,22,0.15)',
+                border: '1px solid var(--success)',
+                color: 'var(--success)',
+              }}
+            >
+              {letter}
+            </span>
+          ))}
+          {incorrectLetters.map(letter => (
+            <span
+              key={letter}
+              className="px-2 py-0.5 rounded-full text-xs font-bold line-through"
+              style={{
+                background: 'rgba(244,63,94,0.10)',
+                border: '1px solid var(--danger)',
+                color: 'var(--danger)',
+                opacity: 0.7,
+              }}
+            >
+              {letter}
+            </span>
+          ))}
         </div>
-      </div>
-
-      {/* Incorrect Guesses Section */}
-      <div>
-        <h4 className="text-sm font-medium text-red-700 mb-2">
-          Incorrect Letters ({incorrectLetters.length})
-        </h4>
-        <div className="min-h-[2rem] p-2 bg-red-50 rounded border border-red-200">
-          {incorrectLetters.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {incorrectLetters.map(letter => (
-                <span 
-                  key={letter} 
-                  className="px-2 py-1 bg-red-200 text-red-800 rounded text-sm font-mono line-through"
-                >
-                  {letter}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <span className="text-red-600 text-sm italic">No incorrect guesses yet</span>
-          )}
-        </div>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="pt-2 border-t border-gray-200">
-        <div className="flex justify-between text-sm text-gray-600">
-          <span>Total Guesses: {totalGuesses}</span>
-          <span>Accuracy: {totalGuesses > 0 ? Math.round((correctLetters.length / totalGuesses) * 100) : 0}%</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
