@@ -71,7 +71,7 @@ describe('HangGuyGame', () => {
       // Try to guess after game is over
       const canGuess = game.canGuessLetter('A');
       expect(canGuess.canGuess).toBe(false);
-      expect(canGuess.reason).toBe('Game is not in playing state');
+      expect(canGuess.reason).toBe('Game is not active');
     });
   });
 
