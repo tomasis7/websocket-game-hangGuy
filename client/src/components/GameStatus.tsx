@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 interface GameStatusProps {
   status: 'playing' | 'won' | 'lost';
@@ -39,7 +39,21 @@ function ConfettiPiece({ style }: { style: React.CSSProperties }) {
   );
 }
 
+const CONFETTI_COLORS = ['#8b5cf6','#84cc16','#f59e0b','#f43f5e','#06b6d4'];
+
 export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingGuesses }) => {
+  // Compute once on mount — Math.random() must not re-run on every render
+  const confettiPieces = useMemo(() =>
+    Array.from({ length: 12 }, (_, i) => ({
+      left: `${(i / 12) * 100}%`,
+      top: '-10px',
+      background: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      animation: `confetti-fall ${0.8 + Math.random() * 0.8}s ease-out forwards`,
+      animationDelay: `${Math.random() * 0.5}s`,
+      transform: `rotate(${Math.random() * 360}deg)`,
+    }))
+  , []);
+
   if (status === 'playing') {
     const isCritical = (remainingGuesses ?? 0) <= 2;
     const isWarning = (remainingGuesses ?? 0) <= 4;
@@ -74,16 +88,6 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
   }
 
   if (status === 'won') {
-    const confettiColors = ['#8b5cf6','#84cc16','#f59e0b','#f43f5e','#06b6d4'];
-    const pieces = Array.from({ length: 12 }, (_, i) => ({
-      left: `${(i / 12) * 100}%`,
-      top: '-10px',
-      background: confettiColors[i % confettiColors.length],
-      animation: `confetti-fall ${0.8 + Math.random() * 0.8}s ease-out forwards`,
-      animationDelay: `${Math.random() * 0.5}s`,
-      transform: `rotate(${Math.random() * 360}deg)`,
-    }));
-
     return (
       <div
         role="status"
@@ -94,7 +98,7 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
           border: '2px solid var(--success)',
         }}
       >
-        {pieces.map((s, i) => <ConfettiPiece key={i} style={s} />)}
+        {confettiPieces.map((s, i) => <ConfettiPiece key={i} style={s} />)}
         <div
           className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
           style={{ background: 'rgba(132,204,22,0.2)', color: 'var(--success)' }}

@@ -9,6 +9,18 @@ const HANGMAN_ROOM = "hangman-room";
 // Rate limiting: track guess timestamps per socket
 const guessTimestamps = new Map<string, number[]>();
 const MAX_GUESSES_PER_SECOND = 2;
+const RATE_TTL = 60_000;
+
+// Periodically prune stale rate-limit entries for sockets that disconnected
+// without triggering the disconnect event (e.g. network drop)
+setInterval(() => {
+  const cutoff = Date.now() - RATE_TTL;
+  for (const [id, times] of guessTimestamps) {
+    const trimmed = times.filter(t => t > cutoff);
+    if (trimmed.length === 0) guessTimestamps.delete(id);
+    else guessTimestamps.set(id, trimmed);
+  }
+}, 30_000);
 
 function isRateLimited(socketId: string): boolean {
   const now = Date.now();
@@ -27,6 +39,10 @@ function sanitizePlayerName(name: unknown): string {
 
 function isValidGuessLetter(letter: unknown): letter is string {
   return typeof letter === "string" && /^[A-Za-z]$/.test(letter);
+}
+
+function emitError(socket: Socket, message: string, code: string) {
+  socket.emit("hangman:error", { message, code, timestamp: Date.now() });
 }
 
 export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
@@ -62,19 +78,11 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
           .to(HANGMAN_ROOM)
           .emit("hangman:player-action-broadcast", joinBroadcast);
       } else {
-        socket.emit("hangman:error", {
-          message: joinResult.error || "Failed to join game",
-          code: "JOIN_ERROR",
-          timestamp: Date.now(),
-        });
+        emitError(socket, joinResult.error || "Failed to join game", "JOIN_ERROR");
       }
     } catch (error) {
       console.error("Error joining game:", error);
-      socket.emit("hangman:error", {
-        message: "Failed to join game",
-        code: "JOIN_EXCEPTION",
-        timestamp: Date.now(),
-      });
+      emitError(socket, "Failed to join game", "JOIN_EXCEPTION");
     }
   });
 
@@ -85,11 +93,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
       const player = gameManager.getPlayer(socket.id);
 
       if (!player) {
-        socket.emit("hangman:error", {
-          message: "Player not found in game",
-          code: "PLAYER_NOT_FOUND",
-          timestamp: Date.now(),
-        });
+        emitError(socket, "Player not found in game", "PLAYER_NOT_FOUND");
         return;
       }
 
@@ -103,11 +107,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
       });
     } catch (error) {
       console.error("Error in sync request:", error);
-      socket.emit("hangman:error", {
-        message: "Failed to sync game state",
-        code: "SYNC_ERROR",
-        timestamp: Date.now(),
-      });
+      emitError(socket, "Failed to sync game state", "SYNC_ERROR");
     }
   });
 
@@ -145,11 +145,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
 
     const letter = typeof data.letter === "string" ? data.letter.trim().toUpperCase() : "";
     if (!/^[A-Z]$/.test(letter)) {
-      socket.emit("hangman:error", {
-        message: "Letter must be a single A-Z character",
-        code: "INVALID_LETTER",
-        timestamp: Date.now(),
-      });
+      emitError(socket, "Letter must be a single A-Z character", "INVALID_LETTER");
       return;
     }
     data = { ...data, letter };
@@ -157,29 +153,17 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
     const player = gameManager.getPlayer(playerId);
 
     if (!player) {
-      socket.emit("hangman:error", {
-        message: "You must join the game first",
-        code: "NOT_IN_GAME",
-        timestamp: Date.now(),
-      });
+      emitError(socket, "You must join the game first", "NOT_IN_GAME");
       return;
     }
 
     if (!isValidGuessLetter(data?.letter)) {
-      socket.emit("hangman:error", {
-        message: "Invalid guess: must be a single letter A-Z",
-        code: "INVALID_INPUT",
-        timestamp: Date.now(),
-      });
+      emitError(socket, "Invalid guess: must be a single letter A-Z", "INVALID_INPUT");
       return;
     }
 
     if (isRateLimited(playerId)) {
-      socket.emit("hangman:error", {
-        message: "Too many guesses — slow down!",
-        code: "RATE_LIMITED",
-        timestamp: Date.now(),
-      });
+      emitError(socket, "Too many guesses — slow down!", "RATE_LIMITED");
       return;
     }
 
@@ -187,11 +171,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
       const result = gameManager.processGuess(data.letter, playerId);
 
       if (!result.success) {
-        socket.emit("hangman:error", {
-          message: result.error || "Failed to process guess",
-          code: "GUESS_ERROR",
-          timestamp: Date.now(),
-        });
+        emitError(socket, result.error || "Failed to process guess", "GUESS_ERROR");
         return;
       }
 
@@ -207,11 +187,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
       io.to(HANGMAN_ROOM).emit("hangman:guess-broadcast", guessBroadcast);
     } catch (error) {
       console.error("Error processing guess:", error);
-      socket.emit("hangman:error", {
-        message: "Failed to process guess",
-        code: "GUESS_PROCESSING_ERROR",
-        timestamp: Date.now(),
-      });
+      emitError(socket, "Failed to process guess", "GUESS_PROCESSING_ERROR");
     }
   });
 
@@ -221,11 +197,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
     const player = gameManager.getPlayer(playerId);
 
     if (!player) {
-      socket.emit("hangman:error", {
-        message: "You must join the game first",
-        code: "NOT_IN_GAME",
-        timestamp: Date.now(),
-      });
+      emitError(socket, "You must join the game first", "NOT_IN_GAME");
       return;
     }
 
@@ -245,11 +217,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
       );
     } catch (error) {
       console.error("Error starting new game:", error);
-      socket.emit("hangman:error", {
-        message: "Failed to start new game",
-        code: "NEW_GAME_ERROR",
-        timestamp: Date.now(),
-      });
+      emitError(socket, "Failed to start new game", "NEW_GAME_ERROR");
     }
   });
 

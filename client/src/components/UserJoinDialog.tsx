@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 interface UserJoinDialogProps {
   onJoin: (nickname: string, sessionId?: string, avatar?: string) => void;
@@ -32,34 +33,7 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
     }
   }, [isVisible]);
 
-  // Focus trap — native listener so preventDefault fires before browser moves focus
-  useEffect(() => {
-    if (!isVisible) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-      const dialog = dialogRef.current;
-      if (!dialog) return;
-      const focusable = Array.from(
-        dialog.querySelectorAll<HTMLElement>('button, input, [tabindex]:not([tabindex="-1"])')
-      ).filter(el => !el.hasAttribute('disabled'));
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isVisible]);
+  useFocusTrap(dialogRef, isVisible);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

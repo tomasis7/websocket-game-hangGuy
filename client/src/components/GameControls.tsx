@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { getAvailableCategories } from '../utils/wordSelection';
 
 interface GameControlsProps {
@@ -19,7 +19,7 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard' | ''>('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const categories = getAvailableCategories();
+  const categories = useMemo(() => getAvailableCategories(), []);
 
   const handleQuickNewGame = () => {
     onNewGame();

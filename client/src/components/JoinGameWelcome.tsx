@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef } from "react";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 import type { GameStateEvent, PlayerInfo } from "../../../shared/types";
 
 interface JoinGameWelcomeProps {
@@ -24,27 +25,7 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
     setTimeout(() => dismissRef.current?.focus(), 50);
   }, []);
 
-  // Focus trap + Escape to dismiss
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      onDismiss();
-      return;
-    }
-    if (e.key === 'Tab') {
-      const dialog = dialogRef.current;
-      if (!dialog) {return;}
-      const focusable = dialog.querySelectorAll<HTMLElement>(
-        'button, [tabindex]:not([tabindex="-1"])'
-      );
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey) {
-        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
-      } else {
-        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
-      }
-    }
-  }, [onDismiss]);
+  useFocusTrap(dialogRef, true, onDismiss);
 
   const getIcon = () => {
     if (gameState.status === "won") {return "🎉";}
@@ -85,7 +66,6 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
     >
       <div
         ref={dialogRef}
-        onKeyDown={handleKeyDown}
         className="w-full sm:max-w-md flex flex-col gap-4 animate-bounce-in"
         style={{
           background: 'var(--bg)',
