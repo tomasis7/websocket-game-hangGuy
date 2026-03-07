@@ -20,25 +20,37 @@ setInterval(() => {
     if (trimmed.length === 0) guessTimestamps.delete(id);
     else guessTimestamps.set(id, trimmed);
   }
-}, 30_000);
+}, 30_000).unref();
 
 function isRateLimited(socketId: string): boolean {
   const now = Date.now();
-  const timestamps = guessTimestamps.get(socketId) || [];
-  const recent = timestamps.filter((t) => now - t < 1000);
-  guessTimestamps.set(socketId, recent);
-  if (recent.length >= MAX_GUESSES_PER_SECOND) return true;
-  recent.push(now);
+  let timestamps = guessTimestamps.get(socketId);
+  if (!timestamps) {
+    timestamps = [];
+    guessTimestamps.set(socketId, timestamps);
+  }
+  while (timestamps.length > 0 && now - timestamps[0] >= 1000) {
+    timestamps.shift();
+  }
+  if (timestamps.length >= MAX_GUESSES_PER_SECOND) return true;
+  timestamps.push(now);
   return false;
+}
+
+function broadcastPlayerLeft(socket: Socket, playerId: string, playerInfo: { name: string }) {
+  socket.to(HANGMAN_ROOM).emit("hangman:player-action-broadcast", {
+    action: "left" as const,
+    playerId,
+    playerName: playerInfo.name,
+    playerCount: gameManager.getPlayerCount(),
+    gameState: gameManager.getGameState(),
+    timestamp: Date.now(),
+  });
 }
 
 function sanitizePlayerName(name: unknown): string {
   if (typeof name !== "string") return "";
   return name.trim().replace(/[<>&"']/g, "").slice(0, 20);
-}
-
-function isValidGuessLetter(letter: unknown): letter is string {
-  return typeof letter === "string" && /^[A-Za-z]$/.test(letter);
 }
 
 function emitError(socket: Socket, message: string, code: string) {
@@ -120,19 +132,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
 
       if (removed && playerInfo) {
         socket.leave(HANGMAN_ROOM);
-
-        const leaveBroadcast = {
-          action: "left" as const,
-          playerId,
-          playerName: playerInfo.name,
-          playerCount: gameManager.getPlayerCount(),
-          gameState: gameManager.getGameState(),
-          timestamp: Date.now(),
-        };
-
-        socket
-          .to(HANGMAN_ROOM)
-          .emit("hangman:player-action-broadcast", leaveBroadcast);
+        broadcastPlayerLeft(socket, playerId, playerInfo);
       }
     } catch (error) {
       console.error("Error in leave-game:", error);
@@ -154,11 +154,6 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
 
     if (!player) {
       emitError(socket, "You must join the game first", "NOT_IN_GAME");
-      return;
-    }
-
-    if (!isValidGuessLetter(data?.letter)) {
-      emitError(socket, "Invalid guess: must be a single letter A-Z", "INVALID_INPUT");
       return;
     }
 
@@ -230,18 +225,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
       const { removed, playerInfo } = gameManager.removePlayer(playerId);
 
       if (removed && playerInfo) {
-        const disconnectBroadcast = {
-          action: "left" as const,
-          playerId,
-          playerName: playerInfo.name,
-          playerCount: gameManager.getPlayerCount(),
-          gameState: gameManager.getGameState(),
-          timestamp: Date.now(),
-        };
-
-        socket
-          .to(HANGMAN_ROOM)
-          .emit("hangman:player-action-broadcast", disconnectBroadcast);
+        broadcastPlayerLeft(socket, playerId, playerInfo);
       }
     } catch (error) {
       console.error("Error handling disconnect:", error);

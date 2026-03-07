@@ -48,6 +48,8 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
     return 'var(--accent)';
   };
 
+  const buttonColor = getButtonColor();
+
   return (
     <div className="flex flex-col gap-3 w-full">
       {/* Main action button */}
@@ -56,10 +58,10 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
         disabled={disabled}
         className="w-full font-bold py-3.5 px-6 rounded-full text-white transition-all duration-200 hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2"
         style={{
-          background: disabled ? 'var(--border)' : getButtonColor(),
+          background: disabled ? 'var(--border)' : buttonColor,
           cursor: disabled ? 'not-allowed' : 'pointer',
           fontSize: '1rem',
-          boxShadow: disabled ? 'none' : `0 4px 16px ${getButtonColor()}44`,
+          boxShadow: disabled ? 'none' : `0 4px 16px ${buttonColor}44`,
           fontFamily: "'Fredoka One', cursive",
           letterSpacing: '0.02em',
         }}

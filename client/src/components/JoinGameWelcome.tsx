@@ -27,28 +27,29 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
 
   useFocusTrap(dialogRef, true, onDismiss);
 
-  const getIcon = () => {
-    if (gameState.status === "won") {return "🎉";}
-    if (gameState.status === "lost") {return "💀";}
-    if (isGameInProgress) {return "🎯";}
-    return "👋";
+  type StatusKey = 'won' | 'lost' | 'inProgress' | 'waiting';
+  const statusKey: StatusKey =
+    gameState.status === "won"  ? "won"  :
+    gameState.status === "lost" ? "lost" :
+    isGameInProgress            ? "inProgress" : "waiting";
+
+  const STATUS_CONTENT: Record<StatusKey, { icon: string; title: string }> = {
+    won:        { icon: "🎉", title: "Game Already Won!" },
+    lost:       { icon: "💀", title: "Game Already Lost" },
+    inProgress: { icon: "🎯", title: "Game In Progress!" },
+    waiting:    { icon: "👋", title: "Welcome to Hang Guy!" },
   };
 
-  const getTitle = () => {
-    if (gameState.status === "won") {return "Game Already Won!";}
-    if (gameState.status === "lost") {return "Game Already Lost";}
-    if (isGameInProgress) {return "Game In Progress!";}
-    return "Welcome to Hang Guy!";
-  };
+  const { icon, title } = STATUS_CONTENT[statusKey];
 
   const getMessage = () => {
-    if (gameState.status === "won") {
+    if (statusKey === "won") {
       return `The word "${gameState.word}" was already guessed. Start a new game to play!`;
     }
-    if (gameState.status === "lost") {
+    if (statusKey === "lost") {
       return `The previous game ended. The word was "${gameState.word}". Start a new game to play!`;
     }
-    if (isGameInProgress) {
+    if (statusKey === "inProgress") {
       const chars = gameState.displayWord.replace(/\s/g, "");
       const revealed = chars.replace(/_/g, "").length;
       return `You joined an active game! ${revealed} of ${chars.length} letters revealed. Guess away!`;
@@ -79,7 +80,7 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
 
         {/* Header */}
         <div className="text-center">
-          <div className="text-4xl mb-2" aria-hidden="true">{getIcon()}</div>
+          <div className="text-4xl mb-2" aria-hidden="true">{icon}</div>
           <h2
             id={headingId}
             className="text-xl font-bold"
@@ -87,7 +88,7 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
           >
             Welcome, {playerInfo.name}!
           </h2>
-          <p className="font-semibold mt-0.5" style={{ color: 'var(--text)' }}>{getTitle()}</p>
+          <p className="font-semibold mt-0.5" style={{ color: 'var(--text)' }}>{title}</p>
         </div>
 
         {/* Summary */}

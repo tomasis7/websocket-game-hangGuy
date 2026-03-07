@@ -1,4 +1,5 @@
-import { useEffect, RefObject } from 'react';
+import { useEffect } from 'react';
+import type { RefObject } from 'react';
 
 const FOCUSABLE_SELECTOR = 'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -9,17 +10,17 @@ export function useFocusTrap(
 ) {
   useEffect(() => {
     if (!active) return;
+    const container = ref.current;
+    if (!container) return;
+    const focusable = Array.from(
+      container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+    );
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onEscape?.();
         return;
       }
       if (e.key !== 'Tab') return;
-      const container = ref.current;
-      if (!container) return;
-      const focusable = Array.from(
-        container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-      );
       if (focusable.length === 0) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
