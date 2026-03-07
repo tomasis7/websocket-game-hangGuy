@@ -5,7 +5,7 @@
   --bg:           #f5f3ff;   /* violet-50  */
   --bg-surface:   #ffffff;
   --text:         #1e1b4b;   /* indigo-950 */
-  --text-muted:   #6b7280;
+  --text-muted:   #545d6b;   /* darkened for WCAG AA 4.5:1 on --bg */
   --accent:       #7c3aed;   /* violet-600 */
   --accent-hover: #6d28d9;
   --success:      #84cc16;   /* lime-500   */

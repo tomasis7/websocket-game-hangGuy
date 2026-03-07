@@ -102,8 +102,22 @@ export const MultiplayerHangGuy: React.FC = () => {
     setShowJoinDialog(true);
   }, [leaveGame]);
 
-  // ── Loading / connecting ─────────────────────────────────────────
-  if (!isConnected || isJoining) {
+  // ── Join dialog (shown immediately, even while connecting) ─────────
+  // Dialog is visible before connection so users can prepare — submit is
+  // disabled until connected (eager UI pattern).
+  if (showJoinDialog || (!currentUser && !gameState?.players?.find((p) => p.id === socket?.id))) {
+    const connectingError = !isConnected ? "Connecting to server…" : undefined;
+    return (
+      <UserJoinDialog
+        onJoin={handleJoinGame}
+        isVisible={true}
+        error={joinError || error || (isJoining ? "Joining…" : connectingError) || undefined}
+      />
+    );
+  }
+
+  // ── Joining / loading ────────────────────────────────────────────
+  if (isJoining) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div
@@ -121,10 +135,10 @@ export const MultiplayerHangGuy: React.FC = () => {
           />
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--text)' }}>
-            {isJoining ? "Joining Game…" : "Connecting…"}
+            Joining Game…
           </h2>
           <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-            {isJoining ? "Syncing with the current game state." : "Connecting to the multiplayer server."}
+            Syncing with the current game state.
           </p>
           {error && (
             <div
@@ -181,17 +195,6 @@ export const MultiplayerHangGuy: React.FC = () => {
           </button>
         </div>
       </div>
-    );
-  }
-
-  // ── Join dialog ──────────────────────────────────────────────────
-  if (showJoinDialog || (!currentUser && !gameState?.players?.find((p) => p.id === socket?.id))) {
-    return (
-      <UserJoinDialog
-        onJoin={handleJoinGame}
-        isVisible={true}
-        error={joinError || error || undefined}
-      />
     );
   }
 

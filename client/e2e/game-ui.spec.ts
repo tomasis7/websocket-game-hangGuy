@@ -3,60 +3,49 @@ import AxeBuilder from '@axe-core/playwright';
 
 // ── Helpers ────────────────────────────────────────────────────────
 
-/** Fill the join dialog with a nickname and submit */
-async function joinGame(page: import('@playwright/test').Page, nickname = 'TestPlayer') {
-  await page.waitForSelector('[role="dialog"]', { timeout: 10_000 });
-  await page.fill('#nickname-input', nickname);
-  await page.click('button[type="submit"]');
-  // Wait for dialog to close
-  await page.waitForSelector('[role="dialog"]', { state: 'hidden', timeout: 10_000 }).catch(() => {
-    // Dialog may not close if no server — that's ok for offline tests
-  });
-}
+const DIALOG_TIMEOUT = 8_000;
 
 // ── Join flow ──────────────────────────────────────────────────────
 
 test.describe('Join flow', () => {
-  test('shows join dialog on load', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
+    // Block socket so app stays in dialog state throughout tests
+    await page.route('**/socket.io/**', route => route.abort());
     await page.goto('/');
+  });
+
+  test('shows join dialog immediately on load', async ({ page }) => {
     const dialog = page.locator('[role="dialog"]');
-    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    await expect(dialog).toBeVisible({ timeout: DIALOG_TIMEOUT });
     await expect(page.locator('#nickname-input')).toBeFocused({ timeout: 5_000 });
   });
 
-  test('shows error when submitting empty nickname', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('[role="dialog"]');
-
+  test('submit button is disabled when nickname is empty', async ({ page }) => {
+    await page.locator('[role="dialog"]').waitFor({ timeout: DIALOG_TIMEOUT });
     const submitBtn = page.locator('button[type="submit"]');
-    // Submit button should be disabled (no nickname)
     await expect(submitBtn).toBeDisabled();
   });
 
   test('submit button enables when nickname is entered', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('[role="dialog"]');
+    await page.locator('[role="dialog"]').waitFor({ timeout: DIALOG_TIMEOUT });
     await page.fill('#nickname-input', 'PlayerOne');
     const submitBtn = page.locator('button[type="submit"]');
     await expect(submitBtn).toBeEnabled();
   });
 
-  test('avatar selection changes visual highlight', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('[role="dialog"]');
-
+  test('avatar selection changes aria-pressed state', async ({ page }) => {
+    await page.locator('[role="dialog"]').waitFor({ timeout: DIALOG_TIMEOUT });
     const avatarButtons = page.locator('[role="radiogroup"] button');
     await avatarButtons.nth(2).click();
-    // The clicked button should have aria-pressed=true
     await expect(avatarButtons.nth(2)).toHaveAttribute('aria-pressed', 'true');
+    await expect(avatarButtons.nth(0)).toHaveAttribute('aria-pressed', 'false');
   });
 });
 
-// ── Game board ─────────────────────────────────────────────────────
+// ── App chrome ─────────────────────────────────────────────────────
 
-test.describe('Game board (offline mode)', () => {
+test.describe('App chrome (offline mode)', () => {
   test.beforeEach(async ({ page }) => {
-    // Block socket connections so page loads in a predictable state
     await page.route('**/socket.io/**', route => route.abort());
     await page.goto('/');
   });
@@ -74,56 +63,48 @@ test.describe('Game board (offline mode)', () => {
 
   test('join dialog has correct ARIA attributes', async ({ page }) => {
     const dialog = page.locator('[role="dialog"]');
-    await expect(dialog).toBeVisible({ timeout: 10_000 });
+    await expect(dialog).toBeVisible({ timeout: DIALOG_TIMEOUT });
     await expect(dialog).toHaveAttribute('aria-modal', 'true');
     await expect(dialog).toHaveAttribute('aria-labelledby');
-  });
-});
-
-// ── QWERTY keyboard ────────────────────────────────────────────────
-
-test.describe('QWERTY keyboard layout', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.route('**/socket.io/**', route => route.abort());
-    await page.goto('/');
-  });
-
-  test('keyboard group has correct ARIA role', async ({ page }) => {
-    // Keyboard only visible in playing state — skip if dialog is shown
-    const dialog = page.locator('[role="dialog"]');
-    if (await dialog.isVisible().catch(() => true)) return;
-
-    const keyboard = page.locator('[role="group"][aria-label="Letter keyboard"]');
-    await expect(keyboard).toBeVisible();
   });
 });
 
 // ── Dark mode ──────────────────────────────────────────────────────
 
 test.describe('Dark mode', () => {
-  test('toggles dark class on html element', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.route('**/socket.io/**', route => route.abort());
     await page.goto('/');
-
-    const toggleBtn = page.locator('header button[aria-label*="mode"]');
-    await toggleBtn.waitFor({ timeout: 5_000 });
-
-    const htmlEl = page.locator('html');
-    const classBefore = await htmlEl.getAttribute('class');
-
-    await toggleBtn.click();
-
-    const classAfter = await htmlEl.getAttribute('class');
-    expect(classBefore).not.toEqual(classAfter);
   });
 
-  test('persists dark mode preference in localStorage', async ({ page }) => {
-    await page.route('**/socket.io/**', route => route.abort());
-    await page.goto('/');
-
+  test('toggles dark class on html element', async ({ page }) => {
     const toggleBtn = page.locator('header button[aria-label*="mode"]');
     await toggleBtn.waitFor({ timeout: 5_000 });
-    await toggleBtn.click();
+
+    // Capture initial state
+    const hasDarkBefore = await page.evaluate(() =>
+      document.documentElement.classList.contains('dark')
+    );
+
+    // The join dialog overlay (fixed inset-0) blocks pointer events on the header.
+    // Click via JS to bypass the overlay and trigger React's onClick handler.
+    await page.evaluate(() => {
+      const btn = document.querySelector<HTMLElement>('header button[aria-label*="mode"]');
+      btn?.click();
+    });
+
+    // Wait for React to flip the dark class
+    await page.waitForFunction(
+      (before: boolean) => document.documentElement.classList.contains('dark') !== before,
+      hasDarkBefore,
+      { timeout: 3_000 }
+    );
+  });
+
+  test('persists theme preference in localStorage', async ({ page }) => {
+    const toggleBtn = page.locator('header button[aria-label*="mode"]');
+    await toggleBtn.waitFor({ timeout: 5_000 });
+    await toggleBtn.click({ force: true });
 
     const stored = await page.evaluate(() => localStorage.getItem('hangGuy_theme'));
     expect(stored === 'dark' || stored === 'light').toBe(true);
@@ -133,17 +114,18 @@ test.describe('Dark mode', () => {
 // ── Responsive layouts ─────────────────────────────────────────────
 
 test.describe('Responsive layout', () => {
-  test('renders at 375px width without overflow', async ({ page }) => {
+  test('renders at 375px width without horizontal overflow', async ({ page }) => {
     await page.route('**/socket.io/**', route => route.abort());
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/');
 
-    const body = page.locator('body');
-    const box = await body.boundingBox();
-    expect(box?.width).toBeLessThanOrEqual(375 + 2);
+    const overflow = await page.evaluate(() =>
+      document.documentElement.scrollWidth > document.documentElement.clientWidth
+    );
+    expect(overflow).toBe(false);
   });
 
-  test('header is visible at all breakpoints', async ({ page }) => {
+  test('header is visible at 375px, 768px, and 1280px', async ({ page }) => {
     await page.route('**/socket.io/**', route => route.abort());
     for (const width of [375, 768, 1280]) {
       await page.setViewportSize({ width, height: 900 });
@@ -157,55 +139,44 @@ test.describe('Responsive layout', () => {
 // ── Accessibility ──────────────────────────────────────────────────
 
 test.describe('Accessibility', () => {
-  test('join dialog passes axe audit', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.route('**/socket.io/**', route => route.abort());
     await page.goto('/');
-    await page.waitForSelector('[role="dialog"]');
+    await page.locator('[role="dialog"]').waitFor({ timeout: DIALOG_TIMEOUT });
+  });
 
+  test('join dialog passes axe accessibility audit', async ({ page }) => {
     const results = await new AxeBuilder({ page })
       .include('[role="dialog"]')
       .analyze();
-
     expect(results.violations).toEqual([]);
   });
 
-  test('header passes axe audit', async ({ page }) => {
-    await page.route('**/socket.io/**', route => route.abort());
-    await page.goto('/');
-    await page.waitForSelector('header');
-
+  test('header passes axe accessibility audit', async ({ page }) => {
     const results = await new AxeBuilder({ page })
       .include('header')
       .analyze();
-
     expect(results.violations).toEqual([]);
   });
 
-  test('focus trap in join dialog: Tab cycles within dialog', async ({ page }) => {
-    await page.route('**/socket.io/**', route => route.abort());
-    await page.goto('/');
-    await page.waitForSelector('[role="dialog"]');
-
-    // Tab through all focusable elements — focus should stay within dialog
+  test('focus trap: Tab key cycles within dialog', async ({ page }) => {
     const dialog = page.locator('[role="dialog"]');
     const focusableCount = await dialog.locator('button, input').count();
 
-    // Press Tab (focusableCount + 1) times and verify still within dialog
     for (let i = 0; i < focusableCount + 2; i++) {
       await page.keyboard.press('Tab');
     }
 
-    const focused = await page.evaluate(() => document.activeElement?.closest('[role="dialog"]') !== null);
-    expect(focused).toBe(true);
+    const isInsideDialog = await page.evaluate(() => {
+      const active = document.activeElement;
+      return active?.closest('[role="dialog"]') !== null;
+    });
+    expect(isInsideDialog).toBe(true);
   });
 
-  test('aria-live region exists for game announcements', async ({ page }) => {
-    await page.route('**/socket.io/**', route => route.abort());
-    await page.goto('/');
-
-    // Check for aria-live regions (may be in dialog or game board)
-    const liveRegions = page.locator('[aria-live]');
-    const count = await liveRegions.count();
+  test('page has at least one accessible live or status region', async ({ page }) => {
+    const liveOrStatus = page.locator('[aria-live], [role="status"], [role="alert"]');
+    const count = await liveOrStatus.count();
     expect(count).toBeGreaterThan(0);
   });
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface UserJoinDialogProps {
   onJoin: (nickname: string, sessionId?: string, avatar?: string) => void;
@@ -32,16 +32,17 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
     }
   }, [isVisible]);
 
-  // Focus trap
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {return;} // no dismiss on Escape for join dialog (required)
-
-    if (e.key === 'Tab') {
+  // Focus trap — native listener so preventDefault fires before browser moves focus
+  useEffect(() => {
+    if (!isVisible) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
       const dialog = dialogRef.current;
-      if (!dialog) {return;}
-      const focusable = dialog.querySelectorAll<HTMLElement>(
-        'button, input, [tabindex]:not([tabindex="-1"])'
-      );
+      if (!dialog) return;
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>('button, input, [tabindex]:not([tabindex="-1"])')
+      ).filter(el => !el.hasAttribute('disabled'));
+      if (focusable.length === 0) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (e.shiftKey) {
@@ -55,8 +56,10 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
           first.focus();
         }
       }
-    }
-  }, []);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isVisible]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +84,6 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
     >
       <div
         ref={dialogRef}
-        onKeyDown={handleKeyDown}
         className="w-full sm:max-w-md animate-bounce-in"
         style={{
           background: 'var(--bg)',
@@ -182,20 +184,23 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
             </div>
           </div>
 
-          {/* Server error */}
-          {error && (
-            <div
-              className="px-4 py-3 rounded-xl text-sm"
-              role="alert"
-              style={{
-                background: 'rgba(244,63,94,0.10)',
-                border: '1px solid var(--danger)',
-                color: 'var(--danger)',
-              }}
-            >
-              {error}
-            </div>
-          )}
+          {/* Status / error message */}
+          {error && (() => {
+            const isConnecting = error.startsWith('Connecting');
+            return (
+              <div
+                className="px-4 py-3 rounded-xl text-sm"
+                role={isConnecting ? 'status' : 'alert'}
+                style={{
+                  background: isConnecting ? 'rgba(139,92,246,0.08)' : 'rgba(244,63,94,0.10)',
+                  border: `1px solid ${isConnecting ? 'var(--accent)' : 'var(--danger)'}`,
+                  color: isConnecting ? 'var(--accent)' : 'var(--danger)',
+                }}
+              >
+                {error}
+              </div>
+            );
+          })()}
 
           {/* Submit */}
           <button
