@@ -6,120 +6,135 @@ interface GameStatusProps {
   remainingGuesses?: number;
 }
 
-export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingGuesses }) => {
-  const getStatusConfig = () => {
-    switch (status) {
-      case 'playing':
-        return {
-          icon: '🎯',
-          title: 'Game In Progress',
-          message: `Keep guessing! ${remainingGuesses || 0} guesses remaining.`,
-          bgColor: 'bg-blue-50',
-          borderColor: 'border-blue-200',
-          textColor: 'text-blue-800',
-          iconBg: 'bg-blue-100'
-        };
-      case 'won':
-        return {
-          icon: '🎉',
-          title: 'Congratulations!',
-          message: 'You successfully guessed the word!',
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200',
-          textColor: 'text-green-800',
-          iconBg: 'bg-green-100'
-        };
-      case 'lost':
-        return {
-          icon: '💀',
-          title: 'Game Over',
-          message: word ? `The word was: "${word}"` : 'Better luck next time!',
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
-          textColor: 'text-red-800',
-          iconBg: 'bg-red-100'
-        };
-      default:
-        return {
-          icon: '❓',
-          title: 'Unknown Status',
-          message: 'Something went wrong.',
-          bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200',
-          textColor: 'text-gray-800',
-          iconBg: 'bg-gray-100'
-        };
-    }
-  };
-
-  const config = getStatusConfig();
-
+function TrophyIcon() {
   return (
-    <div className={`
-      ${config.bgColor} ${config.borderColor} ${config.textColor}
-      border-2 rounded-lg p-6 text-center shadow-sm
-      transition-all duration-300 ease-in-out
-    `}>
-      <div className={`
-        ${config.iconBg} w-16 h-16 rounded-full 
-        flex items-center justify-center mx-auto mb-4
-        text-2xl
-      `}>
-        {config.icon}
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="8 21 12 17 16 21" />
+      <line x1="12" y1="17" x2="12" y2="11" />
+      <path d="M7 4h10v5a5 5 0 0 1-10 0V4z" />
+      <path d="M4 4h3v3a3 3 0 0 1-3 0V4z" />
+      <path d="M17 4h3v3a3 3 0 0 1-3 0V4z" />
+    </svg>
+  );
+}
+
+function SkullIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="11" r="7" />
+      <path d="M12 18v3" />
+      <path d="M9 21h6" />
+      <line x1="9.5" y1="10" x2="9.5" y2="10" strokeWidth="3" strokeLinecap="round" />
+      <line x1="14.5" y1="10" x2="14.5" y2="10" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ConfettiPiece({ style }: { style: React.CSSProperties }) {
+  return (
+    <div
+      className="absolute w-2 h-2 rounded-sm pointer-events-none"
+      style={style}
+    />
+  );
+}
+
+export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingGuesses }) => {
+  if (status === 'playing') {
+    const isCritical = (remainingGuesses ?? 0) <= 2;
+    const isWarning = (remainingGuesses ?? 0) <= 4;
+    const color = isCritical ? 'var(--danger)' : isWarning ? 'var(--warning)' : 'var(--success)';
+
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex items-center gap-3 px-4 py-2 rounded-full text-sm font-semibold"
+        style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: 'var(--text)',
+        }}
+      >
+        <span
+          className="w-3 h-3 rounded-full flex-shrink-0"
+          style={{
+            background: color,
+            boxShadow: `0 0 8px ${color}`,
+            animation: isCritical ? 'glow-pulse 0.8s ease-in-out infinite' : 'glow-pulse 2s ease-in-out infinite',
+          }}
+          aria-hidden="true"
+        />
+        <span style={{ color }}>
+          <strong>{remainingGuesses ?? 0}</strong>
+          <span style={{ color: 'var(--text-muted)' }}> guesses left</span>
+        </span>
       </div>
-      
-      <h2 className="text-xl font-bold mb-2">
-        {config.title}
+    );
+  }
+
+  if (status === 'won') {
+    const confettiColors = ['#8b5cf6','#84cc16','#f59e0b','#f43f5e','#06b6d4'];
+    const pieces = Array.from({ length: 12 }, (_, i) => ({
+      left: `${(i / 12) * 100}%`,
+      top: '-10px',
+      background: confettiColors[i % confettiColors.length],
+      animation: `confetti-fall ${0.8 + Math.random() * 0.8}s ease-out forwards`,
+      animationDelay: `${Math.random() * 0.5}s`,
+      transform: `rotate(${Math.random() * 360}deg)`,
+    }));
+
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="relative overflow-hidden rounded-2xl p-6 text-center animate-bounce-in"
+        style={{
+          background: 'linear-gradient(135deg, rgba(132,204,22,0.15) 0%, rgba(139,92,246,0.15) 100%)',
+          border: '2px solid var(--success)',
+        }}
+      >
+        {pieces.map((s, i) => <ConfettiPiece key={i} style={s} />)}
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+          style={{ background: 'rgba(132,204,22,0.2)', color: 'var(--success)' }}
+        >
+          <TrophyIcon />
+        </div>
+        <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--success)', fontFamily: "'Fredoka One', cursive" }}>
+          You Won!
+        </h2>
+        <p style={{ color: 'var(--text-muted)' }}>You saved the day!</p>
+      </div>
+    );
+  }
+
+  // Lost
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="rounded-2xl p-6 text-center animate-shake"
+      style={{
+        background: 'rgba(244,63,94,0.08)',
+        border: '2px solid var(--danger)',
+      }}
+    >
+      <div
+        className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+        style={{ background: 'rgba(244,63,94,0.15)', color: 'var(--danger)' }}
+      >
+        <SkullIcon />
+      </div>
+      <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--danger)', fontFamily: "'Fredoka One', cursive" }}>
+        Game Over
       </h2>
-      
-      <p className="text-base font-medium">
-        {config.message}
-      </p>
-
-      {/* Additional status details */}
-      {status === 'playing' && (
-        <div className="mt-4 space-y-2">
-          <div className="flex justify-center items-center gap-2">
-            <div className={`
-              w-3 h-3 rounded-full animate-pulse
-              ${remainingGuesses && remainingGuesses <= 2 ? 'bg-red-500' : 
-                remainingGuesses && remainingGuesses <= 4 ? 'bg-yellow-500' : 
-                'bg-blue-500'}
-            `} />
-            <span className="text-sm font-medium">
-              {remainingGuesses && remainingGuesses <= 2 ? 'Critical!' : 
-               remainingGuesses && remainingGuesses <= 4 ? 'Be careful!' : 
-               'You\'re doing great!'}
-            </span>
-          </div>
-        </div>
+      {word && (
+        <p className="text-lg font-bold mt-2" style={{ color: 'var(--text)' }}>
+          The word was: <span style={{ color: 'var(--accent)' }}>{word}</span>
+        </p>
       )}
-
-      {status === 'won' && (
-        <div className="mt-4">
-          <div className="flex justify-center items-center gap-1">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className="text-yellow-400 text-lg animate-bounce" style={{ animationDelay: `${i * 0.1}s` }}>
-                ⭐
-              </span>
-            ))}
-          </div>
-          <p className="text-sm mt-2 font-medium">
-            You saved the day!
-          </p>
-        </div>
-      )}
-
-      {status === 'lost' && (
-        <div className="mt-4">
-          <div className="text-4xl mb-2">
-            ⚰️
-          </div>
-          <p className="text-sm font-medium">
-            Don't give up - try again!
-          </p>
-        </div>
-      )}
+      <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Don't give up — try again!</p>
     </div>
   );
 };

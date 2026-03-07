@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { getAvailableCategories } from '../utils/wordSelection';
 
 interface GameControlsProps {
@@ -7,17 +7,19 @@ interface GameControlsProps {
   disabled?: boolean;
 }
 
+const DIFFICULTIES: { value: 'easy' | 'medium' | 'hard'; label: string; color: string; border: string }[] = [
+  { value: 'easy',   label: 'Easy',   color: 'rgba(132,204,22,0.12)',  border: 'var(--success)' },
+  { value: 'medium', label: 'Medium', color: 'rgba(245,158,11,0.12)', border: 'var(--warning)' },
+  { value: 'hard',   label: 'Hard',   color: 'rgba(244,63,94,0.12)',  border: 'var(--danger)'  },
+];
+
 export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatus, disabled = false }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard' | ''>('');
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const categories = getAvailableCategories();
-  const difficulties = [
-    { value: 'easy', label: 'Easy (3-6 letters)', icon: '🟢' },
-    { value: 'medium', label: 'Medium (7-10 letters)', icon: '🟡' },
-    { value: 'hard', label: 'Hard (11+ letters)', icon: '🔴' }
-  ];
 
   const handleQuickNewGame = () => {
     onNewGame();
@@ -26,15 +28,8 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
 
   const handleCustomNewGame = () => {
     const options: { category?: string; difficulty?: 'easy' | 'medium' | 'hard' } = {};
-    
-    if (selectedCategory) {
-      options.category = selectedCategory;
-    }
-    
-    if (selectedDifficulty) {
-      options.difficulty = selectedDifficulty as 'easy' | 'medium' | 'hard';
-    }
-
+    if (selectedCategory) options.category = selectedCategory;
+    if (selectedDifficulty) options.difficulty = selectedDifficulty;
     onNewGame(options);
     setShowOptions(false);
     setSelectedCategory('');
@@ -42,184 +37,128 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
   };
 
   const getButtonText = () => {
-    switch (gameStatus) {
-      case 'playing':
-        return '🔄 Restart Game';
-      case 'won':
-        return '🎉 Play Again';
-      case 'lost':
-        return '💪 Try Again';
-      default:
-        return '🎮 New Game';
-    }
+    if (gameStatus === 'won')  return 'Play Again';
+    if (gameStatus === 'lost') return 'Try Again';
+    return 'New Game';
   };
 
   const getButtonColor = () => {
-    switch (gameStatus) {
-      case 'playing':
-        return 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500';
-      case 'won':
-        return 'bg-green-600 hover:bg-green-700 focus:ring-green-500';
-      case 'lost':
-        return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
-      default:
-        return 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500';
-    }
+    if (gameStatus === 'won')  return 'var(--success)';
+    if (gameStatus === 'lost') return 'var(--danger)';
+    return 'var(--accent)';
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 w-full">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Game Controls</h3>
-      
-      <div className="space-y-4">
-        {/* Quick New Game Button */}
-        <button
-          onClick={handleQuickNewGame}
-          disabled={disabled}
-          className={`
-            w-full text-white font-semibold py-3 px-4 rounded-lg 
-            transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2
-            ${disabled 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : getButtonColor()
-            }
-          `}
-        >
-          {getButtonText()}
-        </button>
+    <div className="flex flex-col gap-3 w-full">
+      {/* Main action button */}
+      <button
+        onClick={handleQuickNewGame}
+        disabled={disabled}
+        className="w-full font-bold py-3.5 px-6 rounded-full text-white transition-all duration-200 hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2"
+        style={{
+          background: disabled ? 'var(--border)' : getButtonColor(),
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          fontSize: '1rem',
+          boxShadow: disabled ? 'none' : `0 4px 16px ${getButtonColor()}44`,
+          fontFamily: "'Fredoka One', cursive",
+          letterSpacing: '0.02em',
+        }}
+      >
+        {getButtonText()}
+      </button>
 
-        {/* Options Toggle */}
-        <button
-          onClick={() => setShowOptions(!showOptions)}
-          disabled={disabled}
-          className={`
-            w-full bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-lg
-            border border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500
-            ${disabled 
-              ? 'cursor-not-allowed opacity-50' 
-              : 'hover:bg-gray-200'
-            }
-          `}
-        >
-          ⚙️ {showOptions ? 'Hide Options' : 'Show Options'}
-        </button>
+      {/* Options toggle */}
+      <button
+        onClick={() => setShowOptions(v => !v)}
+        disabled={disabled}
+        aria-expanded={showOptions}
+        className="text-sm font-medium py-2 px-4 rounded-full transition-colors hover:opacity-80 focus:outline-none focus-visible:ring-2"
+        style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-muted)',
+        }}
+      >
+        {showOptions ? 'Hide options' : 'Customize game'}
+      </button>
 
-        {/* Game Options */}
-        {showOptions && (
-          <div className="border-t border-gray-200 pt-4 space-y-4">
-            {/* Category Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                📚 Category
-              </label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                disabled={disabled}
-                className={`
-                  w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                  ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}
-                `}
+      {/* Options panel with max-height transition */}
+      <div
+        style={{
+          maxHeight: showOptions ? '600px' : '0',
+          overflow: 'hidden',
+          transition: 'max-height 0.35s ease',
+        }}
+      >
+        <div className="flex flex-col gap-4 pt-2">
+          {/* Category horizontal scroll chips */}
+          <div>
+            <p className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+              Category
+            </p>
+            <div ref={scrollRef} className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              <button
+                key="random"
+                onClick={() => setSelectedCategory('')}
+                className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all"
+                style={{
+                  background: selectedCategory === '' ? 'var(--accent)' : 'var(--bg-surface)',
+                  color: selectedCategory === '' ? '#fff' : 'var(--text)',
+                  border: '1px solid var(--border)',
+                }}
               >
-                <option value="">Random Category</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Difficulty Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🎯 Difficulty
-              </label>
-              <div className="space-y-2">
-                {difficulties.map(diff => (
-                  <label key={diff.value} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="difficulty"
-                      value={diff.value}
-                      checked={selectedDifficulty === diff.value}
-                      onChange={(e) => setSelectedDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
-                      disabled={disabled}
-                      className="mr-2 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">
-                      {diff.icon} {diff.label}
-                    </span>
-                  </label>
-                ))}
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="difficulty"
-                    value=""
-                    checked={selectedDifficulty === ''}
-                    onChange={() => setSelectedDifficulty('')}
-                    disabled={disabled}
-                    className="mr-2 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">
-                    🎲 Random Difficulty
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* Custom Start Button */}
-            <button
-              onClick={handleCustomNewGame}
-              disabled={disabled}
-              className={`
-                w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg
-                transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
-                ${disabled 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'hover:bg-indigo-700'
-                }
-              `}
-            >
-              🚀 Start Custom Game
-            </button>
-
-            {/* Clear Options */}
-            <button
-              onClick={() => {
-                setSelectedCategory('');
-                setSelectedDifficulty('');
-              }}
-              disabled={disabled}
-              className={`
-                w-full bg-gray-200 text-gray-700 font-medium py-1 px-4 rounded text-sm
-                transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500
-                ${disabled 
-                  ? 'cursor-not-allowed opacity-50' 
-                  : 'hover:bg-gray-300'
-                }
-              `}
-            >
-              🧹 Clear Options
-            </button>
-          </div>
-        )}
-
-        {/* Game Statistics (if game is finished) */}
-        {gameStatus !== 'playing' && (
-          <div className="border-t border-gray-200 pt-4">
-            <div className="text-center text-sm text-gray-600">
-              <p className="mb-2">🎮 Ready for another round?</p>
-              {gameStatus === 'won' && (
-                <p className="text-green-600 font-medium">🏆 Great job solving that word!</p>
-              )}
-              {gameStatus === 'lost' && (
-                <p className="text-red-600 font-medium">💪 Don't give up - you've got this!</p>
-              )}
+                Random
+              </button>
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all"
+                  style={{
+                    background: selectedCategory === cat ? 'var(--accent)' : 'var(--bg-surface)',
+                    color: selectedCategory === cat ? '#fff' : 'var(--text)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
           </div>
-        )}
+
+          {/* Difficulty cards */}
+          <div>
+            <p className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+              Difficulty
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {DIFFICULTIES.map(d => (
+                <button
+                  key={d.value}
+                  onClick={() => setSelectedDifficulty(prev => prev === d.value ? '' : d.value)}
+                  className="py-2 rounded-xl text-sm font-semibold transition-all"
+                  style={{
+                    background: selectedDifficulty === d.value ? d.color : 'var(--bg-surface)',
+                    border: `1.5px solid ${selectedDifficulty === d.value ? d.border : 'var(--border)'}`,
+                    color: selectedDifficulty === d.value ? d.border : 'var(--text-muted)',
+                  }}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Start custom game */}
+          <button
+            onClick={handleCustomNewGame}
+            disabled={disabled}
+            className="w-full py-2.5 rounded-full text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95"
+            style={{ background: 'var(--accent)', boxShadow: '0 2px 12px rgba(139,92,246,0.35)' }}
+          >
+            Start Custom Game
+          </button>
+        </div>
       </div>
     </div>
   );
