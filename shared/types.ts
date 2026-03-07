@@ -1,3 +1,28 @@
+// ─── Internal Game State (used by game logic) ───────────────────────────────
+
+export interface GuessResult {
+  letter: string;
+  isCorrect: boolean;
+  isAlreadyGuessed: boolean;
+  newLettersRevealed: string[];
+  gameStateAfter: "playing" | "won" | "lost";
+  message: string;
+}
+
+export interface GameState {
+  word: string;
+  guessedLetters: Set<string>;
+  correctGuesses: Set<string>;
+  incorrectGuesses: Set<string>;
+  remainingGuesses: number;
+  maxGuesses: number;
+  status: "playing" | "won" | "lost";
+  displayWord: string;
+  lastGuessResult?: GuessResult;
+}
+
+// ─── Network/Socket Types (serialized for transport) ─────────────────────────
+
 export interface User {
   id: string;
   nickname: string;
@@ -6,38 +31,27 @@ export interface User {
   joinedAt: number;
 }
 
-export interface SessionInfo {
+export interface PlayerInfo {
   id: string;
-  hostUserId: string;
-  createdAt: number;
-  playerCount: number;
-}
-
-export interface JoinGameRequest {
-  nickname: string;
-  sessionId?: string;
+  name: string;
   avatar?: string;
+  joinedAt: number;
+  isActive: boolean;
 }
 
-export interface UserIdentification {
-  userId: string;
-  nickname: string;
-  sessionId: string;
-  isHost: boolean;
+export interface GameAction {
+  type: "guess" | "new_game" | "player_join" | "player_leave";
+  playerId: string;
+  playerName: string;
+  timestamp: number;
+  data?: Record<string, unknown>;
 }
 
-export interface JoinGameResponse {
-  success: boolean;
-  user?: User;
-  session?: SessionInfo;
-  error?: string;
-}
-
-export interface ReconnectResponse {
-  success: boolean;
-  user?: User;
-  session?: SessionInfo;
-  error?: string;
+export interface GuessEvent {
+  letter: string;
+  playerId: string;
+  playerName: string;
+  timestamp: number;
 }
 
 export interface GameStateEvent {
@@ -55,34 +69,13 @@ export interface GameStateEvent {
   lastAction?: GameAction;
 }
 
-export interface PlayerInfo {
-  avatar: any;
-  id: string;
-  name: string;
-  joinedAt: number;
-  isActive: boolean;
-}
-
-export interface GameAction {
-  type: "guess" | "new_game" | "player_join" | "player_leave";
-  playerId: string;
-  playerName: string;
-  timestamp: number;
-  data?: any;
-}
-
-export interface GuessEvent {
-  letter: string;
-  playerId: string;
-  playerName: string;
-  timestamp: number;
-}
-
 export interface GameBroadcast {
   gameState: GameStateEvent;
   action: GameAction;
   timestamp: number;
 }
+
+// ─── Socket Event Map ────────────────────────────────────────────────────────
 
 export interface HangGuySocketEvents {
   // Client to Server
@@ -161,39 +154,4 @@ export interface HangGuySocketEvents {
     code?: string;
     timestamp: number;
   }) => void;
-}
-
-export interface ClientToServerEvents {
-  joinGame: (request: JoinGameRequest & { userId: string }) => void;
-  leaveGame: (data: { userId: string }) => void;
-  reconnectToSession: (data: {
-    userId: string;
-    sessionId: string;
-    nickname: string;
-  }) => void;
-  guessLetter: (data: { letter: string; playerId: string }) => void;
-  startNewGame: (options?: {
-    category?: string;
-    difficulty?: "easy" | "medium" | "hard";
-  }) => void;
-  requestSync: () => void;
-  requestGameHistory: () => void;
-}
-
-export interface ServerToClientEvents {
-  joinGameResponse: (response: JoinGameResponse) => void;
-  reconnectResponse: (response: ReconnectResponse) => void;
-  userJoined: (user: User) => void;
-  userLeft: (userId: string) => void;
-  userListUpdated: (users: User[]) => void;
-  sessionUpdated: (session: SessionInfo) => void;
-  gameStateUpdated: (gameState: GameStateEvent) => void;
-  playerGuessed: (data: {
-    playerId: string;
-    letter: string;
-    isCorrect: boolean;
-  }) => void;
-  gameEnded: (data: { status: "won" | "lost"; word: string }) => void;
-  notification: (message: string) => void;
-  error: (error: string) => void;
 }
