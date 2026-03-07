@@ -1,4 +1,4 @@
-import { HangGuyGame } from "../../client/src/utils/gameLogic";
+import { HangGuyGame } from "../../shared/gameLogic";
 import {
   GameStateEvent,
   PlayerInfo,
