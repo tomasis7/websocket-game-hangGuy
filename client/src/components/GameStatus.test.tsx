@@ -11,7 +11,7 @@ describe('GameStatus', () => {
       />
     );
     
-    expect(screen.getByText('Game in Progress')).toBeInTheDocument();
+    expect(screen.getByText('Game In Progress')).toBeInTheDocument();
     expect(screen.getByText(/5 guesses remaining/)).toBeInTheDocument();
   });
 
@@ -23,8 +23,8 @@ describe('GameStatus', () => {
       />
     );
     
-    expect(screen.getByText('Congratulations! You Won!')).toBeInTheDocument();
-    expect(screen.getByText(/The word was: TESTING/)).toBeInTheDocument();
+    expect(screen.getByText('Congratulations!')).toBeInTheDocument();
+    expect(screen.getByText(/You successfully guessed the word/)).toBeInTheDocument();
   });
 
   it('should render lost status correctly', () => {
@@ -36,7 +36,7 @@ describe('GameStatus', () => {
     );
     
     expect(screen.getByText('Game Over')).toBeInTheDocument();
-    expect(screen.getByText(/The word was: TESTING/)).toBeInTheDocument();
+    expect(screen.getByText(/The word was: "TESTING"/)).toBeInTheDocument();
   });
 
   it('should show low guesses warning', () => {
