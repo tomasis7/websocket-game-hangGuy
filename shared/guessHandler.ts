@@ -1,4 +1,4 @@
-import type { GuessResult, GameState } from "../types/gameTypes";
+import type { GuessResult, GameState } from "./types";
 
 export class GuessHandler {
   /**

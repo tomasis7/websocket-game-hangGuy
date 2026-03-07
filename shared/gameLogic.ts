@@ -1,4 +1,4 @@
-import type { GameState, GuessResult } from "../types/gameTypes";
+import type { GameState, GuessResult } from "./types";
 import { GuessHandler } from "./guessHandler";
 import { getRandomWord } from "./wordSelection";
 
