@@ -43,11 +43,6 @@ export const MultiplayerHangGuy: React.FC = () => {
   const incorrectGuessCount = gameState?.incorrectGuesses.length || 0;
   const isGameActive = gameState?.status === "playing";
 
-  const correctGuessesSet = useMemo(
-    () => new Set(gameState?.correctGuesses ?? []),
-    [gameState?.correctGuesses]
-  );
-
   const allGuessedLetters = useMemo(
     () => new Set([...(gameState?.correctGuesses ?? []), ...(gameState?.incorrectGuesses ?? [])]),
     [gameState?.correctGuesses, gameState?.incorrectGuesses]
@@ -239,7 +234,7 @@ export const MultiplayerHangGuy: React.FC = () => {
                 <div className="flex gap-4 items-center">
                   <GameStatus
                     status={gameState.status}
-                    word={gameState.word}
+                    word={gameState.status !== "playing" ? gameState.word : undefined}
                     remainingGuesses={gameState.remainingGuesses}
                   />
                   {currentUser && (
@@ -259,10 +254,7 @@ export const MultiplayerHangGuy: React.FC = () => {
               </div>
 
               {/* Word Display */}
-              <HangGuyWord
-                word={gameState.word}
-                correctGuesses={correctGuessesSet}
-              />
+              <HangGuyWord displayWord={gameState.displayWord} />
 
               {/* Letter Input */}
               {isGameActive && (

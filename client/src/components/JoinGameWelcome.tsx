@@ -34,8 +34,9 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
       };
     }
     if (isGameInProgress) {
-      const revealed = gameState.displayWord.replace(/[_\s]/g, "").length;
-      const total = gameState.word.length;
+      const displayChars = gameState.displayWord.replace(/\s/g, "");
+      const total = displayChars.length;
+      const revealed = displayChars.replace(/_/g, "").length;
       return {
         icon: "🎯",
         iconLabel: "Target",

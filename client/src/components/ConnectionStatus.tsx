@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../socket';
 
 interface ConnectionStatusProps {
@@ -14,14 +14,21 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const [lastDisconnectReason, setLastDisconnectReason] = useState<string | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleConnect = () => {
-      console.log('Socket connected');
       setIsConnected(true);
-      setReconnectAttempts(0);
       setIsReconnecting(false);
       setLastDisconnectReason(null);
+      if (reconnectAttempts > 0) {
+        setShowSuccess(true);
+        dismissTimerRef.current = setTimeout(() => {
+          setShowSuccess(false);
+          setReconnectAttempts(0);
+        }, 3000);
+      }
       onConnectionRestored?.();
     };
 
@@ -55,15 +62,15 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
     socket.on('reconnect_error', handleReconnectError);
     socket.on('reconnect_failed', handleReconnectFailed);
 
-    // Cleanup
     return () => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('reconnect_attempt', handleReconnectAttempt);
       socket.off('reconnect_error', handleReconnectError);
       socket.off('reconnect_failed', handleReconnectFailed);
+      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
     };
-  }, [onConnectionLost, onConnectionRestored]);
+  }, [onConnectionLost, onConnectionRestored, reconnectAttempts]);
 
   const handleManualReconnect = () => {
     if (!socket.connected) {
@@ -106,8 +113,8 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
     );
   }
 
-  // Show brief success message when reconnected
-  if (isConnected && reconnectAttempts > 0) {
+  // Show brief success message when reconnected (auto-dismisses after 3s)
+  if (isConnected && showSuccess) {
     return (
       <div className="fixed top-0 left-0 right-0 z-50 bg-green-600 text-white px-4 py-2 shadow-lg animate-slide-down">
         <div className="max-w-6xl mx-auto flex items-center space-x-3">

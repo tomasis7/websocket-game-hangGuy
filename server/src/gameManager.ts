@@ -178,7 +178,8 @@ export class GameManager {
     const state = this.game.getState();
 
     return {
-      word: state.word,
+      // Only reveal word when game is over
+      word: state.status === "playing" ? "" : state.word,
       guessedLetters: Array.from(state.guessedLetters),
       correctGuesses: Array.from(state.correctGuesses),
       incorrectGuesses: Array.from(state.incorrectGuesses),
