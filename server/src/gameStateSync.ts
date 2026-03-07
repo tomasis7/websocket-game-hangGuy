@@ -67,11 +67,11 @@ export class GameStateSynchronizer {
    * Prepare synchronization data for new players
    */
   private prepareSyncData(gameState: GameStateEvent) {
-    const wordLength = gameState.word.length;
+    const wordLength = gameState.displayWord.replace(/\s/g, '').length;
     const revealedLetters = gameState.correctGuesses;
     const hangmanStage = gameState.incorrectGuesses.length;
     const totalGuesses = gameState.guessedLetters.length;
-    const maxPossibleGuesses = 26; // All alphabet letters
+    const maxPossibleGuesses = 26;
     const gameProgress = Math.round((totalGuesses / maxPossibleGuesses) * 100);
 
     return {
@@ -89,14 +89,15 @@ export class GameStateSynchronizer {
     if (gameState.status === 'playing') {
       const correctCount = gameState.correctGuesses.length;
       const incorrectCount = gameState.incorrectGuesses.length;
-      const wordLength = gameState.word.length;
-      const revealedCount = gameState.displayWord.replace(/[_\s]/g, '').length;
-      
+      const displayChars = gameState.displayWord.replace(/\s/g, '');
+      const wordLength = displayChars.length;
+      const revealedCount = displayChars.replace(/_/g, '').length;
+
       return `Game in progress: ${revealedCount}/${wordLength} letters revealed, ${correctCount} correct guesses, ${incorrectCount} incorrect guesses`;
     } else if (gameState.status === 'won') {
-      return `Game completed: Word "${gameState.word}" was guessed successfully!`;
+      return `Game completed: The word was guessed successfully!`;
     } else if (gameState.status === 'lost') {
-      return `Game over: Word "${gameState.word}" was not guessed in time.`;
+      return `Game over: The word was "${gameState.word}".`;
     }
     
     return 'No active game';

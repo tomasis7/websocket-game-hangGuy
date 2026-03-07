@@ -38,8 +38,9 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
       return `The previous game ended. The word was "${gameState.word}". Start a new game to play!`;
     }
     if (isGameInProgress) {
-      const revealed = gameState.displayWord.replace(/[_\s]/g, "").length;
-      const total = gameState.word.length;
+      const displayChars = gameState.displayWord.replace(/\s/g, "");
+      const total = displayChars.length;
+      const revealed = displayChars.replace(/_/g, "").length;
       return `You joined an active game! ${revealed} of ${total} letters have been revealed. You can start guessing letters right away.`;
     }
     return "You've joined the game! Wait for someone to start a new game or start one yourself.";

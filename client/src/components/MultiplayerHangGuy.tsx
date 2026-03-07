@@ -209,7 +209,7 @@ export const MultiplayerHangGuy: React.FC = () => {
                 <div className="flex gap-4 items-center">
                   <GameStatus
                     status={gameState.status}
-                    word={gameState.word}
+                    word={gameState.status !== "playing" ? gameState.word : undefined}
                     remainingGuesses={gameState.remainingGuesses}
                   />
                   {currentUser && (
@@ -229,10 +229,7 @@ export const MultiplayerHangGuy: React.FC = () => {
               </div>
 
               {/* Word Display */}
-              <HangGuyWord
-                word={gameState.word}
-                correctGuesses={new Set(gameState.correctGuesses)}
-              />
+              <HangGuyWord displayWord={gameState.displayWord} />
 
               {/* Letter Input */}
               {isGameActive && (

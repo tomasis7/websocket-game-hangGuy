@@ -54,10 +54,7 @@ export const HangGuyGame: React.FC = () => {
                 Word to Guess
               </h3>
               <div className="flex justify-center">
-                <HangGuyWord
-                  word={gameState.word}
-                  correctGuesses={gameState.correctGuesses}
-                />
+                <HangGuyWord displayWord={gameState.displayWord} />
               </div>
             </div>
           </div>

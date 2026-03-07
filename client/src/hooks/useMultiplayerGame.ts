@@ -1,21 +1,36 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { socket } from "../socket";
-import type { GameStateEvent, PlayerInfo } from "../../../shared/types";
+import type {
+  GameStateEvent,
+  PlayerInfo,
+  GameBroadcast,
+  HangGuySocketEvents,
+} from "../../../shared/types";
+
+type JoinSuccessData = Parameters<HangGuySocketEvents["hangman:join-success"]>[0];
+type PlayerActionData = Parameters<HangGuySocketEvents["hangman:player-action-broadcast"]>[0];
+type GuessBroadcastData = Parameters<HangGuySocketEvents["hangman:guess-broadcast"]>[0];
+type GameStartData = Parameters<HangGuySocketEvents["hangman:game-start-broadcast"]>[0];
+type ErrorData = Parameters<HangGuySocketEvents["hangman:error"]>[0];
+
+const MAX_NOTIFICATIONS = 20;
+const NOTIFICATION_EXPIRY_MS = 30_000;
 
 export const useMultiplayerGame = () => {
-  // Game state
   const [gameState, setGameState] = useState<GameStateEvent | null>(null);
-  const [players, setPlayers] = useState<PlayerInfo[]>([]);
-
-  // Connection state
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [error, setError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
-  // UI state
   const [notifications, setNotifications] = useState<
     Array<{ message: string; id: number; read: boolean }>
   >([]);
-  const [joinWelcome, setJoinWelcome] = useState({
+  const [joinWelcome, setJoinWelcome] = useState<{
+    show: boolean;
+    gameState: GameStateEvent | null;
+    playerInfo: PlayerInfo | null;
+    isGameInProgress: boolean;
+    gameSummary: string;
+  }>({
     show: false,
     gameState: null,
     playerInfo: null,
@@ -23,17 +38,24 @@ export const useMultiplayerGame = () => {
     gameSummary: "",
   });
 
+  const expiryTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Auto-expire old notifications
+  useEffect(() => {
+    expiryTimerRef.current = setInterval(() => {
+      const cutoff = Date.now() - NOTIFICATION_EXPIRY_MS;
+      setNotifications((prev) => prev.filter((n) => n.id > cutoff));
+    }, 5000);
+
+    return () => {
+      if (expiryTimerRef.current) clearInterval(expiryTimerRef.current);
+    };
+  }, []);
+
   // Connection events
   useEffect(() => {
-    const onConnect = () => {
-      setIsConnected(true);
-      console.log("Socket connected ✅");
-    };
-
-    const onDisconnect = () => {
-      setIsConnected(false);
-      console.log("Socket disconnected ❌");
-    };
+    const onConnect = () => setIsConnected(true);
+    const onDisconnect = () => setIsConnected(false);
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
@@ -44,24 +66,19 @@ export const useMultiplayerGame = () => {
     };
   }, []);
 
-  // Add notification to the list
   const addNotification = useCallback((message: string) => {
-    setNotifications((prev) => [
-      ...prev,
-      { message, id: Date.now(), read: false },
-    ]);
+    setNotifications((prev) => {
+      const next = [...prev, { message, id: Date.now(), read: false }];
+      return next.length > MAX_NOTIFICATIONS ? next.slice(-MAX_NOTIFICATIONS) : next;
+    });
   }, []);
 
   // Game state event handlers
   useEffect(() => {
-    // Handle join success
-    const handleJoinSuccess = (data: any) => {
-      console.log("Join success:", data);
+    const handleJoinSuccess = (data: JoinSuccessData) => {
       setIsJoining(false);
       setGameState(data.gameState);
-      setPlayers(data.gameState?.players || []);
 
-      // Show welcome message if provided
       if (data.isGameInProgress) {
         setJoinWelcome({
           show: true,
@@ -75,58 +92,39 @@ export const useMultiplayerGame = () => {
       addNotification("Successfully joined the game!");
     };
 
-    // Handle game state broadcast
-    const handleStateBroadcast = (data: any) => {
-      console.log("Game state broadcast:", data);
+    const handleStateBroadcast = (data: GameBroadcast) => {
       setGameState(data.gameState);
-      setPlayers(data.gameState?.players || []);
     };
 
-    // Handle player action broadcast
-    const handlePlayerAction = (data: any) => {
-      console.log("Player action:", data);
+    const handlePlayerAction = (data: PlayerActionData) => {
       setGameState(data.gameState);
-      setPlayers(data.gameState?.players || []);
-
-      // Add notification
-      const action = data.action === "joined" ? "joined" : "left";
-      addNotification(`${data.playerName} has ${action} the game.`);
+      const verb = data.action === "joined" ? "joined" : "left";
+      addNotification(`${data.playerName} has ${verb} the game.`);
     };
 
-    // Handle guess broadcast
-    const handleGuessBroadcast = (data: any) => {
-      console.log("Guess broadcast:", data);
+    const handleGuessBroadcast = (data: GuessBroadcastData) => {
       setGameState(data.gameState);
-
-      // Add notification about the guess
       const result = data.isCorrect ? "correct" : "incorrect";
       addNotification(
         `${data.playerName} guessed "${data.letter}" - ${result}!`
       );
     };
 
-    // Handle game start broadcast
-    const handleGameStartBroadcast = (data: any) => {
-      console.log("Game start broadcast:", data);
+    const handleGameStartBroadcast = (data: GameStartData) => {
       setGameState(data.gameState);
       addNotification(`${data.startedByName} started a new game!`);
     };
 
-    // Handle errors
-    const handleError = (data: any) => {
-      console.error("Game error:", data);
+    const handleError = (data: ErrorData) => {
       setError(data.message);
       addNotification(`Error: ${data.message}`);
       setIsJoining(false);
     };
 
-    // Handle general notifications
     const handleNotification = (message: string) => {
-      console.log("Notification:", message);
       addNotification(message);
     };
 
-    // Register all event handlers
     socket.on("hangman:join-success", handleJoinSuccess);
     socket.on("hangman:state-broadcast", handleStateBroadcast);
     socket.on("hangman:player-action-broadcast", handlePlayerAction);
@@ -135,7 +133,6 @@ export const useMultiplayerGame = () => {
     socket.on("hangman:error", handleError);
     socket.on("notification", handleNotification);
 
-    // Clean up event handlers on unmount
     return () => {
       socket.off("hangman:join-success", handleJoinSuccess);
       socket.off("hangman:state-broadcast", handleStateBroadcast);
@@ -146,17 +143,20 @@ export const useMultiplayerGame = () => {
       socket.off("notification", handleNotification);
     };
   }, [addNotification]);
-  // Game actions
+
   const actions = {
     joinGame: (playerName?: string) => {
       setIsJoining(true);
-      const finalPlayerName = playerName || `Player${Math.random().toString(36).substr(2, 4)}`;
+      const finalPlayerName =
+        playerName || `Player${Math.random().toString(36).substr(2, 4)}`;
       socket.emit("hangman:join-game", { playerName: finalPlayerName });
     },
 
     guessLetter: (letter: string) => {
       socket.emit("hangman:guess-letter", {
         letter: letter.toUpperCase(),
+        playerId: socket.id ?? "",
+        playerName: "",
         timestamp: Date.now(),
       });
     },
@@ -167,6 +167,7 @@ export const useMultiplayerGame = () => {
     }) => {
       socket.emit("hangman:new-game", {
         ...options,
+        startedBy: socket.id ?? "",
       });
     },
 
@@ -181,7 +182,6 @@ export const useMultiplayerGame = () => {
 
   return {
     gameState,
-    players,
     isConnected,
     isJoining,
     error,

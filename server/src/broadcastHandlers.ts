@@ -6,13 +6,36 @@ const gameManager = new GameManager();
 const gameSync = new GameStateSynchronizer(gameManager);
 const HANGMAN_ROOM = "hangman-room";
 
-export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
-  // Join game handler with state synchronization
-  socket.on("hangman:join-game", async (data) => {
-    console.log("Player attempting to join:", data);
+// Rate limiting: track guess timestamps per socket
+const guessTimestamps = new Map<string, number[]>();
+const MAX_GUESSES_PER_SECOND = 2;
 
+function isRateLimited(socketId: string): boolean {
+  const now = Date.now();
+  const timestamps = guessTimestamps.get(socketId) || [];
+  const recent = timestamps.filter((t) => now - t < 1000);
+  guessTimestamps.set(socketId, recent);
+  if (recent.length >= MAX_GUESSES_PER_SECOND) return true;
+  recent.push(now);
+  return false;
+}
+
+function sanitizePlayerName(name: unknown): string {
+  if (typeof name !== "string") return "";
+  return name.trim().replace(/[<>&"']/g, "").slice(0, 20);
+}
+
+function isValidGuessLetter(letter: unknown): letter is string {
+  return typeof letter === "string" && /^[A-Za-z]$/.test(letter);
+}
+
+export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
+  // Join game handler
+  socket.on("hangman:join-game", async (data) => {
+    const rawName = data?.playerName;
     const playerName =
-      data.playerName || `Player${Math.random().toString(36).substr(2, 4)}`;
+      sanitizePlayerName(rawName) ||
+      `Player${Math.random().toString(36).substr(2, 4)}`;
 
     try {
       const joinResult = await gameSync.handlePlayerJoin(socket, playerName);
@@ -39,7 +62,6 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
         socket
           .to(HANGMAN_ROOM)
           .emit("hangman:player-action-broadcast", joinBroadcast);
-        console.log(`Broadcasted player join for ${playerName}`);
       } else {
         socket.emit("hangman:error", {
           message: joinResult.error || "Failed to join game",
@@ -80,8 +102,6 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
         gameSummary,
         timestamp: Date.now(),
       });
-
-      console.log(`Sent sync response to ${player.name}`);
     } catch (error) {
       console.error("Error in sync request:", error);
       socket.emit("hangman:error", {
@@ -114,14 +134,13 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
         socket
           .to(HANGMAN_ROOM)
           .emit("hangman:player-action-broadcast", leaveBroadcast);
-        console.log(`${playerInfo.name} left the game`);
       }
     } catch (error) {
       console.error("Error in leave-game:", error);
     }
   });
 
-  // Handle letter guess
+  // Handle letter guess with validation and rate limiting
   socket.on("hangman:guess-letter", (data) => {
     const playerId = socket.id;
     const player = gameManager.getPlayer(playerId);
@@ -130,6 +149,24 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
       socket.emit("hangman:error", {
         message: "You must join the game first",
         code: "NOT_IN_GAME",
+        timestamp: Date.now(),
+      });
+      return;
+    }
+
+    if (!isValidGuessLetter(data?.letter)) {
+      socket.emit("hangman:error", {
+        message: "Invalid guess: must be a single letter A-Z",
+        code: "INVALID_INPUT",
+        timestamp: Date.now(),
+      });
+      return;
+    }
+
+    if (isRateLimited(playerId)) {
+      socket.emit("hangman:error", {
+        message: "Too many guesses — slow down!",
+        code: "RATE_LIMITED",
         timestamp: Date.now(),
       });
       return;
@@ -157,11 +194,6 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
       };
 
       io.to(HANGMAN_ROOM).emit("hangman:guess-broadcast", guessBroadcast);
-      console.log(
-        `${player.name} guessed "${data.letter}" - ${
-          result.isCorrect ? "correct" : "incorrect"
-        }`
-      );
     } catch (error) {
       console.error("Error processing guess:", error);
       socket.emit("hangman:error", {
@@ -200,7 +232,6 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
         "hangman:game-start-broadcast",
         newGameBroadcast
       );
-      console.log(`New game started by ${player.name}`);
     } catch (error) {
       console.error("Error starting new game:", error);
       socket.emit("hangman:error", {
@@ -211,9 +242,10 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
     }
   });
 
-  // Handle disconnect
+  // Handle disconnect — also clean up rate limit data
   socket.on("disconnect", () => {
     const playerId = socket.id;
+    guessTimestamps.delete(playerId);
 
     try {
       const { removed, playerInfo } = gameManager.removePlayer(playerId);
@@ -231,7 +263,6 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
         socket
           .to(HANGMAN_ROOM)
           .emit("hangman:player-action-broadcast", disconnectBroadcast);
-        console.log(`${playerInfo.name} disconnected`);
       }
     } catch (error) {
       console.error("Error handling disconnect:", error);

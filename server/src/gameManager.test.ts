@@ -51,8 +51,10 @@ describe('GameManager', () => {
       
       expect(gameState.status).toBe('playing');
       expect(gameState.remainingGuesses).toBe(8);
-      expect(gameState.word).toBeDefined();
-      expect(gameState.word.length).toBeGreaterThan(0);
+      // Word is hidden during active play (security)
+      expect(gameState.word).toBe('');
+      expect(gameState.displayWord).toBeDefined();
+      expect(gameState.displayWord.length).toBeGreaterThan(0);
     });
 
     it('should process valid guess', () => {

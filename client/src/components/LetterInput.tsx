@@ -190,38 +190,42 @@ export const LetterInput: React.FC<LetterInputProps> = ({
         </div>
       </form>
 
-      {/* Virtual Keyboard (Optional) */}
-      <div className="mt-6">
+      {/* Virtual Keyboard */}
+      <div className="mt-6" role="group" aria-label="Virtual keyboard">
         <h4 className="text-sm font-medium text-gray-700 mb-3">
           Virtual Keyboard
         </h4>
-        <div className="grid grid-cols-6 sm:grid-cols-9 gap-1">
-          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
-            <button
-              key={letter}
-              onClick={() => {
-                if (!disabled && !guessedLetters.has(letter)) {
-                  onGuess(letter);
-                  setFeedback({
-                    message: `Guessed "${letter}"`,
-                    type: "success",
-                  });
-                }
-              }}
-              disabled={disabled || guessedLetters.has(letter)}
-              className={`
-                w-8 h-8 text-sm font-mono font-semibold rounded border-2 transition-colors
-                ${
-                  disabled || guessedLetters.has(letter)
-                    ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:border-blue-300"
-                }
-                ${guessedLetters.has(letter) ? "line-through" : ""}
-              `}
-            >
-              {letter}
-            </button>
-          ))}
+        <div className="grid grid-cols-7 sm:grid-cols-9 gap-1">
+          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => {
+            const isGuessed = guessedLetters.has(letter);
+            return (
+              <button
+                key={letter}
+                aria-label={`Guess letter ${letter}${isGuessed ? " (already guessed)" : ""}`}
+                onClick={() => {
+                  if (!disabled && !isGuessed) {
+                    onGuess(letter);
+                    setFeedback({
+                      message: `Guessed "${letter}"`,
+                      type: "success",
+                    });
+                  }
+                }}
+                disabled={disabled || isGuessed}
+                className={`
+                  w-8 h-8 sm:w-9 sm:h-9 text-sm font-mono font-semibold rounded border-2 transition-colors
+                  ${
+                    disabled || isGuessed
+                      ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:border-blue-300"
+                  }
+                  ${isGuessed ? "line-through" : ""}
+                `}
+              >
+                {letter}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
