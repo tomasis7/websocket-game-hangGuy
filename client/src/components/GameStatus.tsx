@@ -11,7 +11,7 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
     switch (status) {
       case 'playing':
         return {
-          icon: '🎯',
+          icon: '🎯', iconLabel: 'Target',
           title: 'Game In Progress',
           message: `Keep guessing! ${remainingGuesses || 0} guesses remaining.`,
           bgColor: 'bg-blue-50',
@@ -21,7 +21,7 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
         };
       case 'won':
         return {
-          icon: '🎉',
+          icon: '🎉', iconLabel: 'Party popper',
           title: 'Congratulations!',
           message: 'You successfully guessed the word!',
           bgColor: 'bg-green-50',
@@ -31,7 +31,7 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
         };
       case 'lost':
         return {
-          icon: '💀',
+          icon: '💀', iconLabel: 'Skull',
           title: 'Game Over',
           message: word ? `The word was: "${word}"` : 'Better luck next time!',
           bgColor: 'bg-red-50',
@@ -41,7 +41,7 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
         };
       default:
         return {
-          icon: '❓',
+          icon: '❓', iconLabel: 'Question mark',
           title: 'Unknown Status',
           message: 'Something went wrong.',
           bgColor: 'bg-gray-50',
@@ -65,7 +65,7 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
         flex items-center justify-center mx-auto mb-4
         text-2xl
       `}>
-        {config.icon}
+        <span role="img" aria-label={config.iconLabel}>{config.icon}</span>
       </div>
       
       <h2 className="text-xl font-bold mb-2">
@@ -113,7 +113,7 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
       {status === 'lost' && (
         <div className="mt-4">
           <div className="text-4xl mb-2">
-            ⚰️
+            <span role="img" aria-label="Coffin">⚰️</span>
           </div>
           <p className="text-sm font-medium">
             Don't give up - try again!

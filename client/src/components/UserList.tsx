@@ -33,7 +33,7 @@ export const UserList: React.FC<UserListProps> = ({
                 : "bg-gray-50 border border-gray-200"
             }`}
           >
-            <div className="text-2xl">{user.avatar || "🎮"}</div>
+            <div className="text-2xl" role="img" aria-label={user.avatar ? "Player avatar" : "Game controller"}>{user.avatar || "🎮"}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-2">
                 <span
@@ -62,6 +62,8 @@ export const UserList: React.FC<UserListProps> = ({
                   className={`w-2 h-2 rounded-full ${
                     user.isActive ? "bg-green-400" : "bg-gray-400"
                   }`}
+                  role="img"
+                  aria-label={user.isActive ? "Active" : "Away"}
                 />
                 <span>{user.isActive ? "Active" : "Away"}</span>
               </div>
@@ -71,7 +73,7 @@ export const UserList: React.FC<UserListProps> = ({
 
         {users.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            <div className="text-4xl mb-2">👥</div>
+            <div className="text-4xl mb-2" role="img" aria-label="Players">👥</div>
             <p>No players yet</p>
             <p className="text-sm">Share the session ID to invite others!</p>
           </div>

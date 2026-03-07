@@ -7,40 +7,20 @@ const gameSync = new GameStateSynchronizer(gameManager);
 const HANGMAN_ROOM = "hangman-room";
 
 export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
-  // Utility function to broadcast game state to all players (currently unused)
-  /*
-  const broadcastGameState = (action: string, additionalData?: any) => {
-    const gameState = gameManager.getGameState();
-    const broadcast: GameBroadcast = {
-      gameState,
-      action: gameState.lastAction!,
-      timestamp: Date.now(),
-    };
-
-    io.to(HANGMAN_ROOM).emit("hangman:state-broadcast", broadcast);
-
-    // Send specific event broadcasts for better UX
-    if (additionalData) {
-      io.to(HANGMAN_ROOM).emit(
-        action as keyof HangGuySocketEvents,
-        additionalData
-      );
-    }
-
-    console.log(
-      `Broadcasted ${action} to ${
-        io.sockets.adapter.rooms.get(HANGMAN_ROOM)?.size || 0
-      } players`
-    );
-  };
-  */
-
   // Enhanced join game handler with state synchronization
   socket.on("hangman:join-game", async (data) => {
     console.log("Player attempting to join:", data);
 
-    const playerName =
-      data.playerName || `Player${Math.random().toString(36).substr(2, 4)}`;
+    const rawName = typeof data.playerName === "string" ? data.playerName.trim() : "";
+    if (rawName.length > 30) {
+      socket.emit("hangman:error", {
+        message: "Player name must be 30 characters or fewer",
+        code: "INVALID_NAME",
+        timestamp: Date.now(),
+      });
+      return;
+    }
+    const playerName = rawName || `Player${Math.random().toString(36).substr(2, 4)}`;
     const sessionId = data.sessionId || "default";
 
     try {
@@ -162,6 +142,18 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
   // Handle letter guess with enhanced validation
   socket.on("hangman:guess-letter", (data) => {
     const playerId = socket.id;
+
+    const letter = typeof data.letter === "string" ? data.letter.trim().toUpperCase() : "";
+    if (!/^[A-Z]$/.test(letter)) {
+      socket.emit("hangman:error", {
+        message: "Letter must be a single A-Z character",
+        code: "INVALID_LETTER",
+        timestamp: Date.now(),
+      });
+      return;
+    }
+    data = { ...data, letter };
+
     const player = gameManager.getPlayer(playerId);
 
     if (!player) {

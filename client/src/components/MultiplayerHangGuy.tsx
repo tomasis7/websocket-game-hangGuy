@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { HangmanSVGs } from "./hangman/HangmanSVGs";
 import { HangGuyWord } from "./HangGuyWord";
-// import { GuessDisplay } from "./GuessDisplay";
 import { LetterInput } from "./LetterInput";
 import { GameStatus } from "./GameStatus";
 import { GameControls } from "./GameControls";
@@ -42,6 +41,28 @@ export const MultiplayerHangGuy: React.FC = () => {
   // Memoized calculations
   const incorrectGuessCount = gameState?.incorrectGuesses.length || 0;
   const isGameActive = gameState?.status === "playing";
+
+  const correctGuessesSet = useMemo(
+    () => new Set(gameState?.correctGuesses ?? []),
+    [gameState?.correctGuesses]
+  );
+
+  const allGuessedLetters = useMemo(
+    () => new Set([...(gameState?.correctGuesses ?? []), ...(gameState?.incorrectGuesses ?? [])]),
+    [gameState?.correctGuesses, gameState?.incorrectGuesses]
+  );
+
+  const userListPlayers = useMemo(
+    () =>
+      gameState?.players?.map((player) => ({
+        id: player.id,
+        nickname: player.name,
+        avatar: player.avatar,
+        isActive: player.isActive,
+        joinedAt: player.joinedAt,
+      })) ?? [],
+    [gameState?.players]
+  );
   const isJoining = userJoining || gameJoining || isJoiningLocal;
 
   // Event handlers with proper typing
@@ -63,30 +84,13 @@ export const MultiplayerHangGuy: React.FC = () => {
     [isConnected, actions]
   );
 
-  // Listen for successful join events
+  // Hide join dialog once this socket appears in the game's player list
   useEffect(() => {
-    if (!socket) {return;}
-
-    const handleJoinSuccess = (data: any) => {
-      console.log("Successfully joined game:", data);
+    if (gameState?.players?.find((p) => p.id === socket?.id)) {
+      setShowJoinDialog(false);
       setIsJoining(false);
-      setShowJoinDialog(false); // This should hide the join dialog
-    };
-
-    const handleJoinError = (error: any) => {
-      console.error("Failed to join game:", error);
-      setIsJoining(false);
-      setShowJoinDialog(true);
-    };
-
-    socket.on("hangman:join-success", handleJoinSuccess);
-    socket.on("hangman:error", handleJoinError); // Use consistent error event name
-
-    return () => {
-      socket.off("hangman:join-success", handleJoinSuccess);
-      socket.off("hangman:error", handleJoinError);
-    };
-  }, [socket]);
+    }
+  }, [gameState]);
 
   const handleJoinGame = useCallback(
     (nickname: string, sessionId?: string, avatar?: string): void => {
@@ -248,19 +252,14 @@ export const MultiplayerHangGuy: React.FC = () => {
               {/* Word Display */}
               <HangGuyWord
                 word={gameState.word}
-                correctGuesses={new Set(gameState.correctGuesses)}
+                correctGuesses={correctGuessesSet}
               />
 
               {/* Letter Input */}
               {isGameActive && (
                 <LetterInput
                   onGuess={handleGuess}
-                  guessedLetters={
-                    new Set([
-                      ...gameState.correctGuesses,
-                      ...gameState.incorrectGuesses,
-                    ])
-                  }
+                  guessedLetters={allGuessedLetters}
                 />
               )}
 
@@ -275,15 +274,7 @@ export const MultiplayerHangGuy: React.FC = () => {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <UserList
-              users={
-                gameState?.players?.map((player) => ({
-                  id: player.id,
-                  nickname: player.name,
-                  avatar: player.avatar,
-                  isActive: player.isActive,
-                  joinedAt: player.joinedAt,
-                })) || []
-              } // Transform PlayerInfo to User format
+              users={userListPlayers}
               currentUserId={currentUser?.id}
               sessionInfo={
                 sessionInfo

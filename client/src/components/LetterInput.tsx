@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 interface LetterInputProps {
   onGuess: (letter: string) => void;
@@ -17,6 +17,11 @@ export const LetterInput: React.FC<LetterInputProps> = ({
     type: "error" | "success" | "";
   }>({ message: "", type: "" });
   const inputRef = useRef<HTMLInputElement>(null);
+  // Stable refs so the keydown effect doesn't re-register on every guess
+  const onGuessRef = useRef(onGuess);
+  const guessedLettersRef = useRef(guessedLetters);
+  useEffect(() => { onGuessRef.current = onGuess; }, [onGuess]);
+  useEffect(() => { guessedLettersRef.current = guessedLetters; }, [guessedLetters]);
 
   // Focus input on mount and when game becomes active
   useEffect(() => {
@@ -79,7 +84,11 @@ export const LetterInput: React.FC<LetterInputProps> = ({
     }
   };
 
-  // Keyboard handler for global key presses
+  // Stable handleGuess ref so the keydown closure can call the latest version
+  const handleGuessRef = useRef(handleGuess);
+  useEffect(() => { handleGuessRef.current = handleGuess; });
+
+  // Keyboard handler for global key presses — re-registers only when disabled changes
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       // Only handle if input is not focused and game is active
@@ -95,8 +104,8 @@ export const LetterInput: React.FC<LetterInputProps> = ({
         setInputValue(key);
 
         // Auto-submit if it's a valid new guess
-        if (!guessedLetters.has(key)) {
-          onGuess(key);
+        if (!guessedLettersRef.current.has(key)) {
+          onGuessRef.current(key);
           setFeedback({ message: `Guessed "${key}"`, type: "success" });
         } else {
           setFeedback({
@@ -107,15 +116,15 @@ export const LetterInput: React.FC<LetterInputProps> = ({
       }
 
       // Handle Enter key
-      if (e.key === "Enter" && inputValue) {
+      if (e.key === "Enter") {
         e.preventDefault();
-        handleGuess();
+        handleGuessRef.current();
       }
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [disabled, guessedLetters, inputValue, onGuess]);
+  }, [disabled]);
 
   return (
     <div className="w-full max-w-md">
@@ -138,6 +147,7 @@ export const LetterInput: React.FC<LetterInputProps> = ({
               disabled={disabled}
               maxLength={1}
               placeholder="A-Z"
+              aria-describedby="letter-input-instructions"
               className={`
                 flex-1 px-4 py-3 text-2xl font-mono text-center uppercase
                 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
@@ -184,7 +194,7 @@ export const LetterInput: React.FC<LetterInputProps> = ({
         )}
 
         {/* Instructions */}
-        <div className="text-xs text-gray-500 text-center space-y-1">
+        <div id="letter-input-instructions" className="text-xs text-gray-500 text-center space-y-1">
           <p>Type a letter and press Enter, or click Guess</p>
           <p>You can also press any letter key to guess directly</p>
         </div>

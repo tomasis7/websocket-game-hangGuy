@@ -77,7 +77,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
       <div className="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white px-4 py-3 shadow-lg">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="animate-pulse">
+            <div className="animate-pulse" role="img" aria-label={isReconnecting ? 'Reconnecting' : 'Warning'}>
               {isReconnecting ? '🔄' : '⚠️'}
             </div>
             <div>
@@ -111,7 +111,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
     return (
       <div className="fixed top-0 left-0 right-0 z-50 bg-green-600 text-white px-4 py-2 shadow-lg animate-slide-down">
         <div className="max-w-6xl mx-auto flex items-center space-x-3">
-          <span>✅</span>
+          <span role="img" aria-label="Connected">✅</span>
           <p className="font-semibold">Connection Restored</p>
         </div>
       </div>

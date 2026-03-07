@@ -20,6 +20,7 @@ export class UserManager {
   private users = new Map<string, User>();
   private sessions = new Map<string, GameSession>();
   private userSocketMap = new Map<string, string>(); // userId -> socketId
+  private socketUserMap = new Map<string, string>(); // socketId -> userId (reverse map for O(1) lookup)
 
   createUser(socketId: string, nickname: string): User {
     const user: User = {
@@ -31,14 +32,17 @@ export class UserManager {
 
     this.users.set(user.id, user);
     this.userSocketMap.set(user.id, socketId);
+    this.socketUserMap.set(socketId, user.id);
     return user;
   }
 
   removeUser(userId: string): User | null {
     const user = this.users.get(userId);
     if (user) {
+      const socketId = this.userSocketMap.get(userId);
       this.users.delete(userId);
       this.userSocketMap.delete(userId);
+      if (socketId) this.socketUserMap.delete(socketId);
       // Remove user from all sessions
       this.sessions.forEach((session) => {
         session.users = session.users.filter((u) => u.id !== userId);
@@ -48,12 +52,8 @@ export class UserManager {
   }
 
   getUserBySocketId(socketId: string): User | null {
-    for (const [userId, userSocketId] of this.userSocketMap.entries()) {
-      if (userSocketId === socketId) {
-        return this.users.get(userId) || null;
-      }
-    }
-    return null;
+    const userId = this.socketUserMap.get(socketId);
+    return userId ? this.users.get(userId) || null : null;
   }
 
   addUserToSession(userId: string, sessionId: string = "default"): GameSession {

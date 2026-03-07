@@ -41,31 +41,12 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
     setSelectedDifficulty('');
   };
 
-  const getButtonText = () => {
-    switch (gameStatus) {
-      case 'playing':
-        return '🔄 Restart Game';
-      case 'won':
-        return '🎉 Play Again';
-      case 'lost':
-        return '💪 Try Again';
-      default:
-        return '🎮 New Game';
-    }
+  const gameStatusConfig: Record<typeof gameStatus, { text: string; color: string }> = {
+    playing: { text: '🔄 Restart Game', color: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500' },
+    won:     { text: '🎉 Play Again',   color: 'bg-green-600 hover:bg-green-700 focus:ring-green-500' },
+    lost:    { text: '💪 Try Again',    color: 'bg-red-600 hover:bg-red-700 focus:ring-red-500' },
   };
-
-  const getButtonColor = () => {
-    switch (gameStatus) {
-      case 'playing':
-        return 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500';
-      case 'won':
-        return 'bg-green-600 hover:bg-green-700 focus:ring-green-500';
-      case 'lost':
-        return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
-      default:
-        return 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500';
-    }
-  };
+  const { text: buttonText, color: buttonColor } = gameStatusConfig[gameStatus] ?? { text: '🎮 New Game', color: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500' };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 w-full">
@@ -79,13 +60,13 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
           className={`
             w-full text-white font-semibold py-3 px-4 rounded-lg 
             transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2
-            ${disabled 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : getButtonColor()
+            ${disabled
+              ? 'bg-gray-400 cursor-not-allowed'
+              : buttonColor
             }
           `}
         >
-          {getButtonText()}
+          {buttonText}
         </button>
 
         {/* Options Toggle */}

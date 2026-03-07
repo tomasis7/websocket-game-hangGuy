@@ -16,46 +16,52 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
   gameSummary,
   onDismiss,
 }) => {
-  const getWelcomeIcon = () => {
-    if (gameState.status === "won") {return "🎉";}
-    if (gameState.status === "lost") {return "💀";}
-    if (isGameInProgress) {return "🎯";}
-    return "👋";
-  };
-
-  const getWelcomeTitle = () => {
-    if (gameState.status === "won") {return "Game Already Won!";}
-    if (gameState.status === "lost") {return "Game Already Lost";}
-    if (isGameInProgress) {return "Game In Progress!";}
-    return "Welcome to Hang Guy!";
-  };
-
-  const getWelcomeMessage = () => {
+  const statusConfig = (() => {
     if (gameState.status === "won") {
-      return `The word "${gameState.word}" was already guessed successfully. Start a new game to play!`;
+      return {
+        icon: "🎉",
+        iconLabel: "Party popper",
+        title: "Game Already Won!",
+        message: `The word "${gameState.word}" was already guessed successfully. Start a new game to play!`,
+      };
     }
     if (gameState.status === "lost") {
-      return `The previous game ended. The word was "${gameState.word}". Start a new game to play!`;
+      return {
+        icon: "💀",
+        iconLabel: "Skull",
+        title: "Game Already Lost",
+        message: `The previous game ended. The word was "${gameState.word}". Start a new game to play!`,
+      };
     }
     if (isGameInProgress) {
       const revealed = gameState.displayWord.replace(/[_\s]/g, "").length;
       const total = gameState.word.length;
-      return `You joined an active game! ${revealed} of ${total} letters have been revealed. You can start guessing letters right away.`;
+      return {
+        icon: "🎯",
+        iconLabel: "Target",
+        title: "Game In Progress!",
+        message: `You joined an active game! ${revealed} of ${total} letters have been revealed. You can start guessing letters right away.`,
+      };
     }
-    return "You've joined the game! Wait for someone to start a new game or start one yourself.";
-  };
+    return {
+      icon: "👋",
+      iconLabel: "Waving hand",
+      title: "Welcome to Hang Guy!",
+      message: "You've joined the game! Wait for someone to start a new game or start one yourself.",
+    };
+  })();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
         {/* Header */}
         <div className="text-center">
-          <div className="text-4xl mb-2">{getWelcomeIcon()}</div>
+          <div className="text-4xl mb-2" role="img" aria-label={statusConfig.iconLabel}>{statusConfig.icon}</div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">
             Welcome, {playerInfo.name}!
           </h2>
           <h3 className="text-lg font-semibold text-gray-700">
-            {getWelcomeTitle()}
+            {statusConfig.title}
           </h3>
         </div>
 
@@ -91,7 +97,7 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
         {/* Player Count */}
         <div className="bg-blue-50 rounded-lg p-3">
           <div className="flex items-center justify-center gap-2 text-sm text-blue-700">
-            <span>👥</span>
+            <span role="img" aria-label="Players">👥</span>
             <span>
               {gameState.players.length} player
               {gameState.players.length !== 1 ? "s" : ""} in game
@@ -110,12 +116,12 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
 
         {/* Instructions */}
         <div className="text-center space-y-2">
-          <p className="text-sm text-gray-600">{getWelcomeMessage()}</p>
+          <p className="text-sm text-gray-600">{statusConfig.message}</p>
 
           {isGameInProgress && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
               <p className="text-sm text-green-700 font-medium">
-                💡 You can start guessing letters immediately!
+                <span role="img" aria-label="Tip">💡</span> You can start guessing letters immediately!
               </p>
             </div>
           )}

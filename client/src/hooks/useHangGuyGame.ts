@@ -52,10 +52,6 @@ export const useHangGuyGame = (initialWord?: string) => {
     getGameStats,
     getGuessSummary,
     getLastGuessResult,
-    // Legacy methods for compatibility
-    // getHangmanStage: () => game.getHangmanStage(), // ❌ Method doesn't exist
-    // isGameOver: () => game.isGameOver(),           // ❌ Method doesn't exist  
-    // getGuessedLettersArray: () => game.getGuessedLettersArray(), // ❌ Method doesn't exist
     game,
   };
 };

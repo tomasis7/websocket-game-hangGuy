@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 interface GuessDisplayProps {
   correctGuesses: string[]; // ✅ Should be array, not Set
@@ -13,9 +13,8 @@ export const GuessDisplay: React.FC<GuessDisplayProps> = ({
   remainingGuesses, 
   maxGuesses 
 }) => {
-  // ✅ Remove Array.from() since these are already arrays
-  const correctLetters = correctGuesses.sort();
-  const incorrectLetters = incorrectGuesses.sort();
+  const correctLetters = useMemo(() => [...correctGuesses].sort(), [correctGuesses]);
+  const incorrectLetters = useMemo(() => [...incorrectGuesses].sort(), [incorrectGuesses]);
   const totalGuesses = correctLetters.length + incorrectLetters.length;
   
   return (
