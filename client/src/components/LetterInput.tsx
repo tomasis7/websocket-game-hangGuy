@@ -40,14 +40,14 @@ export const LetterInput: React.FC<LetterInputProps> = ({
   const lastPressRef = useRef<string | null>(null);
 
   const handleGuess = useCallback((letter: string) => {
-    if (disabled || guessedLetters.has(letter)) return;
+    if (disabled || guessedLetters.has(letter)) {return;}
     onGuess(letter);
   }, [disabled, guessedLetters, onGuess]);
 
   // Global keyboard handler
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (disabled) return;
+      if (disabled) {return;}
       const key = e.key.toUpperCase();
       if (/^[A-Z]$/.test(key) && !guessedLetters.has(key)) {
         e.preventDefault();
@@ -59,9 +59,9 @@ export const LetterInput: React.FC<LetterInputProps> = ({
   }, [disabled, guessedLetters, handleGuess]);
 
   const getKeyState = (letter: string) => {
-    if (correctLetters?.has(letter)) return 'correct';
-    if (incorrectLetters?.has(letter)) return 'incorrect';
-    if (guessedLetters.has(letter)) return 'guessed';
+    if (correctLetters?.has(letter)) {return 'correct';}
+    if (incorrectLetters?.has(letter)) {return 'incorrect';}
+    if (guessedLetters.has(letter)) {return 'guessed';}
     return 'default';
   };
 

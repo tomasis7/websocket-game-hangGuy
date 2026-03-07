@@ -61,15 +61,15 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
       socket.off('reconnect_attempt', handleReconnectAttempt);
       socket.off('reconnect_error', handleReconnectError);
       socket.off('reconnect_failed', handleReconnectFailed);
-      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+      if (dismissTimerRef.current) {clearTimeout(dismissTimerRef.current);}
     };
   }, [onConnectionLost, onConnectionRestored, reconnectAttempts]);
 
   const handleManualReconnect = () => {
-    if (!socket.connected) socket.connect();
+    if (!socket.connected) {socket.connect();}
   };
 
-  if (dismissed) return null;
+  if (dismissed) {return null;}
 
   // Disconnected toast
   if (!isConnected) {

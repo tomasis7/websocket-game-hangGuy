@@ -32,7 +32,7 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
     }
     if (e.key === 'Tab') {
       const dialog = dialogRef.current;
-      if (!dialog) return;
+      if (!dialog) {return;}
       const focusable = dialog.querySelectorAll<HTMLElement>(
         'button, [tabindex]:not([tabindex="-1"])'
       );
@@ -47,16 +47,16 @@ export const JoinGameWelcome: React.FC<JoinGameWelcomeProps> = ({
   }, [onDismiss]);
 
   const getIcon = () => {
-    if (gameState.status === "won") return "🎉";
-    if (gameState.status === "lost") return "💀";
-    if (isGameInProgress) return "🎯";
+    if (gameState.status === "won") {return "🎉";}
+    if (gameState.status === "lost") {return "💀";}
+    if (isGameInProgress) {return "🎯";}
     return "👋";
   };
 
   const getTitle = () => {
-    if (gameState.status === "won") return "Game Already Won!";
-    if (gameState.status === "lost") return "Game Already Lost";
-    if (isGameInProgress) return "Game In Progress!";
+    if (gameState.status === "won") {return "Game Already Won!";}
+    if (gameState.status === "lost") {return "Game Already Lost";}
+    if (isGameInProgress) {return "Game In Progress!";}
     return "Welcome to Hang Guy!";
   };
 

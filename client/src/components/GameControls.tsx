@@ -28,8 +28,8 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
 
   const handleCustomNewGame = () => {
     const options: { category?: string; difficulty?: 'easy' | 'medium' | 'hard' } = {};
-    if (selectedCategory) options.category = selectedCategory;
-    if (selectedDifficulty) options.difficulty = selectedDifficulty;
+    if (selectedCategory) {options.category = selectedCategory;}
+    if (selectedDifficulty) {options.difficulty = selectedDifficulty;}
     onNewGame(options);
     setShowOptions(false);
     setSelectedCategory('');
@@ -37,14 +37,14 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
   };
 
   const getButtonText = () => {
-    if (gameStatus === 'won')  return 'Play Again';
-    if (gameStatus === 'lost') return 'Try Again';
+    if (gameStatus === 'won')  {return 'Play Again';}
+    if (gameStatus === 'lost') {return 'Try Again';}
     return 'New Game';
   };
 
   const getButtonColor = () => {
-    if (gameStatus === 'won')  return 'var(--success)';
-    if (gameStatus === 'lost') return 'var(--danger)';
+    if (gameStatus === 'won')  {return 'var(--success)';}
+    if (gameStatus === 'lost') {return 'var(--danger)';}
     return 'var(--accent)';
   };
 

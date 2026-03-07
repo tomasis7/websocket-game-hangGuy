@@ -1,9 +1,9 @@
-import { HangGuyGame } from "../../shared/gameLogic";
+import { HangGuyGame } from "../../shared/gameLogic.ts";
 import {
   GameStateEvent,
   PlayerInfo,
   GameAction,
-} from "../../shared/types";
+} from "../../shared/types.ts";
 
 export class GameManager {
   private game: HangGuyGame;

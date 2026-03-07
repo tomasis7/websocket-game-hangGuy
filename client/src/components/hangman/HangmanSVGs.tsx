@@ -57,10 +57,10 @@ function AnimatedPart({ children, partKey }: AnimatedPartProps) {
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el) {return;}
     el.style.animation = 'none';
     // Force reflow
-    void el.offsetHeight;
+    void (el as unknown as HTMLElement).offsetHeight;
     el.style.animation = 'fade-scale-in 0.35s ease-out both';
   }, [partKey]);
 

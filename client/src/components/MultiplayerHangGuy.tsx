@@ -62,7 +62,7 @@ export const MultiplayerHangGuy: React.FC = () => {
   );
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {return;}
 
     const handleJoinSuccess = () => {
       setIsJoining(false);
@@ -271,7 +271,7 @@ export const MultiplayerHangGuy: React.FC = () => {
           {gameState.status !== 'playing' && (
             <GameStatus
               status={gameState.status}
-              word={gameState.status !== "playing" ? gameState.word : undefined}
+              word={gameState.word}
               remainingGuesses={gameState.remainingGuesses}
             />
           )}

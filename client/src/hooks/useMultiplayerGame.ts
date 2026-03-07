@@ -48,7 +48,7 @@ export const useMultiplayerGame = () => {
     }, 5000);
 
     return () => {
-      if (expiryTimerRef.current) clearInterval(expiryTimerRef.current);
+      if (expiryTimerRef.current) {clearInterval(expiryTimerRef.current);}
     };
   }, []);
 

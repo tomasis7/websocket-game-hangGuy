@@ -22,7 +22,7 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
 
   useEffect(() => {
     const saved = localStorage.getItem("hangGuy_nickname");
-    if (saved) setNickname(saved);
+    if (saved) {setNickname(saved);}
   }, []);
 
   // Focus first focusable element on open
@@ -34,11 +34,11 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
 
   // Focus trap
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') return; // no dismiss on Escape for join dialog (required)
+    if (e.key === 'Escape') {return;} // no dismiss on Escape for join dialog (required)
 
     if (e.key === 'Tab') {
       const dialog = dialogRef.current;
-      if (!dialog) return;
+      if (!dialog) {return;}
       const focusable = dialog.querySelectorAll<HTMLElement>(
         'button, input, [tabindex]:not([tabindex="-1"])'
       );
@@ -69,7 +69,7 @@ export const UserJoinDialog: React.FC<UserJoinDialogProps> = ({
     onJoin(nickname.trim(), undefined, selectedAvatar);
   };
 
-  if (!isVisible) return null;
+  if (!isVisible) {return null;}
 
   return (
     <div
