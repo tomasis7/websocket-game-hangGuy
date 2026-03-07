@@ -19,7 +19,9 @@ interface GameOptions {
 export const MultiplayerHangGuy: React.FC = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(true);
   const [isJoiningLocal, setIsJoining] = useState(false);
-  const [lastUsedPlayerName, setLastUsedPlayerName] = useState<string | null>(null);
+  const [lastUsedPlayerName, setLastUsedPlayerName] = useState<string | null>(
+    null
+  );
 
   const {
     gameState,
@@ -32,13 +34,12 @@ export const MultiplayerHangGuy: React.FC = () => {
 
   const {
     currentUser,
-    sessionInfo,
     joinError,
     isJoining: userJoining,
     leaveGame,
+    joinGame: identifyUser,
   } = useUserIdentification();
 
-  // Memoized calculations
   const incorrectGuessCount = gameState?.incorrectGuesses.length || 0;
   const isGameActive = gameState?.status === "playing";
 
@@ -65,7 +66,6 @@ export const MultiplayerHangGuy: React.FC = () => {
   );
   const isJoining = userJoining || gameJoining || isJoiningLocal;
 
-  // Event handlers with proper typing
   const handleGuess = useCallback(
     (letter: string): void => {
       if (isGameActive && isConnected) {
@@ -92,33 +92,45 @@ export const MultiplayerHangGuy: React.FC = () => {
     }
   }, [gameState]);
 
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+
+    const handleJoinSuccess = () => {
+      setIsJoining(false);
+      setShowJoinDialog(false);
+    };
+
+    const handleJoinError = () => {
+      setIsJoining(false);
+      setShowJoinDialog(true);
+    };
+
+    socket.on("hangman:join-success", handleJoinSuccess);
+    socket.on("hangman:error", handleJoinError);
+
+    return () => {
+      socket.off("hangman:join-success", handleJoinSuccess);
+      socket.off("hangman:error", handleJoinError);
+    };
+  }, []);
+
   const handleJoinGame = useCallback(
-    (nickname: string, sessionId?: string, avatar?: string): void => {
-      console.log("Attempting to join game:", { nickname, sessionId, avatar });
+    (nickname: string, _sessionId?: string, _avatar?: string): void => {
       setIsJoining(true);
-      setLastUsedPlayerName(nickname); // Store for retries
+      setLastUsedPlayerName(nickname);
+      identifyUser(nickname);
 
       if (socket && socket.connected) {
-        // Generate a 6-character session ID to match the validation pattern
-        const targetSessionId =
-          sessionId || Date.now().toString(36).toUpperCase().slice(-6);
-
-        console.log(
-          "Emitting hangman:join-game with sessionId:",
-          targetSessionId
-        );
-
         socket.emit("hangman:join-game", {
           playerName: nickname,
-          sessionId: targetSessionId,
-          avatar,
         });
       } else {
-        console.error("Socket not connected");
         setIsJoining(false);
       }
     },
-    [socket]
+    [identifyUser]
   );
 
   const handleLeaveGame = useCallback((): void => {
@@ -126,15 +138,16 @@ export const MultiplayerHangGuy: React.FC = () => {
     setShowJoinDialog(true);
   }, [leaveGame]);
 
-  // Remove the duplicate socket effect - it's already handled in useUserIdentification
-  // This was causing duplicate event listeners and potential memory leaks
-
   // Loading/connecting state
   if (!isConnected || isJoining) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-md">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div
+            className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"
+            role="status"
+            aria-label="Loading"
+          ></div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
             {isJoining ? "Joining Game..." : "Connecting to Game..."}
           </h2>
@@ -144,24 +157,25 @@ export const MultiplayerHangGuy: React.FC = () => {
               : "Please wait while we connect you to the multiplayer game."}
           </p>
           {error && (
-            <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            <div
+              className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded"
+              role="alert"
+            >
               Error: {error}
             </div>
           )}
           <button
             onClick={() => {
-              // Use stored player name for retry, or fallback to generated name
               if (lastUsedPlayerName) {
                 actions.joinGame(lastUsedPlayerName);
               } else {
-                // Show join dialog again if no stored name
                 setShowJoinDialog(true);
               }
             }}
             disabled={!isConnected}
             className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
           >
-            {lastUsedPlayerName ? 'Retry Connection' : 'Join Game'}
+            {lastUsedPlayerName ? "Retry Connection" : "Join Game"}
           </button>
         </div>
       </div>
@@ -187,12 +201,7 @@ export const MultiplayerHangGuy: React.FC = () => {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
           <button
-            onClick={() => {
-              // Call an existing method or implement sync functionality
-              if (actions.joinGame) {
-                actions.joinGame();
-              }
-            }}
+            onClick={() => actions.joinGame()}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
             Sync Game State
@@ -202,7 +211,7 @@ export const MultiplayerHangGuy: React.FC = () => {
     );
   }
 
-  // Show join dialog if no current user OR showJoinDialog is true
+  // Show join dialog if needed
   if (
     showJoinDialog ||
     (!currentUser && !gameState?.players?.find((p) => p.id === socket?.id))
@@ -225,11 +234,11 @@ export const MultiplayerHangGuy: React.FC = () => {
           <div className="lg:col-span-3">
             <div className="bg-white rounded-lg shadow-lg p-6">
               {/* Game Header */}
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
                 <h1 className="text-3xl font-bold text-gray-800">Hang Guy</h1>
-                <div className="flex gap-4">
-                  <GameStatus 
-                    status={gameState.status} 
+                <div className="flex gap-4 items-center">
+                  <GameStatus
+                    status={gameState.status}
                     word={gameState.word}
                     remainingGuesses={gameState.remainingGuesses}
                   />
@@ -276,14 +285,6 @@ export const MultiplayerHangGuy: React.FC = () => {
             <UserList
               users={userListPlayers}
               currentUserId={currentUser?.id}
-              sessionInfo={
-                sessionInfo
-                  ? {
-                      ...sessionInfo,
-                      userCount: gameState?.players?.length || 0,
-                    } // Update count from game players
-                  : undefined
-              }
             />
           </div>
         </div>
