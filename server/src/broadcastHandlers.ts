@@ -7,62 +7,25 @@ const gameSync = new GameStateSynchronizer(gameManager);
 const HANGMAN_ROOM = "hangman-room";
 
 export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
-  // Utility function to broadcast game state to all players (currently unused)
-  /*
-  const broadcastGameState = (action: string, additionalData?: any) => {
-    const gameState = gameManager.getGameState();
-    const broadcast: GameBroadcast = {
-      gameState,
-      action: gameState.lastAction!,
-      timestamp: Date.now(),
-    };
-
-    io.to(HANGMAN_ROOM).emit("hangman:state-broadcast", broadcast);
-
-    // Send specific event broadcasts for better UX
-    if (additionalData) {
-      io.to(HANGMAN_ROOM).emit(
-        action as keyof HangGuySocketEvents,
-        additionalData
-      );
-    }
-
-    console.log(
-      `Broadcasted ${action} to ${
-        io.sockets.adapter.rooms.get(HANGMAN_ROOM)?.size || 0
-      } players`
-    );
-  };
-  */
-
-  // Enhanced join game handler with state synchronization
+  // Join game handler with state synchronization
   socket.on("hangman:join-game", async (data) => {
     console.log("Player attempting to join:", data);
 
     const playerName =
       data.playerName || `Player${Math.random().toString(36).substr(2, 4)}`;
-    const sessionId = data.sessionId || "default";
 
     try {
-      // Join the socket to the session room
-      socket.join(sessionId);
-
-      console.log(`Player ${playerName} joined session ${sessionId}`);
-
-      // Handle player join with sync
       const joinResult = await gameSync.handlePlayerJoin(socket, playerName);
 
       if (joinResult.success) {
-        // Emit success event
         socket.emit("hangman:join-success", {
           playerInfo: joinResult.playerInfo,
           gameState: joinResult.gameState,
-          sessionId: sessionId,
           isGameInProgress: joinResult.isGameInProgress,
           gameSummary: gameSync.getGameSummary(joinResult.gameState!),
+          timestamp: Date.now(),
         });
 
-        // Broadcast player join to other players
         const joinBroadcast = {
           action: "joined" as const,
           playerId: socket.id,
@@ -76,7 +39,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
         socket
           .to(HANGMAN_ROOM)
           .emit("hangman:player-action-broadcast", joinBroadcast);
-        console.log(`📢 Broadcasted player join for ${playerName}`);
+        console.log(`Broadcasted player join for ${playerName}`);
       } else {
         socket.emit("hangman:error", {
           message: joinResult.error || "Failed to join game",
@@ -94,7 +57,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
     }
   });
 
-  // Enhanced sync request handler
+  // Sync request handler
   socket.on("hangman:request-sync", () => {
     try {
       const gameState = gameManager.getGameState();
@@ -109,19 +72,18 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
         return;
       }
 
-      const syncData = gameSync.getGameSummary(gameState);
+      const gameSummary = gameSync.getGameSummary(gameState);
 
       socket.emit("hangman:sync-response", {
         gameState,
         playerInfo: player,
-        syncData,
-        gameSummary: syncData,
+        gameSummary,
         timestamp: Date.now(),
       });
 
-      console.log(`🔄 Sent enhanced sync response to ${player.name}`);
+      console.log(`Sent sync response to ${player.name}`);
     } catch (error) {
-      console.error("❌ Error in sync request:", error);
+      console.error("Error in sync request:", error);
       socket.emit("hangman:error", {
         message: "Failed to sync game state",
         code: "SYNC_ERROR",
@@ -152,14 +114,14 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
         socket
           .to(HANGMAN_ROOM)
           .emit("hangman:player-action-broadcast", leaveBroadcast);
-        console.log(`👋 ${playerInfo.name} left the game`);
+        console.log(`${playerInfo.name} left the game`);
       }
     } catch (error) {
-      console.error("❌ Error in leave-game:", error);
+      console.error("Error in leave-game:", error);
     }
   });
 
-  // Handle letter guess with enhanced validation
+  // Handle letter guess
   socket.on("hangman:guess-letter", (data) => {
     const playerId = socket.id;
     const player = gameManager.getPlayer(playerId);
@@ -196,12 +158,12 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
 
       io.to(HANGMAN_ROOM).emit("hangman:guess-broadcast", guessBroadcast);
       console.log(
-        `🎯 ${player.name} guessed "${data.letter}" - ${
+        `${player.name} guessed "${data.letter}" - ${
           result.isCorrect ? "correct" : "incorrect"
         }`
       );
     } catch (error) {
-      console.error("❌ Error processing guess:", error);
+      console.error("Error processing guess:", error);
       socket.emit("hangman:error", {
         message: "Failed to process guess",
         code: "GUESS_PROCESSING_ERROR",
@@ -238,9 +200,9 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
         "hangman:game-start-broadcast",
         newGameBroadcast
       );
-      console.log(`🎮 New game started by ${player.name}`);
+      console.log(`New game started by ${player.name}`);
     } catch (error) {
-      console.error("❌ Error starting new game:", error);
+      console.error("Error starting new game:", error);
       socket.emit("hangman:error", {
         message: "Failed to start new game",
         code: "NEW_GAME_ERROR",
@@ -269,10 +231,10 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
         socket
           .to(HANGMAN_ROOM)
           .emit("hangman:player-action-broadcast", disconnectBroadcast);
-        console.log(`🔌 ${playerInfo.name} disconnected`);
+        console.log(`${playerInfo.name} disconnected`);
       }
     } catch (error) {
-      console.error("❌ Error handling disconnect:", error);
+      console.error("Error handling disconnect:", error);
     }
   });
 };
