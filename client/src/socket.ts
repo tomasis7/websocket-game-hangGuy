@@ -5,7 +5,9 @@ import { io, Socket } from "socket.io-client";
 
 // Create a typed socket.io client instance connecting to the main game server on port 3001
 // Enhanced with robust reconnection settings for better connection handling
-export const socket: Socket<any, any> = io("http://localhost:3001", {
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
+
+export const socket: Socket<any, any> = io(SERVER_URL, {
   transports: ["websocket", "polling"], // Fallback to polling if websocket fails
   autoConnect: true,
   reconnection: true,

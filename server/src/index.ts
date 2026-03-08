@@ -7,16 +7,18 @@ import { setupHangmanBroadcasters } from "./broadcastHandlers";
 const app = express();
 const server = createServer(app);
 
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
+
 // Configure CORS for Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: CORS_ORIGIN,
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-app.use(cors());
+app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 
 // Basic health check endpoint
