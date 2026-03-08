@@ -5,12 +5,12 @@ import { LetterInput } from "./LetterInput";
 import { GameStatus } from "./GameStatus";
 import { GameControls } from "./GameControls";
 import { GuessDisplay } from "./GuessDisplay";
-import { JoinGameWelcome } from "./JoinGameWelcome";
 import { useMultiplayerGame } from "../hooks/useMultiplayerGame";
 import { UserJoinDialog } from "./UserJoinDialog";
 import { UserList } from "./UserList";
 import { useUserIdentification } from "../hooks/useUserIdentification";
 import { socket } from "../socket";
+import { QRCodeInvite } from "./QRCodeInvite";
 
 interface GameOptions {
   category?: string;
@@ -27,7 +27,6 @@ export const MultiplayerHangGuy: React.FC = () => {
     isConnected,
     isJoining: gameJoining,
     error,
-    joinWelcome,
     actions,
   } = useMultiplayerGame();
 
@@ -168,19 +167,6 @@ export const MultiplayerHangGuy: React.FC = () => {
     );
   }
 
-  // ── Welcome modal ────────────────────────────────────────────────
-  if (joinWelcome.show && joinWelcome.gameState && joinWelcome.playerInfo) {
-    return (
-      <JoinGameWelcome
-        gameState={joinWelcome.gameState}
-        playerInfo={joinWelcome.playerInfo}
-        isGameInProgress={joinWelcome.isGameInProgress}
-        gameSummary={joinWelcome.gameSummary}
-        onDismiss={actions.dismissWelcome}
-      />
-    );
-  }
-
   // ── No game state ────────────────────────────────────────────────
   if (!gameState) {
     return (
@@ -205,8 +191,7 @@ export const MultiplayerHangGuy: React.FC = () => {
   // ── Main game UI ─────────────────────────────────────────────────
   return (
     <div
-      className="min-h-[80vh] py-4"
-      style={{ background: 'var(--bg)' }}
+      className="min-h-[100vh] py-6 sm:py-10 flex items-center justify-center bg-zinc-50"
     >
       {/* Landscape mobile: hangman left, content right */}
       <style>{`
@@ -217,22 +202,23 @@ export const MultiplayerHangGuy: React.FC = () => {
       `}</style>
 
       <div
-        className="game-grid container mx-auto grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-4 px-2"
+        className="game-grid container max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 px-4"
       >
         {/* ── Game area ── */}
         <main
-          className="glass-card p-4 md:p-6 flex flex-col gap-5"
+          className="bg-white shadow-sm border border-zinc-200 rounded-3xl p-6 sm:p-8 flex flex-col gap-8 w-full max-w-3xl mx-auto"
           style={{ minHeight: '0' }}
         >
           {/* Header row */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-100 pb-4">
             <h1
-              className="text-3xl font-bold"
-              style={{ fontFamily: "'Fredoka One', cursive", color: 'var(--accent)' }}
+              className="text-3xl font-bold text-violet-500 tracking-tight"
+              style={{ fontFamily: "'Fredoka One', cursive" }}
             >
               Hang Guy
             </h1>
             <div className="flex items-center gap-3">
+              <QRCodeInvite />
               <GameStatus
                 status={gameState.status}
                 word={gameState.status !== "playing" ? gameState.word : undefined}
@@ -241,12 +227,7 @@ export const MultiplayerHangGuy: React.FC = () => {
               {currentUser && (
                 <button
                   onClick={handleLeaveGame}
-                  className="px-4 py-2 rounded-full text-sm font-semibold transition-all hover:opacity-80 focus:outline-none focus-visible:ring-2"
-                  style={{
-                    background: 'rgba(244,63,94,0.10)',
-                    border: '1px solid var(--danger)',
-                    color: 'var(--danger)',
-                  }}
+                  className="px-5 py-2 rounded-xl text-sm font-bold transition-all hover:bg-rose-50 active:scale-95 focus:outline-none focus-visible:ring-2 bg-white border border-zinc-200 text-zinc-500 hover:text-rose-500 hover:border-rose-200 shadow-sm"
                 >
                   Leave
                 </button>

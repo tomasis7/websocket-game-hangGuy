@@ -9,7 +9,7 @@ interface GuessDisplayProps {
 
 function HeartFilled() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
     </svg>
   );
@@ -17,7 +17,7 @@ function HeartFilled() {
 
 function HeartEmpty() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
     </svg>
   );
@@ -34,11 +34,10 @@ export const GuessDisplay: React.FC<GuessDisplayProps> = ({
   const isCritical = remainingGuesses <= 2;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4 items-center">
       {/* Lives strip */}
       <div
-        className="flex flex-col items-center gap-2 py-3 px-4 rounded-2xl"
-        style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+        className="flex flex-col items-center gap-2 py-3 px-6 rounded-2xl bg-white shadow-sm border border-zinc-100"
         aria-label={`${remainingGuesses} of ${maxGuesses} guesses remaining`}
       >
         <div className="flex gap-1.5">
@@ -47,11 +46,11 @@ export const GuessDisplay: React.FC<GuessDisplayProps> = ({
             return (
               <span
                 key={i}
+                className="transition-colors duration-300"
                 style={{
                   color: isAlive
-                    ? isCritical ? 'var(--danger)' : 'var(--success)'
-                    : 'var(--border)',
-                  transition: 'color 0.3s',
+                    ? isCritical ? '#f43f5e' : '#10b981' // rose-500 or emerald-500
+                    : '#e4e4e7' // zinc-200
                 }}
               >
                 {isAlive ? <HeartFilled /> : <HeartEmpty />}
@@ -59,23 +58,18 @@ export const GuessDisplay: React.FC<GuessDisplayProps> = ({
             );
           })}
         </div>
-        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-          {remainingGuesses} / {maxGuesses} remaining
+        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+          {remainingGuesses} / {maxGuesses} Lives
         </span>
       </div>
 
       {/* Guessed letters chips */}
       {(correctLetters.length > 0 || incorrectLetters.length > 0) && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap justify-center gap-2 max-w-md">
           {correctLetters.map(letter => (
             <span
               key={letter}
-              className="px-2 py-0.5 rounded-full text-xs font-bold"
-              style={{
-                background: 'rgba(132,204,22,0.15)',
-                border: '1px solid var(--success)',
-                color: 'var(--success)',
-              }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm"
             >
               {letter}
             </span>
@@ -83,13 +77,7 @@ export const GuessDisplay: React.FC<GuessDisplayProps> = ({
           {incorrectLetters.map(letter => (
             <span
               key={letter}
-              className="px-2 py-0.5 rounded-full text-xs font-bold line-through"
-              style={{
-                background: 'rgba(244,63,94,0.10)',
-                border: '1px solid var(--danger)',
-                color: 'var(--danger)',
-                opacity: 0.7,
-              }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold bg-rose-100 text-rose-500 border border-rose-200 line-through opacity-75 shadow-sm"
             >
               {letter}
             </span>

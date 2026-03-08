@@ -39,10 +39,10 @@ function ConfettiPiece({ style }: { style: React.CSSProperties }) {
   );
 }
 
-const CONFETTI_COLORS = ['#8b5cf6','#84cc16','#f59e0b','#f43f5e','#06b6d4'];
+const CONFETTI_COLORS = ['#8b5cf6','#10b981','#f59e0b','#f43f5e','#0ea5e9'];
 
-const confettiPieces = Array.from({ length: 12 }, (_, i) => ({
-  left: `${(i / 12) * 100}%`,
+const confettiPieces = Array.from({ length: 15 }, (_, i) => ({
+  left: `${(i / 15) * 100}%`,
   top: '-10px',
   background: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
   animation: `confetti-fall ${0.8 + Math.random() * 0.8}s ease-out forwards`,
@@ -55,31 +55,25 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
   if (status === 'playing') {
     const isCritical = (remainingGuesses ?? 0) <= 2;
     const isWarning = (remainingGuesses ?? 0) <= 4;
-    const color = isCritical ? 'var(--danger)' : isWarning ? 'var(--warning)' : 'var(--success)';
+    const colorClass = isCritical ? 'bg-rose-500 shadow-rose-500/50' : isWarning ? 'bg-amber-500 shadow-amber-500/50' : 'bg-emerald-500 shadow-emerald-500/50';
+    const textClass = isCritical ? 'text-rose-600' : isWarning ? 'text-amber-600' : 'text-emerald-600';
 
     return (
       <div
         role="status"
         aria-live="polite"
-        className="flex items-center gap-3 px-4 py-2 rounded-full text-sm font-semibold"
-        style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          color: 'var(--text)',
-        }}
+        className="flex items-center gap-2.5 px-4 py-2 rounded-full text-sm font-bold bg-white border border-zinc-200 shadow-sm"
       >
         <span
-          className="w-3 h-3 rounded-full flex-shrink-0"
+          className={`w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-md ${colorClass}`}
           style={{
-            background: color,
-            boxShadow: `0 0 8px ${color}`,
             animation: isCritical ? 'glow-pulse 0.8s ease-in-out infinite' : 'glow-pulse 2s ease-in-out infinite',
           }}
           aria-hidden="true"
         />
-        <span style={{ color }}>
-          <strong>{remainingGuesses ?? 0}</strong>
-          <span style={{ color: 'var(--text-muted)' }}> guesses left</span>
+        <span className={textClass}>
+          {remainingGuesses ?? 0}
+          <span className="text-zinc-500 font-medium ml-1">left</span>
         </span>
       </div>
     );
@@ -90,23 +84,16 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
       <div
         role="status"
         aria-live="polite"
-        className="relative overflow-hidden rounded-2xl p-6 text-center animate-bounce-in"
-        style={{
-          background: 'linear-gradient(135deg, rgba(132,204,22,0.15) 0%, rgba(139,92,246,0.15) 100%)',
-          border: '2px solid var(--success)',
-        }}
+        className="relative overflow-hidden rounded-3xl p-8 text-center animate-bounce-in bg-white border-2 border-emerald-200 shadow-lg"
       >
         {confettiPieces.map((s, i) => <ConfettiPiece key={i} style={s} />)}
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
-          style={{ background: 'rgba(132,204,22,0.2)', color: 'var(--success)' }}
-        >
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 bg-emerald-100 text-emerald-600 shadow-inner">
           <TrophyIcon />
         </div>
-        <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--success)', fontFamily: "'Fredoka One', cursive" }}>
+        <h2 className="text-3xl font-bold mb-2 text-emerald-600" style={{ fontFamily: "'Fredoka One', cursive" }}>
           You Won!
         </h2>
-        <p style={{ color: 'var(--text-muted)' }}>You saved the day!</p>
+        <p className="text-zinc-500 font-medium text-lg">Great job guessing the word!</p>
       </div>
     );
   }
@@ -116,27 +103,20 @@ export const GameStatus: React.FC<GameStatusProps> = ({ status, word, remainingG
     <div
       role="status"
       aria-live="polite"
-      className="rounded-2xl p-6 text-center animate-shake"
-      style={{
-        background: 'rgba(244,63,94,0.08)',
-        border: '2px solid var(--danger)',
-      }}
+      className="rounded-3xl p-8 text-center animate-shake bg-white border-2 border-rose-200 shadow-lg"
     >
-      <div
-        className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
-        style={{ background: 'rgba(244,63,94,0.15)', color: 'var(--danger)' }}
-      >
+      <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 bg-rose-100 text-rose-500 shadow-inner">
         <SkullIcon />
       </div>
-      <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--danger)', fontFamily: "'Fredoka One', cursive" }}>
+      <h2 className="text-3xl font-bold mb-2 text-rose-600" style={{ fontFamily: "'Fredoka One', cursive" }}>
         Game Over
       </h2>
       {word && (
-        <p className="text-lg font-bold mt-2" style={{ color: 'var(--text)' }}>
-          The word was: <span style={{ color: 'var(--accent)' }}>{word}</span>
+        <p className="text-lg font-medium text-zinc-600 mt-3">
+          The word was: <span className="font-bold text-zinc-900 tracking-wider bg-zinc-100 px-3 py-1 rounded-lg ml-1">{word}</span>
         </p>
       )}
-      <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Don't give up — try again!</p>
+      <p className="text-sm mt-4 text-zinc-400 font-medium">Don't give up — try again!</p>
     </div>
   );
 };

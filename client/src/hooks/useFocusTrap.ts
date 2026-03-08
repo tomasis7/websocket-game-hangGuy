@@ -9,9 +9,9 @@ export function useFocusTrap(
   onEscape?: () => void
 ) {
   useEffect(() => {
-    if (!active) return;
+    if (!active) {return;}
     const container = ref.current;
-    if (!container) return;
+    if (!container) {return;}
     const focusable = Array.from(
       container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
     );
@@ -20,8 +20,8 @@ export function useFocusTrap(
         onEscape?.();
         return;
       }
-      if (e.key !== 'Tab') return;
-      if (focusable.length === 0) return;
+      if (e.key !== 'Tab') {return;}
+      if (focusable.length === 0) {return;}
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (e.shiftKey) {

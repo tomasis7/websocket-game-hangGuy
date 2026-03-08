@@ -18,7 +18,7 @@ function LetterTile({ char, index, isRevealed }: LetterTileProps) {
     if (!prevRevealed.current && isRevealed && ref.current) {
       ref.current.style.animation = 'none';
       void ref.current.offsetHeight;
-      ref.current.style.animation = 'letter-flip 0.4s ease-out both';
+      ref.current.style.animation = 'letter-flip 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both';
     }
     prevRevealed.current = isRevealed;
   }, [isRevealed]);
@@ -26,13 +26,10 @@ function LetterTile({ char, index, isRevealed }: LetterTileProps) {
   if (!isRevealed) {
     return (
       <span
-        className="inline-flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold select-none animate-shimmer"
+        className="flex items-center justify-center w-10 h-12 sm:w-12 sm:h-14 rounded-xl bg-zinc-100 sm:bg-white text-transparent sm:shadow-sm sm:border sm:border-zinc-200"
         style={{
-          width: '2.5rem',
-          height: '3rem',
-          minWidth: '2.5rem',
-          border: '2px solid var(--border)',
-          color: 'transparent',
+          borderBottomWidth: '3px',
+          borderBottomColor: 'var(--border)'
         }}
         aria-label="Unknown letter"
       />
@@ -42,17 +39,15 @@ function LetterTile({ char, index, isRevealed }: LetterTileProps) {
   return (
     <span
       ref={ref}
-      className="inline-flex items-center justify-center rounded-xl text-xl sm:text-2xl font-bold select-none"
+      className="flex items-center justify-center w-10 h-12 sm:w-12 sm:h-14 rounded-xl text-2xl sm:text-3xl font-bold select-none text-white shadow-md uppercase tracking-widest"
       style={{
-        width: '2.5rem',
-        height: '3rem',
-        minWidth: '2.5rem',
         background: 'var(--accent)',
-        color: '#fff',
-        border: '2px solid var(--accent)',
-        animation: 'letter-flip 0.4s ease-out both',
-        animationDelay: `${index * 0.06}s`,
+        borderBottomWidth: '3px',
+        borderBottomColor: 'rgba(0,0,0,0.2)',
+        animation: 'letter-flip 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both',
+        animationDelay: `${index * 0.05}s`,
         perspective: '400px',
+        fontFamily: 'monospace'
       }}
       aria-label={`Letter ${char}`}
     >
@@ -66,7 +61,7 @@ export const HangGuyWord: React.FC<HangGuyWordProps> = ({ displayWord }) => {
 
   return (
     <div
-      className="flex flex-wrap justify-center gap-2 py-4"
+      className="flex flex-wrap justify-center gap-2 sm:gap-3 py-6 px-2"
       aria-live="polite"
       aria-label="Word to guess"
       aria-atomic="false"

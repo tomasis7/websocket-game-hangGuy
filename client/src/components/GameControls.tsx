@@ -7,10 +7,10 @@ interface GameControlsProps {
   disabled?: boolean;
 }
 
-const DIFFICULTIES: { value: 'easy' | 'medium' | 'hard'; label: string; color: string; border: string }[] = [
-  { value: 'easy',   label: 'Easy',   color: 'rgba(132,204,22,0.12)',  border: 'var(--success)' },
-  { value: 'medium', label: 'Medium', color: 'rgba(245,158,11,0.12)', border: 'var(--warning)' },
-  { value: 'hard',   label: 'Hard',   color: 'rgba(244,63,94,0.12)',  border: 'var(--danger)'  },
+const DIFFICULTIES: { value: 'easy' | 'medium' | 'hard'; label: string; baseClass: string; activeClass: string }[] = [
+  { value: 'easy',   label: 'Easy',   baseClass: 'text-emerald-600 border-zinc-200 hover:border-emerald-200 hover:bg-emerald-50', activeClass: 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm' },
+  { value: 'medium', label: 'Medium', baseClass: 'text-amber-600 border-zinc-200 hover:border-amber-200 hover:bg-amber-50', activeClass: 'bg-amber-50 border-amber-500 text-amber-700 shadow-sm' },
+  { value: 'hard',   label: 'Hard',   baseClass: 'text-rose-600 border-zinc-200 hover:border-rose-200 hover:bg-rose-50', activeClass: 'bg-rose-50 border-rose-500 text-rose-700 shadow-sm'  },
 ];
 
 export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatus, disabled = false }) => {
@@ -42,27 +42,23 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
     return 'New Game';
   };
 
-  const getButtonColor = () => {
-    if (gameStatus === 'won')  {return 'var(--success)';}
-    if (gameStatus === 'lost') {return 'var(--danger)';}
-    return 'var(--accent)';
+  const getButtonClasses = () => {
+    if (disabled) { return 'bg-zinc-200 text-zinc-400 cursor-not-allowed'; }
+    if (gameStatus === 'won') { return 'bg-emerald-500 text-white shadow-emerald-500/30 hover:bg-emerald-600 shadow-lg'; }
+    if (gameStatus === 'lost') { return 'bg-rose-500 text-white shadow-rose-500/30 hover:bg-rose-600 shadow-lg'; }
+    return 'bg-violet-500 text-white shadow-violet-500/30 hover:bg-violet-600 shadow-lg'; // Accent color equivalent
   };
 
-  const buttonColor = getButtonColor();
-
   return (
-    <div className="flex flex-col gap-3 w-full">
+    <div className="flex flex-col gap-3 w-full max-w-md mx-auto mt-4">
       {/* Main action button */}
       <button
         onClick={handleQuickNewGame}
         disabled={disabled}
-        className="w-full font-bold py-3.5 px-6 rounded-full text-white transition-all duration-200 hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2"
+        className={`w-full py-4 px-6 rounded-2xl font-bold transition-all duration-200 hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${getButtonClasses()}`}
         style={{
-          background: disabled ? 'var(--border)' : buttonColor,
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          fontSize: '1rem',
-          boxShadow: disabled ? 'none' : `0 4px 16px ${buttonColor}44`,
           fontFamily: "'Fredoka One', cursive",
+          fontSize: '1.1rem',
           letterSpacing: '0.02em',
         }}
       >
@@ -74,40 +70,30 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
         onClick={() => setShowOptions(v => !v)}
         disabled={disabled}
         aria-expanded={showOptions}
-        className="text-sm font-medium py-2 px-4 rounded-full transition-colors hover:opacity-80 focus:outline-none focus-visible:ring-2"
-        style={{
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          color: 'var(--text-muted)',
-        }}
+        className="text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 bg-white border border-zinc-200 text-zinc-500"
       >
         {showOptions ? 'Hide options' : 'Customize game'}
       </button>
 
       {/* Options panel with max-height transition */}
       <div
+        className="overflow-hidden transition-all duration-300 ease-in-out"
         style={{
           maxHeight: showOptions ? '600px' : '0',
-          overflow: 'hidden',
-          transition: 'max-height 0.35s ease',
+          opacity: showOptions ? 1 : 0,
         }}
       >
-        <div className="flex flex-col gap-4 pt-2">
+        <div className="flex flex-col gap-5 p-4 mt-2 bg-white rounded-2xl border border-zinc-100 shadow-sm">
           {/* Category horizontal scroll chips */}
           <div>
-            <p className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-xs font-bold mb-3 uppercase tracking-wider text-zinc-400">
               Category
             </p>
-            <div ref={scrollRef} className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            <div ref={scrollRef} className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2" style={{ scrollbarWidth: 'none' }}>
               <button
                 key="random"
                 onClick={() => setSelectedCategory('')}
-                className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all"
-                style={{
-                  background: selectedCategory === '' ? 'var(--accent)' : 'var(--bg-surface)',
-                  color: selectedCategory === '' ? '#fff' : 'var(--text)',
-                  border: '1px solid var(--border)',
-                }}
+                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${selectedCategory === '' ? 'bg-violet-500 text-white border-violet-500 shadow-sm' : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'}`}
               >
                 Random
               </button>
@@ -115,12 +101,7 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all"
-                  style={{
-                    background: selectedCategory === cat ? 'var(--accent)' : 'var(--bg-surface)',
-                    color: selectedCategory === cat ? '#fff' : 'var(--text)',
-                    border: '1px solid var(--border)',
-                  }}
+                  className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${selectedCategory === cat ? 'bg-violet-500 text-white border-violet-500 shadow-sm' : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'}`}
                 >
                   {cat}
                 </button>
@@ -130,24 +111,22 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
 
           {/* Difficulty cards */}
           <div>
-            <p className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-xs font-bold mb-3 uppercase tracking-wider text-zinc-400">
               Difficulty
             </p>
-            <div className="grid grid-cols-3 gap-2">
-              {DIFFICULTIES.map(d => (
-                <button
-                  key={d.value}
-                  onClick={() => setSelectedDifficulty(prev => prev === d.value ? '' : d.value)}
-                  className="py-2 rounded-xl text-sm font-semibold transition-all"
-                  style={{
-                    background: selectedDifficulty === d.value ? d.color : 'var(--bg-surface)',
-                    border: `1.5px solid ${selectedDifficulty === d.value ? d.border : 'var(--border)'}`,
-                    color: selectedDifficulty === d.value ? d.border : 'var(--text-muted)',
-                  }}
-                >
-                  {d.label}
-                </button>
-              ))}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {DIFFICULTIES.map(d => {
+                const isActive = selectedDifficulty === d.value;
+                return (
+                  <button
+                    key={d.value}
+                    onClick={() => setSelectedDifficulty(prev => prev === d.value ? '' : d.value)}
+                    className={`py-3 rounded-xl text-sm font-bold transition-all border-2 ${isActive ? d.activeClass : d.baseClass}`}
+                  >
+                    {d.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -155,8 +134,7 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
           <button
             onClick={handleCustomNewGame}
             disabled={disabled}
-            className="w-full py-2.5 rounded-full text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95"
-            style={{ background: 'var(--accent)', boxShadow: '0 2px 12px rgba(139,92,246,0.35)' }}
+            className="w-full py-3 mt-2 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 bg-violet-500 shadow-md shadow-violet-500/20"
           >
             Start Custom Game
           </button>
