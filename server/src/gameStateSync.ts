@@ -8,12 +8,6 @@ export interface JoinGameResponse {
   playerInfo?: PlayerInfo;
   error?: string;
   isGameInProgress: boolean;
-  syncData?: {
-    wordLength: number;
-    revealedLetters: string[];
-    hangmanStage: number;
-    gameProgress: number; // percentage of game completion
-  };
 }
 
 export class GameStateSynchronizer {
@@ -37,9 +31,6 @@ export class GameStateSynchronizer {
       // Add player to game
       const playerInfo = this.gameManager.addPlayer(playerId, playerName);
 
-      // Prepare sync data for new player
-      const syncData = this.prepareSyncData(currentGameState);
-
       // Join the socket room
       socket.join('hangman-room');
 
@@ -50,7 +41,6 @@ export class GameStateSynchronizer {
         gameState: currentGameState,
         playerInfo,
         isGameInProgress,
-        syncData
       };
 
     } catch (error) {
@@ -61,25 +51,6 @@ export class GameStateSynchronizer {
         isGameInProgress: false
       };
     }
-  }
-
-  /**
-   * Prepare synchronization data for new players
-   */
-  private prepareSyncData(gameState: GameStateEvent) {
-    const wordLength = gameState.displayWord.replace(/\s/g, '').length;
-    const revealedLetters = gameState.correctGuesses;
-    const hangmanStage = gameState.incorrectGuesses.length;
-    const totalGuesses = gameState.guessedLetters.length;
-    const maxPossibleGuesses = 26;
-    const gameProgress = Math.round((totalGuesses / maxPossibleGuesses) * 100);
-
-    return {
-      wordLength,
-      revealedLetters,
-      hangmanStage,
-      gameProgress
-    };
   }
 
   /**

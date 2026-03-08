@@ -61,8 +61,6 @@ export const MultiplayerHangGuy: React.FC = () => {
   );
 
   useEffect(() => {
-    if (!socket) {return;}
-
     const handleJoinSuccess = () => {
       setIsJoining(false);
       setShowJoinDialog(false);
@@ -87,7 +85,7 @@ export const MultiplayerHangGuy: React.FC = () => {
       setLastUsedPlayerName(nickname);
       identifyUser(nickname);
 
-      if (socket?.connected) {
+      if (socket.connected) {
         socket.emit("hangman:join-game", { playerName: nickname });
       } else {
         setIsJoining(false);
@@ -104,7 +102,7 @@ export const MultiplayerHangGuy: React.FC = () => {
   // ── Join dialog (shown immediately, even while connecting) ─────────
   // Dialog is visible before connection so users can prepare — submit is
   // disabled until connected (eager UI pattern).
-  if (showJoinDialog || (!currentUser && !gameState?.players?.find((p) => p.id === socket?.id))) {
+  if (showJoinDialog || (!currentUser && !gameState?.players?.find((p) => p.id === socket.id))) {
     const connectingError = !isConnected ? "Connecting to server…" : undefined;
     return (
       <UserJoinDialog

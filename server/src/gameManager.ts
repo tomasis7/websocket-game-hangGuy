@@ -4,6 +4,11 @@ import {
   PlayerInfo,
   GameAction,
 } from "../../shared/types.ts";
+import {
+  getRandomWordByDifficulty,
+  getRandomWordFromCategory,
+  getRandomWord,
+} from "../../shared/wordSelection.ts";
 
 export class GameManager {
   private game: HangGuyGame;
@@ -81,8 +86,16 @@ export class GameManager {
     options?: { category?: string; difficulty?: "easy" | "medium" | "hard" },
     startedBy?: string
   ): GameStateEvent {
-    // Create a completely new game instance instead of just resetting
-    this.game = new HangGuyGame();
+    let word: string;
+    if (options?.category) {
+      try { word = getRandomWordFromCategory(options.category); }
+      catch { word = getRandomWord(); }
+    } else if (options?.difficulty) {
+      word = getRandomWordByDifficulty(options.difficulty);
+    } else {
+      word = getRandomWord();
+    }
+    this.game = new HangGuyGame(word);
 
     const player = startedBy ? this.players.get(startedBy) : undefined;
 
@@ -95,11 +108,6 @@ export class GameManager {
     };
 
     console.log(`New game started by ${player?.name || "System"}`);
-    console.log(
-      `Game state after reset: remaining guesses = ${
-        this.game.getState().remainingGuesses
-      }`
-    );
 
     return this.getGameState();
   }
