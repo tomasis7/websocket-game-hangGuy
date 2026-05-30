@@ -11,10 +11,10 @@ describe('GameStatus', () => {
       />
     );
 
-    // Playing state shows a compact bar with remaining guesses
+    // Playing state shows a compact bar with the remaining count and a "left" label
     expect(screen.getByRole('status')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
-    expect(screen.getByText(/guesses left/)).toBeInTheDocument();
+    expect(screen.getByText('left')).toBeInTheDocument();
   });
 
   it('should render won status correctly', () => {
@@ -26,7 +26,7 @@ describe('GameStatus', () => {
     );
 
     expect(screen.getByText('You Won!')).toBeInTheDocument();
-    expect(screen.getByText(/saved the day/i)).toBeInTheDocument();
+    expect(screen.getByText(/great job guessing the word/i)).toBeInTheDocument();
   });
 
   it('should render lost status correctly', () => {
@@ -52,6 +52,6 @@ describe('GameStatus', () => {
     );
 
     expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText(/guesses left/)).toBeInTheDocument();
+    expect(screen.getByText('left')).toBeInTheDocument();
   });
 });

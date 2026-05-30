@@ -47,11 +47,10 @@ export interface GameAction {
   data?: Record<string, unknown>;
 }
 
+// The client supplies only the guessed letter; the server derives the player's
+// identity from the authenticated socket, so no playerId/name is trusted here.
 export interface GuessEvent {
   letter: string;
-  playerId: string;
-  playerName: string;
-  timestamp: number;
 }
 
 export interface GameStateEvent {
@@ -67,12 +66,6 @@ export interface GameStateEvent {
   players: PlayerInfo[];
   gameId: string;
   lastAction?: GameAction;
-}
-
-export interface GameBroadcast {
-  gameState: GameStateEvent;
-  action: GameAction;
-  timestamp: number;
 }
 
 // ─── Socket Event Map ────────────────────────────────────────────────────────
@@ -91,7 +84,6 @@ export interface HangGuySocketEvents {
   "hangman:request-game-history": () => void;
 
   // Server to Client - Broadcasts
-  "hangman:state-broadcast": (data: GameBroadcast) => void;
   "hangman:guess-broadcast": (data: {
     letter: string;
     isCorrect: boolean;

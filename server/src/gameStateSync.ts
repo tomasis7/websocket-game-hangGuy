@@ -1,14 +1,23 @@
 import { GameManager } from './gameManager';
 import { Socket } from 'socket.io';
 import { GameStateEvent, PlayerInfo } from '../../shared/types.ts';
+import { HANGMAN_ROOM } from '../../shared/multiplayer.ts';
 
-export interface JoinGameResponse {
-  success: boolean;
-  gameState?: GameStateEvent;
-  playerInfo?: PlayerInfo;
-  error?: string;
-  isGameInProgress: boolean;
-}
+// Discriminated on `success` so callers that check it are statically guaranteed
+// the game state / player info (on success) or the error message (on failure),
+// without resorting to non-null assertions.
+export type JoinGameResponse =
+  | {
+      success: true;
+      gameState: GameStateEvent;
+      playerInfo: PlayerInfo;
+      isGameInProgress: boolean;
+    }
+  | {
+      success: false;
+      error: string;
+      isGameInProgress: boolean;
+    };
 
 export class GameStateSynchronizer {
   private gameManager: GameManager;
@@ -20,7 +29,7 @@ export class GameStateSynchronizer {
   /**
    * Handle new player joining an ongoing game
    */
-  async handlePlayerJoin(socket: Socket, playerName: string): Promise<JoinGameResponse> {
+  handlePlayerJoin(socket: Socket, playerName: string): JoinGameResponse {
     const playerId = socket.id;
 
     try {
@@ -32,7 +41,7 @@ export class GameStateSynchronizer {
       const playerInfo = this.gameManager.addPlayer(playerId, playerName);
 
       // Join the socket room
-      socket.join('hangman-room');
+      socket.join(HANGMAN_ROOM);
 
       console.log(`Player ${playerName} joined ${isGameInProgress ? 'ongoing' : 'inactive'} game`);
 

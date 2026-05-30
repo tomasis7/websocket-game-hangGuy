@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { socket } from "../socket";
+import { generateGuestName } from "../../../shared/multiplayer";
 import type {
   GameStateEvent,
-  GameBroadcast,
   HangGuySocketEvents,
 } from "../../../shared/types";
 
@@ -39,10 +39,6 @@ export const useMultiplayerGame = () => {
       setGameState(data.gameState);
     };
 
-    const handleStateBroadcast = (data: GameBroadcast) => {
-      setGameState(data.gameState);
-    };
-
     const handlePlayerAction = (data: PlayerActionData) => {
       setGameState(data.gameState);
     };
@@ -61,7 +57,6 @@ export const useMultiplayerGame = () => {
     };
 
     socket.on("hangman:join-success", handleJoinSuccess);
-    socket.on("hangman:state-broadcast", handleStateBroadcast);
     socket.on("hangman:player-action-broadcast", handlePlayerAction);
     socket.on("hangman:guess-broadcast", handleGuessBroadcast);
     socket.on("hangman:game-start-broadcast", handleGameStartBroadcast);
@@ -69,7 +64,6 @@ export const useMultiplayerGame = () => {
 
     return () => {
       socket.off("hangman:join-success", handleJoinSuccess);
-      socket.off("hangman:state-broadcast", handleStateBroadcast);
       socket.off("hangman:player-action-broadcast", handlePlayerAction);
       socket.off("hangman:guess-broadcast", handleGuessBroadcast);
       socket.off("hangman:game-start-broadcast", handleGameStartBroadcast);
@@ -80,18 +74,13 @@ export const useMultiplayerGame = () => {
   const actions = {
     joinGame: (playerName?: string) => {
       setIsJoining(true);
-      const finalPlayerName =
-        playerName || `Player${Math.random().toString(36).substr(2, 4)}`;
-      socket.emit("hangman:join-game", { playerName: finalPlayerName });
+      socket.emit("hangman:join-game", {
+        playerName: playerName || generateGuestName(),
+      });
     },
 
     guessLetter: (letter: string) => {
-      socket.emit("hangman:guess-letter", {
-        letter: letter.toUpperCase(),
-        playerId: socket.id ?? "",
-        playerName: "",
-        timestamp: Date.now(),
-      });
+      socket.emit("hangman:guess-letter", { letter: letter.toUpperCase() });
     },
 
     startNewGame: (options?: {

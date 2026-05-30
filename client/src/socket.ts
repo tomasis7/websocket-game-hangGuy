@@ -2,12 +2,14 @@
 // It imports the types for type safety, ensuring that only valid events are sent/received.
 // The socket instance is exported for use throughout the client app.
 import { io, Socket } from "socket.io-client";
+import type { HangGuySocketEvents } from "../../shared/types";
 
-// Create a typed socket.io client instance connecting to the main game server on port 3001
+// Create a typed socket.io client instance connecting to the game server.
+// The URL comes from VITE_SERVER_URL (set in deployment), falling back to local dev.
 // Enhanced with robust reconnection settings for better connection handling
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
 
-export const socket: Socket<any, any> = io(SERVER_URL, {
+export const socket: Socket<HangGuySocketEvents, HangGuySocketEvents> = io(SERVER_URL, {
   transports: ["websocket", "polling"], // Fallback to polling if websocket fails
   autoConnect: true,
   reconnection: true,

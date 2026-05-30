@@ -51,16 +51,17 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
 
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
-    socket.on('reconnect_attempt', handleReconnectAttempt);
-    socket.on('reconnect_error', handleReconnectError);
-    socket.on('reconnect_failed', handleReconnectFailed);
+    // Reconnection lifecycle events are emitted by the Manager, not the Socket.
+    socket.io.on('reconnect_attempt', handleReconnectAttempt);
+    socket.io.on('reconnect_error', handleReconnectError);
+    socket.io.on('reconnect_failed', handleReconnectFailed);
 
     return () => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
-      socket.off('reconnect_attempt', handleReconnectAttempt);
-      socket.off('reconnect_error', handleReconnectError);
-      socket.off('reconnect_failed', handleReconnectFailed);
+      socket.io.off('reconnect_attempt', handleReconnectAttempt);
+      socket.io.off('reconnect_error', handleReconnectError);
+      socket.io.off('reconnect_failed', handleReconnectFailed);
       if (dismissTimerRef.current) {clearTimeout(dismissTimerRef.current);}
     };
   }, [onConnectionLost, onConnectionRestored, reconnectAttempts]);

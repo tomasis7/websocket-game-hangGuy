@@ -1,10 +1,10 @@
 import { Server, Socket } from "socket.io";
 import { GameManager } from "./gameManager";
 import { GameStateSynchronizer } from "./gameStateSync";
+import { HANGMAN_ROOM, generateGuestName } from "../../shared/multiplayer.ts";
 
 const gameManager = new GameManager();
 const gameSync = new GameStateSynchronizer(gameManager);
-const HANGMAN_ROOM = "hangman-room";
 
 // Rate limiting: track guess timestamps per socket
 const guessTimestamps = new Map<string, number[]>();
@@ -17,8 +17,8 @@ setInterval(() => {
   const cutoff = Date.now() - RATE_TTL;
   for (const [id, times] of guessTimestamps) {
     const trimmed = times.filter(t => t > cutoff);
-    if (trimmed.length === 0) guessTimestamps.delete(id);
-    else guessTimestamps.set(id, trimmed);
+    if (trimmed.length === 0) {guessTimestamps.delete(id);}
+    else {guessTimestamps.set(id, trimmed);}
   }
 }, 30_000).unref();
 
@@ -32,7 +32,7 @@ function isRateLimited(socketId: string): boolean {
   while (timestamps.length > 0 && now - timestamps[0] >= 1000) {
     timestamps.shift();
   }
-  if (timestamps.length >= MAX_GUESSES_PER_SECOND) return true;
+  if (timestamps.length >= MAX_GUESSES_PER_SECOND) {return true;}
   timestamps.push(now);
   return false;
 }
@@ -49,7 +49,7 @@ function broadcastPlayerLeft(socket: Socket, playerId: string, playerInfo: { nam
 }
 
 function sanitizePlayerName(name: unknown): string {
-  if (typeof name !== "string") return "";
+  if (typeof name !== "string") {return "";}
   return name.trim().replace(/[<>&"']/g, "").slice(0, 20);
 }
 
@@ -59,20 +59,18 @@ function emitError(socket: Socket, message: string, code: string) {
 
 export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
   // Join game handler
-  socket.on("hangman:join-game", async (data) => {
-    const playerName =
-      sanitizePlayerName(data?.playerName) ||
-      `Player${Math.random().toString(36).substr(2, 4)}`;
+  socket.on("hangman:join-game", (data) => {
+    const playerName = sanitizePlayerName(data?.playerName) || generateGuestName();
 
     try {
-      const joinResult = await gameSync.handlePlayerJoin(socket, playerName);
+      const joinResult = gameSync.handlePlayerJoin(socket, playerName);
 
       if (joinResult.success) {
         socket.emit("hangman:join-success", {
           playerInfo: joinResult.playerInfo,
           gameState: joinResult.gameState,
           isGameInProgress: joinResult.isGameInProgress,
-          gameSummary: gameSync.getGameSummary(joinResult.gameState!),
+          gameSummary: gameSync.getGameSummary(joinResult.gameState),
           timestamp: Date.now(),
         });
 
