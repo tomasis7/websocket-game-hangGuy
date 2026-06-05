@@ -14,22 +14,6 @@ const QWERTY_ROWS = [
   ['Z','X','C','V','B','N','M'],
 ];
 
-function CheckIcon() {
-  return (
-    <svg className="absolute bottom-1 right-1 opacity-70" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
-      <polyline points="2,6 5,9 10,3" />
-    </svg>
-  );
-}
-function XIcon() {
-  return (
-    <svg className="absolute bottom-1 right-1 opacity-70" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
-      <line x1="2" y1="2" x2="10" y2="10" />
-      <line x1="10" y1="2" x2="2" y2="10" />
-    </svg>
-  );
-}
-
 export const LetterInput: React.FC<LetterInputProps> = ({
   onGuess,
   disabled = false,
@@ -64,17 +48,17 @@ export const LetterInput: React.FC<LetterInputProps> = ({
   };
 
   const getKeyClasses = (state: string) => {
-    const base = "relative flex items-center justify-center rounded-xl text-sm sm:text-lg font-bold transition-all duration-150 select-none shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+    const base = "relative flex items-center justify-center font-mono text-sm sm:text-base font-semibold border-[1.5px] select-none transition-[transform,background-color,color] duration-100";
 
     switch (state) {
       case 'correct':
-        return `${base} bg-emerald-500 text-white shadow-inner opacity-90 border-b-2 border-emerald-700`;
+        return `${base} bg-accent text-accent-ink border-accent`;
       case 'incorrect':
-        return `${base} bg-rose-100 text-rose-500 shadow-inner opacity-60 border-b-2 border-rose-200`;
+        return `${base} text-bad border-dashed border-line cursor-not-allowed`;
       case 'guessed':
-        return `${base} bg-zinc-200 text-zinc-400 opacity-50 cursor-not-allowed shadow-none`;
+        return `${base} text-bad border-line-soft cursor-not-allowed`;
       default:
-        return `${base} bg-white text-zinc-800 border sm:border-zinc-200 border-b-2 border-zinc-300 hover:bg-zinc-50 active:translate-y-0.5 active:border-b-0 cursor-pointer`;
+        return `${base} bg-surface text-ink border-line cursor-pointer hover:bg-accent hover:text-accent-ink hover:border-accent hover:-translate-y-px active:translate-y-0`;
     }
   };
 
@@ -82,7 +66,7 @@ export const LetterInput: React.FC<LetterInputProps> = ({
     <div
       role="group"
       aria-label="Letter keyboard"
-      className="w-full flex flex-col items-center gap-2 sm:gap-3 py-4 select-none"
+      className="w-full flex flex-col items-center gap-1.5 sm:gap-2 py-2 select-none"
     >
       {QWERTY_ROWS.map((row, rowIdx) => (
         <div key={rowIdx} className="flex justify-center gap-1.5 sm:gap-2 w-full max-w-2xl px-1">
@@ -96,11 +80,10 @@ export const LetterInput: React.FC<LetterInputProps> = ({
                 disabled={disabled || !isDefault}
                 aria-label={`Guess letter ${letter}${state !== 'default' ? `, ${state}` : ''}`}
                 aria-disabled={disabled || !isDefault}
-                className={`flex-1 max-w-[2.5rem] sm:max-w-[3.5rem] h-12 sm:h-14 ${getKeyClasses(state)}`}
+                className={`flex-1 max-w-[2.5rem] sm:max-w-[3.25rem] h-11 sm:h-13 ${getKeyClasses(state)}`}
+                style={{ height: '2.875rem' }}
               >
-                <span>{letter}</span>
-                {state === 'correct' && <CheckIcon />}
-                {state === 'incorrect' && <XIcon />}
+                {letter}
               </button>
             );
           })}

@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hangguy — Mono / Lime</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── MONO / LIME — light (default) ───────────────────────────── */
+  :root {
+    --bg:        #FFFFFF;
+    --surface:   #FFFFFF;
+    --ink:       #0A0A0A;
+    --muted:     #767676;
+    --accent:    #C6F432;
+    --accent-ink:#0A0A0A;
+    --bad:       #BDBDBD;
+    --border:    #0A0A0A;     /* strong outline */
+    --border-soft:#E2E2E2;
+    --r: 0px;
+  }
+  /* ── MONO / LIME — dark ──────────────────────────────────────── */
+  body[data-mode="dark"] {
+    --bg:        #0B0C09;
+    --surface:   #121310;
+    --ink:       #F1F2EC;
+    --muted:     #8C8E84;
+    --accent:    #C6F432;
+    --accent-ink:#0A0A0A;
+    --bad:       #50524A;
+    --border:    #2E302A;
+    --border-soft:#23251F;
+  }
+
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: 'Geist', sans-serif;
+    min-height: 100vh; -webkit-font-smoothing: antialiased;
+    transition: background .25s, color .25s;
+    padding-bottom: 60px;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ── Top control bar ─────────────────────────────────────────── */
+  .bar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 13px 22px;
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .bar .brand { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; letter-spacing: .04em; }
+  .bar .brand b { background: var(--accent); color: var(--accent-ink); padding: 2px 7px; }
+  .seg { display: flex; border: 1px solid var(--border); }
+  .seg button {
+    font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 600; letter-spacing: .04em;
+    padding: 7px 16px; border: none; background: transparent; color: var(--ink);
+    cursor: pointer; text-transform: uppercase;
+  }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .seg button.active { background: var(--accent); color: var(--accent-ink); }
+  .toggle {
+    margin-left: auto; display: flex; align-items: center; gap: 9px;
+    font-family: 'JetBrains Mono'; font-size: 12px; color: var(--muted); cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+    padding: 7px 13px;
+  }
+  .toggle svg { width: 15px; height: 15px; }
+
+  .stage { max-width: 1040px; margin: 0 auto; padding: 40px 22px; }
+  .screen { display: none; }
+  .screen.on { display: block; }
+
+  /* ════════════════════════ START SCREEN ═══════════════════════ */
+  .start { display: flex; flex-direction: column; align-items: center; padding-top: 14px; }
+  .wordmark { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 46px; letter-spacing: -.02em; }
+  .wordmark .slash { color: var(--accent); background: none; }
+  body:not([data-mode="dark"]) .wordmark .hl { background: var(--accent); padding: 0 6px; }
+  .tagline { font-family: 'JetBrains Mono'; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-top: 16px; }
+
+  .card {
+    width: 100%; max-width: 440px; margin-top: 38px;
+    border: 1.5px solid var(--border); background: var(--surface); padding: 30px;
+  }
+  .field-label { font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; display: block; margin-bottom: 9px; }
+  .input {
+    width: 100%; font-family: 'JetBrains Mono'; font-size: 17px; font-weight: 500;
+    padding: 14px 16px; border: 1.5px solid var(--border); background: var(--bg); color: var(--ink);
+    outline: none;
+  }
+  .input:focus { box-shadow: inset 0 0 0 2px var(--accent); }
+  .input::placeholder { color: var(--muted); }
+
+  .avatar-row { display: flex; align-items: center; gap: 16px; margin-top: 26px; }
+  .av-preview {
+    width: 52px; height: 52px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono'; font-weight: 700; font-size: 19px; color: #0A0A0A;
+    border: 1.5px solid var(--border);
+  }
+  .swatches { display: flex; gap: 9px; flex-wrap: wrap; }
+  .swatch { width: 30px; height: 30px; border: 1.5px solid var(--border); cursor: pointer; position: relative; }
+  .swatch.sel::after { content: ""; position: absolute; inset: 3px; border: 2px solid var(--ink); }
+
+  .enter {
+    width: 100%; margin-top: 30px; font-family: 'JetBrains Mono'; font-weight: 700; font-size: 16px;
+    letter-spacing: .04em; text-transform: uppercase; padding: 16px;
+    background: var(--accent); color: var(--accent-ink); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .enter:hover { filter: brightness(.95); }
+  .lobby-note { font-family: 'JetBrains Mono'; font-size: 12px; color: var(--muted); margin-top: 22px; letter-spacing: .04em; }
+  .lobby-note .live { display: inline-block; width: 7px; height: 7px; background: #4ad66d; margin-right: 6px; vertical-align: middle; }
+
+  /* ════════════════════════ GAME SCREEN ════════════════════════ */
+  .grid { display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+  .panel { background: var(--surface); border: 1.5px solid var(--border); }
+
+  .ghead { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 20px; border-bottom: 1.5px solid var(--border); }
+  .logo { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 20px; background: var(--accent); color: var(--accent-ink); padding: 3px 9px; }
+  .logo .slash { color: var(--accent-ink); }
+  .ghead-right { display: flex; align-items: center; gap: 10px; }
+  .btn { font-family: 'JetBrains Mono'; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 9px 14px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+  .btn:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn svg { width: 14px; height: 14px; }
+  .btn-accent { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .status { display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border: 1.5px solid var(--border); font-family: 'JetBrains Mono'; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .status .dot { width: 8px; height: 8px; background: var(--accent); }
+  .status .muted { color: var(--muted); font-weight: 500; }
+
+  .gbody { padding: 30px 26px 34px; display: flex; flex-direction: column; gap: 26px; align-items: center; }
+  .gallows { color: var(--muted); }
+
+  .lives { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .pips { display: flex; gap: 7px; }
+  .pip { width: 24px; height: 8px; background: var(--accent); border: 1.5px solid var(--ink); }
+  .pip.dead { background: transparent; border-color: var(--border); }
+  body[data-mode="dark"] .pip { border-color: var(--accent); }
+  body[data-mode="dark"] .pip.dead { border-color: var(--border); }
+  .lives .cap { font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .word { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .tile { width: 46px; height: 60px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; font-weight: 700; font-size: 28px; }
+  .tile.blank { color: transparent; border-bottom: 3px solid var(--ink); }
+  .tile.fill { background: var(--accent); color: var(--accent-ink); }
+
+  .guessed { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 360px; }
+  .chip { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; font-size: 13px; font-weight: 600; border: 1.5px solid var(--border); }
+  .chip.bad { color: var(--bad); text-decoration: line-through; border-color: var(--border-soft); }
+
+  .keyboard { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 520px; }
+  .krow { display: flex; gap: 7px; justify-content: center; }
+  .key { flex: 1; max-width: 46px; height: 48px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; font-weight: 600; font-size: 15px; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; transition: transform .1s; user-select: none; }
+  .key:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); transform: translateY(-1px); }
+  .key.correct { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .key.wrong { color: var(--bad); border-style: dashed; cursor: default; }
+  .key.wrong:hover { transform: none; background: var(--surface); color: var(--bad); border-color: var(--border); }
+
+  .cta { font-family: 'JetBrains Mono'; font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: .04em; padding: 15px 28px; background: var(--accent); color: var(--accent-ink); border: none; cursor: pointer; width: 100%; max-width: 360px; }
+  .cta:hover { filter: brightness(.95); }
+
+  .players-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; border-bottom: 1.5px solid var(--border); font-family: 'JetBrains Mono'; font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+  .players-head .count { color: var(--muted); }
+  .plist { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .player { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1.5px solid transparent; }
+  .player.me { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .mono-av { width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; font-weight: 700; font-size: 13px; color: #0A0A0A; }
+  .player .nm { font-family: 'JetBrains Mono'; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .player .you { font-family: 'JetBrains Mono'; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; padding: 2px 6px; background: var(--accent); color: var(--accent-ink); }
+  .player .st { font-family: 'JetBrains Mono'; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
+  .player .st .live { width: 7px; height: 7px; background: #4ad66d; }
+  .player .st .away { width: 7px; height: 7px; background: var(--border); }
+</style>
+</head>
+<body data-mode="light" data-screen="start">
+
+  <div class="bar">
+    <span class="brand">HANG<b>GUY</b> · MONO/LIME</span>
+    <div class="seg" id="seg">
+      <button data-s="start" class="active">Start</button>
+      <button data-s="game">Game</button>
+    </div>
+    <button class="toggle" id="modeBtn">
+      <span id="modeIcon"></span><span id="modeLabel">Dark</span>
+    </button>
+  </div>
+
+  <div class="stage">
+
+    <!-- ════════════ START / JOIN SCREEN ════════════ -->
+    <section class="screen on" data-screen="start">
+      <div class="start">
+        <div class="wordmark mono"><span class="hl">HANGGUY</span><span class="slash">/</span></div>
+        <div class="tagline">Guess the word · together</div>
+
+        <div class="card">
+          <label class="field-label" for="nm">Your name</label>
+          <input id="nm" class="input" value="Tomas" maxlength="20" autocomplete="off" />
+
+          <div style="margin-top:26px">
+            <span class="field-label">Avatar</span>
+            <div class="avatar-row">
+              <div class="av-preview" id="avPrev" style="background:#C6F432">TM</div>
+              <div class="swatches" id="sw">
+                <span class="swatch sel" style="background:#C6F432" data-c="#C6F432"></span>
+                <span class="swatch" style="background:#5AC8FA" data-c="#5AC8FA"></span>
+                <span class="swatch" style="background:#FF6B5E" data-c="#FF6B5E"></span>
+                <span class="swatch" style="background:#FFD23F" data-c="#FFD23F"></span>
+                <span class="swatch" style="background:#A78BFA" data-c="#A78BFA"></span>
+                <span class="swatch" style="background:#4AD66D" data-c="#4AD66D"></span>
+              </div>
+            </div>
+          </div>
+
+          <button class="enter">
+            Enter Game
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px;height:18px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+
+        <p class="lobby-note"><span class="live"></span>2 PLAYERS IN THE LOBBY</p>
+      </div>
+    </section>
+
+    <!-- ════════════ GAME SCREEN ════════════ -->
+    <section class="screen" data-screen="game">
+      <div class="grid">
+        <div class="panel">
+          <div class="ghead">
+            <span class="logo mono">HANGGUY<span class="slash">/</span></span>
+            <div class="ghead-right">
+              <button class="btn btn-accent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Invite
+              </button>
+              <span class="status"><span class="dot"></span>6 <span class="muted">left</span></span>
+              <button class="btn">Leave</button>
+            </div>
+          </div>
+
+          <div class="gbody">
+            <svg width="150" height="180" viewBox="0 0 140 165" class="gallows" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+              <line x1="20" y1="155" x2="120" y2="155"/>
+              <line x1="40" y1="155" x2="40" y2="20"/>
+              <line x1="40" y1="20" x2="80" y2="20"/>
+              <line x1="80" y1="20" x2="80" y2="38"/>
+              <g stroke="var(--accent)">
+                <circle cx="80" cy="50" r="12"/>
+                <line x1="80" y1="62" x2="80" y2="105"/>
+                <line x1="80" y1="75" x2="62" y2="92"/>
+              </g>
+            </svg>
+
+            <div class="lives">
+              <div class="pips">
+                <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+                <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+                <span class="pip dead"></span><span class="pip dead"></span>
+              </div>
+              <span class="cap">6 / 8 lives</span>
+            </div>
+
+            <div class="word">
+              <span class="tile fill">P</span><span class="tile blank">_</span>
+              <span class="tile fill">A</span><span class="tile blank">_</span>
+              <span class="tile fill">E</span><span class="tile blank">_</span>
+            </div>
+
+            <div class="guessed">
+              <span class="chip">P</span><span class="chip">A</span><span class="chip">E</span>
+              <span class="chip bad">R</span><span class="chip bad">S</span>
+            </div>
+
+            <div class="keyboard">
+              <div class="krow"><span class="key wrong">Q</span><span class="key">W</span><span class="key correct">E</span><span class="key wrong">R</span><span class="key">T</span><span class="key">Y</span><span class="key">U</span><span class="key">I</span><span class="key">O</span><span class="key correct">P</span></div>
+              <div class="krow"><span class="key correct">A</span><span class="key wrong">S</span><span class="key">D</span><span class="key">F</span><span class="key">G</span><span class="key">H</span><span class="key">J</span><span class="key">K</span><span class="key">L</span></div>
+              <div class="krow"><span class="key">Z</span><span class="key">X</span><span class="key">C</span><span class="key">V</span><span class="key">B</span><span class="key">N</span><span class="key">M</span></div>
+            </div>
+
+            <button class="cta">New Game</button>
+          </div>
+        </div>
+
+        <div class="panel" style="align-self:start">
+          <div class="players-head"><span>Players</span><span class="count">3</span></div>
+          <div class="plist">
+            <div class="player me">
+              <span class="mono-av" style="background:#C6F432">TM</span>
+              <div><div class="nm">Tomas <span class="you">You</span></div><div class="st"><span class="live"></span>Active</div></div>
+            </div>
+            <div class="player">
+              <span class="mono-av" style="background:#5AC8FA">JD</span>
+              <div><div class="nm">Jordan</div><div class="st"><span class="live"></span>Active</div></div>
+            </div>
+            <div class="player">
+              <span class="mono-av" style="background:#FF6B5E">SK</span>
+              <div><div class="nm">Sasha</div><div class="st"><span class="away"></span>Away</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+  // screen switch
+  const seg = document.getElementById('seg');
+  seg.addEventListener('click', e => {
+    const s = e.target.dataset.s; if (!s) return;
+    document.body.dataset.screen = s;
+    [...seg.children].forEach(b => b.classList.toggle('active', b.dataset.s === s));
+    document.querySelectorAll('.screen').forEach(sec => sec.classList.toggle('on', sec.dataset.screen === s));
+  });
+
+  // dark/light toggle
+  const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.5" y1="4.5" x2="6.5" y2="6.5"/><line x1="17.5" y1="17.5" x2="19.5" y2="19.5"/><line x1="4.5" y1="19.5" x2="6.5" y2="17.5"/><line x1="17.5" y1="6.5" x2="19.5" y2="4.5"/></svg>';
+  const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>';
+  const modeBtn = document.getElementById('modeBtn');
+  function setMode(m) {
+    document.body.dataset.mode = m;
+    document.getElementById('modeIcon').innerHTML = m === 'dark' ? SUN : MOON;
+    document.getElementById('modeLabel').textContent = m === 'dark' ? 'Light' : 'Dark';
+  }
+  modeBtn.addEventListener('click', () => setMode(document.body.dataset.mode === 'dark' ? 'light' : 'dark'));
+  setMode('light');
+
+  // live monogram + swatch picker on start screen
+  const nm = document.getElementById('nm'), avPrev = document.getElementById('avPrev'), sw = document.getElementById('sw');
+  function initials(v){ const p = v.trim().split(/\s+/).filter(Boolean); if(!p.length) return '?'; return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase(); }
+  nm.addEventListener('input', () => avPrev.textContent = initials(nm.value));
+  sw.addEventListener('click', e => {
+    const c = e.target.dataset.c; if(!c) return;
+    [...sw.children].forEach(s => s.classList.toggle('sel', s === e.target));
+    avPrev.style.background = c;
+  });
+</script>
+</body>
+</html>

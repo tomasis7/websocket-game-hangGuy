@@ -117,31 +117,27 @@ export const MultiplayerHangGuy: React.FC = () => {
   if (isJoining) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4">
-        <div
-          className="glass-card p-8 text-center max-w-sm w-full"
-        >
+        <div className="panel p-8 text-center max-w-sm w-full">
           <div
-            className="w-12 h-12 rounded-full border-4 border-t-transparent mx-auto mb-4"
+            className="w-10 h-10 border-[3px] mx-auto mb-5"
             style={{
-              borderColor: 'var(--accent)',
-              borderTopColor: 'transparent',
+              borderColor: 'var(--border-soft)',
+              borderTopColor: 'var(--accent)',
               animation: 'spin 0.8s linear infinite',
             }}
             role="status"
             aria-label="Loading"
           />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--text)' }}>
-            Joining Game…
+          <h2 className="font-mono text-lg font-bold uppercase tracking-[0.04em] text-ink">
+            Joining game
           </h2>
-          <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+          <p className="font-mono text-xs text-muted mt-2">
             Syncing with the current game state.
           </p>
           {error && (
             <div
-              className="mt-2 px-4 py-3 rounded-xl text-sm"
+              className="font-mono text-xs mt-4 px-3.5 py-3 border-[1.5px] border-line text-ink"
               role="alert"
-              style={{ background: 'rgba(244,63,94,0.10)', border: '1px solid var(--danger)', color: 'var(--danger)' }}
             >
               {error}
             </div>
@@ -155,8 +151,7 @@ export const MultiplayerHangGuy: React.FC = () => {
               }
             }}
             disabled={!isConnected}
-            className="mt-4 w-full py-2.5 rounded-full font-bold text-white transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
-            style={{ background: 'var(--accent)' }}
+            className="mt-5 w-full font-mono font-bold text-sm uppercase tracking-[0.04em] py-3 bg-accent text-accent-ink transition-[filter] hover:brightness-95 disabled:opacity-40"
           >
             {lastUsedPlayerName ? "Retry" : "Join Game"}
           </button>
@@ -169,11 +164,10 @@ export const MultiplayerHangGuy: React.FC = () => {
   if (!gameState) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4">
-        <div className="glass-card p-6 text-center">
+        <div className="panel p-6 text-center">
           <button
             onClick={() => actions.joinGame()}
-            className="py-2.5 px-6 rounded-full font-bold text-white"
-            style={{ background: 'var(--accent)' }}
+            className="font-mono font-bold text-sm uppercase tracking-[0.04em] py-3 px-6 bg-accent text-accent-ink transition-[filter] hover:brightness-95"
           >
             Sync Game State
           </button>
@@ -188,9 +182,7 @@ export const MultiplayerHangGuy: React.FC = () => {
 
   // ── Main game UI ─────────────────────────────────────────────────
   return (
-    <div
-      className="min-h-[100vh] py-6 sm:py-10 flex items-center justify-center bg-zinc-50"
-    >
+    <div className="min-h-[100vh] py-5 sm:py-8 flex items-start justify-center">
       {/* Landscape mobile: hangman left, content right */}
       <style>{`
         @media (orientation: landscape) and (max-height: 500px) {
@@ -200,22 +192,19 @@ export const MultiplayerHangGuy: React.FC = () => {
       `}</style>
 
       <div
-        className="game-grid container max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 px-4"
+        className="game-grid container max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5 px-2 sm:px-4"
       >
         {/* ── Game area ── */}
         <main
-          className="bg-white shadow-sm border border-zinc-200 rounded-3xl p-6 sm:p-8 flex flex-col gap-8 w-full max-w-3xl mx-auto"
+          className="panel p-5 sm:p-8 flex flex-col gap-7 w-full max-w-3xl mx-auto"
           style={{ minHeight: '0' }}
         >
           {/* Header row */}
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-100 pb-4">
-            <h1
-              className="text-3xl font-bold text-violet-500 tracking-tight"
-              style={{ fontFamily: "'Fredoka One', cursive" }}
-            >
-              Hang Guy
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft pb-4">
+            <h1 className="font-mono text-xl font-extrabold tracking-tight bg-accent text-accent-ink px-2 py-0.5">
+              HANGGUY<span>/</span>
             </h1>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <QRCodeInvite />
               <GameStatus
                 status={gameState.status}
@@ -225,7 +214,7 @@ export const MultiplayerHangGuy: React.FC = () => {
               {currentUser && (
                 <button
                   onClick={handleLeaveGame}
-                  className="px-5 py-2 rounded-xl text-sm font-bold transition-all hover:bg-rose-50 active:scale-95 focus:outline-none focus-visible:ring-2 bg-white border border-zinc-200 text-zinc-500 hover:text-rose-500 hover:border-rose-200 shadow-sm"
+                  className="font-mono text-xs font-semibold uppercase tracking-[0.04em] px-4 py-2.5 border-[1.5px] border-line text-ink transition-colors hover:bg-accent hover:text-accent-ink hover:border-accent"
                 >
                   Leave
                 </button>

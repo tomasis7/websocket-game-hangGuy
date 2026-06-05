@@ -1,0 +1,32 @@
+# systemd unit for the Hang Guy Node backend (socket.io + express).
+#
+# Install:
+#   sudo cp deploy/hangguy-server.service /etc/systemd/system/hangguy-server.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now hangguy-server
+#   sudo systemctl status hangguy-server      # check it's running
+#   journalctl -u hangguy-server -f           # follow logs
+#
+# Why systemd instead of `npm run dev`: it restarts the server on crash and on
+# reboot, and detaches it from your SSH session (dev mode dies when you log out).
+
+[Unit]
+Description=Hang Guy game server (socket.io)
+After=network.target
+
+[Service]
+Type=simple
+# Adjust to wherever you cloned the repo on the server:
+WorkingDirectory=/opt/hangguy-game/server
+# `npm start` runs `tsx src/index.ts` (no build step needed for the server).
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+RestartSec=3
+Environment=NODE_ENV=production
+Environment=PORT=3001
+# Same-origin deploy: the browser loads the page from your domain and socket.io
+# connects back to the same domain, so CORS_ORIGIN must match it exactly.
+Environment=CORS_ORIGIN=http://hangguy.example.com
+
+[Install]
+WantedBy=multi-user.target

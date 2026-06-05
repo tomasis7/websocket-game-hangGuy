@@ -1,5 +1,10 @@
 import React, { useState } from "react";
 import type { User } from "../../../shared/types";
+import {
+  getInitials,
+  colorForName,
+  getStoredAvatarColor,
+} from "../utils/avatar";
 
 interface UserListProps {
   users: User[];
@@ -22,19 +27,21 @@ function ChevronIcon({ open }: { open: boolean }) {
 
 export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const storedColor = getStoredAvatarColor();
 
   return (
-    <aside
-      className="bg-white rounded-3xl shadow-sm border border-zinc-200 overflow-hidden h-fit"
-    >
+    <aside className="panel overflow-hidden h-fit">
       {/* Collapsible header */}
       <button
         onClick={() => setCollapsed(v => !v)}
-        className="w-full flex items-center justify-between px-6 py-4 font-bold text-zinc-700 transition-colors hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset"
+        className="w-full flex items-center justify-between px-5 py-4 font-mono text-[13px] font-bold uppercase tracking-[0.08em] text-ink transition-colors hover:bg-accent/10"
         aria-expanded={!collapsed}
       >
-        <span className="tracking-wide">Players ({users.length})</span>
-        <ChevronIcon open={!collapsed} />
+        <span>Players</span>
+        <span className="flex items-center gap-3 text-muted">
+          {users.length}
+          <ChevronIcon open={!collapsed} />
+        </span>
       </button>
 
       {/* Player list */}
@@ -45,49 +52,45 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
           transition: 'max-height 0.3s ease',
         }}
       >
-        <ul role="list" className="px-4 pb-4 flex flex-col gap-2">
+        <ul role="list" className="px-3 pb-3 flex flex-col gap-2 border-t border-line-soft pt-3">
           {users.map(user => {
             const isCurrentUser = user.id === currentUserId;
+            const color = isCurrentUser && storedColor ? storedColor : colorForName(user.nickname);
             return (
               <li
                 key={user.id}
                 role="listitem"
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all border ${
-                  isCurrentUser
-                    ? 'bg-violet-50 border-violet-200 shadow-sm'
-                    : 'bg-white border-zinc-100 hover:bg-zinc-50'
-                }`}
+                className="flex items-center gap-3 px-3 py-2.5 border-[1.5px]"
                 style={{
-                  borderLeftWidth: '4px',
-                  borderLeftColor: user.isActive ? '#10b981' : '#e4e4e7',
+                  borderColor: isCurrentUser ? 'var(--accent)' : 'transparent',
+                  background: isCurrentUser ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
                 }}
               >
-                <span className="text-2xl flex-shrink-0 bg-white p-1 rounded-xl shadow-sm border border-zinc-100" aria-hidden="true">{user.avatar || '🎮'}</span>
+                <span
+                  className="w-8 h-8 flex-shrink-0 flex items-center justify-center font-mono text-[13px] font-bold"
+                  style={{ background: color, color: '#0a0a0a' }}
+                  aria-hidden="true"
+                >
+                  {getInitials(user.nickname)}
+                </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span
-                      className={`font-bold truncate text-sm ${isCurrentUser ? 'text-violet-700' : 'text-zinc-700'}`}
-                    >
+                    <span className="font-mono font-semibold truncate text-sm text-ink">
                       {user.nickname}
                     </span>
                     {isCurrentUser && (
-                      <span
-                        className="text-[0.65rem] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-violet-500 text-white"
-                      >
+                      <span className="font-mono text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-[0.08em] bg-accent text-accent-ink">
                         You
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 mt-1">
                     <span
-                      className={`w-2 h-2 rounded-full flex-shrink-0 ${user.isActive ? 'bg-emerald-500' : 'bg-zinc-300'}`}
-                      style={{
-                        animation: user.isActive ? 'glow-pulse 2s ease-in-out infinite' : 'none',
-                        boxShadow: user.isActive ? '0 0 6px #10b981' : 'none'
-                      }}
+                      className="w-1.5 h-1.5 flex-shrink-0"
+                      style={{ background: user.isActive ? 'var(--good)' : 'var(--border)' }}
                       aria-label={user.isActive ? 'Active' : 'Away'}
                     />
-                    <span className="text-xs font-medium text-zinc-500">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
                       {user.isActive ? 'Active' : 'Away'}
                     </span>
                   </div>
@@ -97,9 +100,8 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
           })}
 
           {users.length === 0 && (
-            <li className="text-center py-8 text-zinc-400">
-              <div className="text-4xl mb-2 opacity-50" aria-hidden="true">👥</div>
-              <p className="text-sm font-medium">No players yet</p>
+            <li className="text-center py-8 text-muted">
+              <p className="font-mono text-xs uppercase tracking-[0.08em]">No players yet</p>
             </li>
           )}
         </ul>

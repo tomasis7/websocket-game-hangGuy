@@ -29,7 +29,7 @@ function getFaceExpression(stage: number) {
 // Eyes
 function getEyes(stage: number) {
   if (stage >= 8) {
-    // X eyes when dead
+    // X eyes when out of guesses
     return (
       <g strokeWidth="1.5">
         <line x1="75" y1="46" x2="78" y2="49" />
@@ -59,13 +59,13 @@ function AnimatedPart({ children, partKey }: AnimatedPartProps) {
     const el = ref.current;
     if (!el) {return;}
     el.style.animation = 'none';
-    // Force reflow
+    // Force reflow so the fade re-runs when a new part appears
     void (el as unknown as HTMLElement).offsetHeight;
-    el.style.animation = 'fade-scale-in 0.35s ease-out both';
+    el.style.animation = 'part-in 0.25s ease-out both';
   }, [partKey]);
 
   return (
-    <g ref={ref} style={{ transformOrigin: 'center', animation: 'fade-scale-in 0.35s ease-out both' }}>
+    <g ref={ref} style={{ animation: 'part-in 0.25s ease-out both' }}>
       {children}
     </g>
   );
@@ -73,57 +73,30 @@ function AnimatedPart({ children, partKey }: AnimatedPartProps) {
 
 export const HangmanSVGs: React.FC<{ stage: number; className?: string }> = ({ stage, className }) => {
   const clampedStage = Math.max(0, Math.min(8, stage));
-  const isDanger = clampedStage >= 6;
-  const isDead = clampedStage >= 8;
 
   const parts = useMemo(
     () => BODY_PARTS.slice(0, clampedStage),
     [clampedStage]
   );
 
-  const strokeColor = isDanger ? 'var(--danger)' : 'var(--accent)';
-  const gallowsColor = 'var(--text-muted)';
-
   return (
     <div className={`relative flex items-center justify-center ${className ?? ''}`}>
-      {/* Danger glow ring */}
-      {isDanger && (
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: '80%',
-            height: '80%',
-            background: 'radial-gradient(ellipse, rgba(244,63,94,0.15) 0%, transparent 70%)',
-            animation: 'glow-pulse 1.2s ease-in-out infinite',
-          }}
-        />
-      )}
-
-      {/* Float animation wrapper */}
       <svg
         viewBox="0 0 140 165"
-        className="w-40 h-52 sm:w-48 sm:h-60 lg:w-56 lg:h-72"
+        className="w-36 h-48 sm:w-44 sm:h-56 lg:w-52 lg:h-64"
         role="img"
         aria-label={`Hangman: ${clampedStage} of 8 incorrect guesses`}
-        style={isDead ? { filter: 'drop-shadow(0 0 8px var(--danger))' } : undefined}
       >
-        <style>{`
-          @keyframes fade-scale-in {
-            from { opacity: 0; transform: scale(0.6); }
-            to   { opacity: 1; transform: scale(1); }
-          }
-        `}</style>
-
         {/* Gallows */}
-        <g stroke={gallowsColor} strokeWidth="4" fill="none" strokeLinecap="round">
+        <g stroke="var(--muted)" strokeWidth="4" fill="none" strokeLinecap="round">
           <line x1="20" y1="155" x2="120" y2="155" />
           <line x1="40" y1="155" x2="40" y2="20" />
           <line x1="40" y1="20" x2="80" y2="20" />
           <line x1="80" y1="20" x2="80" y2="38" />
         </g>
 
-        {/* Body parts */}
-        <g stroke={strokeColor} strokeWidth="4" fill="none" strokeLinecap="round">
+        {/* Body parts — drawn in the lime accent */}
+        <g stroke="var(--accent)" strokeWidth="4" fill="none" strokeLinecap="round">
           {parts.map(({ key, el }) => (
             <AnimatedPart key={key} partKey={key}>
               {el}
@@ -131,7 +104,7 @@ export const HangmanSVGs: React.FC<{ stage: number; className?: string }> = ({ s
           ))}
           {/* Face details appear with head (stage >= 1) */}
           {clampedStage >= 1 && (
-            <g stroke={strokeColor} fill="none">
+            <g stroke="var(--accent)" fill="none">
               {getEyes(clampedStage)}
               {getFaceExpression(clampedStage)}
             </g>
