@@ -1,16 +1,21 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 // ── Helpers ────────────────────────────────────────────────────────
 
 const DIALOG_TIMEOUT = 8_000;
 
+async function blockSocket(page: Page) {
+  await page.route('**/socket.io/**', route => route.abort());
+  await page.routeWebSocket(/socket\.io/, ws => ws.close());
+}
+
 // ── Join flow ──────────────────────────────────────────────────────
 
 test.describe('Join flow', () => {
   test.beforeEach(async ({ page }) => {
     // Block socket so app stays in dialog state throughout tests
-    await page.route('**/socket.io/**', route => route.abort());
+    await blockSocket(page);
     await page.goto('/');
   });
 
@@ -46,7 +51,7 @@ test.describe('Join flow', () => {
 
 test.describe('App chrome (offline mode)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route('**/socket.io/**', route => route.abort());
+    await blockSocket(page);
     await page.goto('/');
   });
 
@@ -73,7 +78,7 @@ test.describe('App chrome (offline mode)', () => {
 
 test.describe('Dark mode', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route('**/socket.io/**', route => route.abort());
+    await blockSocket(page);
     await page.goto('/');
   });
 
@@ -115,7 +120,7 @@ test.describe('Dark mode', () => {
 
 test.describe('Responsive layout', () => {
   test('renders at 375px width without horizontal overflow', async ({ page }) => {
-    await page.route('**/socket.io/**', route => route.abort());
+    await blockSocket(page);
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/');
 
@@ -126,7 +131,7 @@ test.describe('Responsive layout', () => {
   });
 
   test('header is visible at 375px, 768px, and 1280px', async ({ page }) => {
-    await page.route('**/socket.io/**', route => route.abort());
+    await blockSocket(page);
     for (const width of [375, 768, 1280]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('/');
@@ -140,7 +145,7 @@ test.describe('Responsive layout', () => {
 
 test.describe('Accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route('**/socket.io/**', route => route.abort());
+    await blockSocket(page);
     await page.goto('/');
     await page.locator('[role="dialog"]').waitFor({ timeout: DIALOG_TIMEOUT });
   });
