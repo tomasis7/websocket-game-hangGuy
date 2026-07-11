@@ -37,6 +37,7 @@ export const useMultiplayerGame = () => {
     const handleJoinSuccess = (data: JoinSuccessData) => {
       setIsJoining(false);
       setGameState(data.gameState);
+      setError(null);
     };
 
     const handlePlayerAction = (data: PlayerActionData) => {
