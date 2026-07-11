@@ -164,7 +164,7 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
       const result = gameManager.processGuess(data.letter, playerId);
 
       if (!result.success) {
-        emitError(socket, result.error || "Failed to process guess", "GUESS_ERROR");
+        emitError(socket, result.error || "Failed to process guess", result.errorCode ?? "GUESS_ERROR");
         return;
       }
 

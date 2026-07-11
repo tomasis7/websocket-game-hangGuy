@@ -97,4 +97,114 @@ describe('GameManager', () => {
       expect(typeof stats.totalGuesses).toBe('number');
     });
   });
+
+  describe('turn management', () => {
+    it('gives the first turn to the first player who joined', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+
+      expect(gameManager.getGameState().currentPlayer).toBe('p1');
+    });
+
+    it('reports no current player when the game is empty', () => {
+      expect(gameManager.getGameState().currentPlayer).toBeUndefined();
+    });
+
+    it('advances the turn after every successful guess and wraps around', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+
+      const first = gameManager.processGuess('A', 'p1');
+      expect(first.success).toBe(true);
+      expect(gameManager.getGameState().currentPlayer).toBe('p2');
+
+      const second = gameManager.processGuess('B', 'p2');
+      expect(second.success).toBe(true);
+      expect(gameManager.getGameState().currentPlayer).toBe('p1');
+    });
+
+    it('rejects an out-of-turn guess with NOT_YOUR_TURN and does not advance', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+
+      const result = gameManager.processGuess('A', 'p2');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("It's not your turn");
+      expect(result.errorCode).toBe('NOT_YOUR_TURN');
+      expect(gameManager.getGameState().currentPlayer).toBe('p1');
+      expect(gameManager.getGameState().guessedLetters).not.toContain('A');
+    });
+
+    it('does not advance the turn on an invalid guess (duplicate letter)', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.processGuess('A', 'p1'); // turn -> p2
+
+      const dup = gameManager.processGuess('A', 'p2');
+
+      expect(dup.success).toBe(false);
+      expect(gameManager.getGameState().currentPlayer).toBe('p2');
+    });
+
+    it('passes the turn to the next player when the current player leaves', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.addPlayer('p3', 'Cara');
+
+      gameManager.removePlayer('p1');
+
+      expect(gameManager.getGameState().currentPlayer).toBe('p2');
+    });
+
+    it('wraps the turn to the first player when the last player leaves mid-turn', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.processGuess('A', 'p1'); // turn -> p2 (last in order)
+
+      gameManager.removePlayer('p2');
+
+      expect(gameManager.getGameState().currentPlayer).toBe('p1');
+    });
+
+    it('keeps the turn on the current player when an earlier player leaves', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.addPlayer('p3', 'Cara');
+      gameManager.processGuess('A', 'p1'); // turn -> p2
+
+      gameManager.removePlayer('p1');
+
+      expect(gameManager.getGameState().currentPlayer).toBe('p2');
+    });
+
+    it('resets the turn to the first player in join order on new game', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.processGuess('A', 'p1'); // turn -> p2
+
+      gameManager.startNewGame();
+
+      expect(gameManager.getGameState().currentPlayer).toBe('p1');
+    });
+
+    it('always lets a solo player guess', () => {
+      gameManager.addPlayer('p1', 'Alice');
+
+      const result = gameManager.processGuess('A', 'p1');
+
+      expect(result.success).toBe(true);
+      expect(gameManager.getGameState().currentPlayer).toBe('p1');
+    });
+
+    it('does not duplicate a player in the turn order on re-join', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.addPlayer('p1', 'Alice'); // reconnection re-add, same id
+
+      gameManager.processGuess('A', 'p1'); // turn -> p2, not p1 again
+
+      expect(gameManager.getGameState().currentPlayer).toBe('p2');
+    });
+  });
 });
