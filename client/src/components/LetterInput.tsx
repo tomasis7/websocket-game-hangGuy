@@ -66,7 +66,9 @@ export const LetterInput: React.FC<LetterInputProps> = ({
     <div
       role="group"
       aria-label="Letter keyboard"
-      className="w-full flex flex-col items-center gap-1.5 sm:gap-2 py-2 select-none"
+      className={`w-full flex flex-col items-center gap-1.5 sm:gap-2 py-2 select-none transition-opacity ${
+        disabled ? "opacity-40 pointer-events-none" : ""
+      }`}
     >
       {QWERTY_ROWS.map((row, rowIdx) => (
         <div key={rowIdx} className="flex justify-center gap-1.5 sm:gap-2 w-full max-w-2xl px-1">

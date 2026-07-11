@@ -11,6 +11,7 @@ import { UserList } from "./UserList";
 import { useUserIdentification } from "../hooks/useUserIdentification";
 import { socket } from "../socket";
 import { QRCodeInvite } from "./QRCodeInvite";
+import { TurnBanner } from "./TurnBanner";
 
 interface GameOptions {
   category?: string;
@@ -42,13 +43,20 @@ export const MultiplayerHangGuy: React.FC = () => {
   const isGameActive = gameState?.status === "playing";
   const isJoining = userJoining || gameJoining || isJoiningLocal;
 
+  // Turn indication only matters with 2+ players; solo play is always "your turn".
+  const hasTurnRotation = (gameState?.players?.length ?? 0) >= 2;
+  const isMyTurn = !hasTurnRotation || gameState?.currentPlayer === socket.id;
+  const currentTurnPlayer = gameState?.players?.find(
+    (p) => p.id === gameState?.currentPlayer
+  );
+
   const handleGuess = useCallback(
     (letter: string): void => {
-      if (isGameActive && isConnected) {
+      if (isGameActive && isConnected && isMyTurn) {
         actions.guessLetter(letter);
       }
     },
-    [isGameActive, isConnected, actions]
+    [isGameActive, isConnected, isMyTurn, actions]
   );
 
   const handleNewGame = useCallback(
@@ -247,10 +255,17 @@ export const MultiplayerHangGuy: React.FC = () => {
             />
           )}
 
-          {/* Keyboard */}
+          {/* Turn banner + keyboard */}
+          {isGameActive && hasTurnRotation && (
+            <TurnBanner
+              isMyTurn={isMyTurn}
+              currentPlayerName={currentTurnPlayer?.name}
+            />
+          )}
           {isGameActive && (
             <LetterInput
               onGuess={handleGuess}
+              disabled={!isMyTurn}
               guessedLetters={allGuessed}
               correctLetters={correctSet}
               incorrectLetters={incorrectSet}
@@ -277,6 +292,9 @@ export const MultiplayerHangGuy: React.FC = () => {
               })) || []
             }
             currentUserId={currentUser?.id}
+            currentTurnPlayerId={
+              hasTurnRotation && isGameActive ? gameState.currentPlayer : undefined
+            }
           />
         </aside>
       </div>
