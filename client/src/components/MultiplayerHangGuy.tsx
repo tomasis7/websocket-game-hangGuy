@@ -73,9 +73,12 @@ export const MultiplayerHangGuy: React.FC = () => {
       setIsJoining(false);
       setShowJoinDialog(false);
     };
-    const handleJoinError = () => {
+    const handleJoinError = (data: { message: string; code?: string; timestamp: number }) => {
       setIsJoining(false);
-      setShowJoinDialog(true);
+      const code = data?.code;
+      if (code === "JOIN_ERROR" || code === "JOIN_EXCEPTION" || code === "NOT_IN_GAME") {
+        setShowJoinDialog(true);
+      }
     };
 
     socket.on("hangman:join-success", handleJoinSuccess);
@@ -253,6 +256,15 @@ export const MultiplayerHangGuy: React.FC = () => {
               word={gameState.word}
               remainingGuesses={gameState.remainingGuesses}
             />
+          )}
+
+          {error && (
+            <div
+              role="alert"
+              className="w-full max-w-2xl mx-auto text-center font-mono text-xs font-semibold px-4 py-2.5 border-[1.5px] border-line text-bad"
+            >
+              {error}
+            </div>
           )}
 
           {/* Turn banner + keyboard */}

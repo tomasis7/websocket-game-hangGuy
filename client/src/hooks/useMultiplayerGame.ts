@@ -41,14 +41,17 @@ export const useMultiplayerGame = () => {
 
     const handlePlayerAction = (data: PlayerActionData) => {
       setGameState(data.gameState);
+      setError(null);
     };
 
     const handleGuessBroadcast = (data: GuessBroadcastData) => {
       setGameState(data.gameState);
+      setError(null);
     };
 
     const handleGameStartBroadcast = (data: GameStartData) => {
       setGameState(data.gameState);
+      setError(null);
     };
 
     const handleError = (data: ErrorData) => {

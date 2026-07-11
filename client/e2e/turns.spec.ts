@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
+// The server holds ONE global game room. This must stay the only spec that really connects; other specs block the socket (see game-ui.spec.ts blockSocket).
+
 const T = 10_000;
 
 async function joinAs(page: Page, name: string) {
@@ -24,11 +26,15 @@ test('turn banner rotates between two players', async ({ browser }) => {
 
   await joinAs(bob, 'Bob');
 
-  // Reset to a known state: fresh word, no guessed letters, turn -> Alice
-  await bob.getByRole('button', { name: /^(new game|play again|try again)$/i }).click();
-
   const aliceBanner = alice.locator('[data-testid="turn-banner"]');
   const bobBanner = bob.locator('[data-testid="turn-banner"]');
+
+  // Banner must appear the moment the game becomes multiplayer (fresh join state)
+  await expect(alice.locator('[data-testid="turn-banner"]')).toBeVisible({ timeout: T });
+  await expect(bob.locator('[data-testid="turn-banner"]')).toBeVisible({ timeout: T });
+
+  // Reset to a known state: fresh word, no guessed letters, turn -> Alice
+  await bob.getByRole('button', { name: /^(new game|play again|try again)$/i }).click();
 
   await expect(aliceBanner).toContainText(/your turn/i, { timeout: T });
   await expect(bobBanner).toContainText(/waiting for alice/i, { timeout: T });

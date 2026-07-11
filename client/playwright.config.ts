@@ -29,6 +29,7 @@ export default defineConfig({
     },
   ],
   webServer: [
+    // reuseExistingServer: a manually started vite without VITE_SERVER_URL=http://localhost:3011 will silently point the app at :3001 — stop it before running e2e
     {
       command: 'npm run dev',
       url: 'http://localhost:5173',
