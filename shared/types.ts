@@ -63,6 +63,7 @@ export interface GameStateEvent {
   status: "playing" | "won" | "lost";
   displayWord: string;
   currentPlayer?: string;
+  wordSetter?: string;
   players: PlayerInfo[];
   gameId: string;
   lastAction?: GameAction;
@@ -78,6 +79,7 @@ export interface HangGuySocketEvents {
   "hangman:new-game": (data: {
     category?: string;
     difficulty?: "easy" | "medium" | "hard";
+    customWord?: string;
     startedBy: string;
   }) => void;
   "hangman:request-sync": () => void;

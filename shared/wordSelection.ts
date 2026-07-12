@@ -308,3 +308,24 @@ export function isValidWord(word: string): boolean {
 export function getAvailableCategories(): string[] {
   return WORD_CATEGORIES.map(category => category.name);
 }
+
+// ─── Custom word validation (shared by client UI and server enforcement) ────
+
+export type CustomWordValidation =
+  | { valid: true; word: string }
+  | { valid: false; reason: string };
+
+/**
+ * Validates and normalizes a player-supplied custom word.
+ * The server is authoritative; the client uses this for inline feedback.
+ */
+export function validateCustomWord(input: string): CustomWordValidation {
+  const word = input.trim().toUpperCase();
+  if (word.length < 3 || word.length > 20) {
+    return { valid: false, reason: "Word must be 3-20 letters long" };
+  }
+  if (!/^[A-Z]+$/.test(word)) {
+    return { valid: false, reason: "Word may only contain letters A-Z" };
+  }
+  return { valid: true, word };
+}
