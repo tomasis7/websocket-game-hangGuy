@@ -16,6 +16,7 @@ import { TurnBanner } from "./TurnBanner";
 interface GameOptions {
   category?: string;
   difficulty?: "easy" | "medium" | "hard";
+  customWord?: string;
 }
 
 export const MultiplayerHangGuy: React.FC = () => {
@@ -288,6 +289,7 @@ export const MultiplayerHangGuy: React.FC = () => {
           <GameControls
             gameStatus={gameState.status}
             onNewGame={handleNewGame}
+            playerCount={gameState.players?.length ?? 0}
           />
         </main>
 
