@@ -10,6 +10,7 @@ interface UserListProps {
   users: User[];
   currentUserId?: string;
   currentTurnPlayerId?: string;
+  wordSetterId?: string;
 }
 
 function ChevronIcon({ open }: { open: boolean }) {
@@ -30,6 +31,7 @@ export const UserList: React.FC<UserListProps> = ({
   users,
   currentUserId,
   currentTurnPlayerId,
+  wordSetterId,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const storedColor = getStoredAvatarColor();
@@ -61,6 +63,7 @@ export const UserList: React.FC<UserListProps> = ({
           {users.map(user => {
             const isCurrentUser = user.id === currentUserId;
             const isCurrentTurn = user.id === currentTurnPlayerId;
+            const isWordSetter = user.id === wordSetterId;
             const color = isCurrentUser && storedColor ? storedColor : colorForName(user.nickname);
             return (
               <li
@@ -100,6 +103,14 @@ export const UserList: React.FC<UserListProps> = ({
                         className="font-mono text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-[0.08em] border-[1.5px] border-accent text-ink"
                       >
                         Turn
+                      </span>
+                    )}
+                    {isWordSetter && (
+                      <span
+                        aria-label="Word setter"
+                        className="font-mono text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-[0.08em] border-[1.5px] border-line text-muted"
+                      >
+                        Word
                       </span>
                     )}
                   </div>

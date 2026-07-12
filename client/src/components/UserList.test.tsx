@@ -25,4 +25,12 @@ describe('UserList turn marker', () => {
 
     expect(screen.queryByLabelText('Current turn')).not.toBeInTheDocument();
   });
+
+  it('badges the word setter', () => {
+    render(<UserList users={users} currentUserId="p2" wordSetterId="p1" />);
+
+    const badge = screen.getByLabelText('Word setter');
+    expect(badge).toHaveTextContent('Word');
+    expect(badge.closest('li')).toHaveTextContent('Alice');
+  });
 });

@@ -50,6 +50,8 @@ export const MultiplayerHangGuy: React.FC = () => {
   const currentTurnPlayer = gameState?.players?.find(
     (p) => p.id === gameState?.currentPlayer
   );
+  const isWordSetter =
+    isGameActive && gameState?.wordSetter === socket.id;
 
   const handleGuess = useCallback(
     (letter: string): void => {
@@ -273,9 +275,10 @@ export const MultiplayerHangGuy: React.FC = () => {
             <TurnBanner
               isMyTurn={isMyTurn}
               currentPlayerName={currentTurnPlayer?.name}
+              spectating={isWordSetter}
             />
           )}
-          {isGameActive && (
+          {isGameActive && !isWordSetter && (
             <LetterInput
               onGuess={handleGuess}
               disabled={!isMyTurn}
@@ -309,6 +312,7 @@ export const MultiplayerHangGuy: React.FC = () => {
             currentTurnPlayerId={
               hasTurnRotation && isGameActive ? gameState.currentPlayer : undefined
             }
+            wordSetterId={isGameActive ? gameState.wordSetter : undefined}
           />
         </aside>
       </div>

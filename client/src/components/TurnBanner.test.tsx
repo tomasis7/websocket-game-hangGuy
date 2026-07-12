@@ -21,4 +21,10 @@ describe('TurnBanner', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent(/waiting for next player/i);
   });
+
+  it('shows the spectator message for the word setter', () => {
+    render(<TurnBanner isMyTurn={false} spectating={true} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent(/you set the word/i);
+  });
 });
