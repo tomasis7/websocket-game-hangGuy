@@ -18,6 +18,8 @@ export class GameManager {
   // Player IDs in join order; the pointer marks whose turn it is.
   private turnOrder: string[] = [];
   private currentTurnIndex = 0;
+  // Set while a custom-word round is active: the setter spectates.
+  private wordSetter?: string;
 
   constructor(gameId: string = "main-hangman-game") {
     this.game = new HangGuyGame();
@@ -25,9 +27,17 @@ export class GameManager {
   }
 
   getCurrentPlayerId(): string | undefined {
-    return this.turnOrder.length > 0
-      ? this.turnOrder[this.currentTurnIndex]
-      : undefined;
+    if (this.turnOrder.length === 0) {
+      return undefined;
+    }
+    // Walk forward from the pointer to the first eligible (non-setter) player.
+    for (let i = 0; i < this.turnOrder.length; i++) {
+      const idx = (this.currentTurnIndex + i) % this.turnOrder.length;
+      if (this.turnOrder[idx] !== this.wordSetter) {
+        return this.turnOrder[idx];
+      }
+    }
+    return undefined; // only the setter remains
   }
 
   private advanceTurn(): void {
@@ -35,7 +45,18 @@ export class GameManager {
       this.currentTurnIndex = 0;
       return;
     }
-    this.currentTurnIndex = (this.currentTurnIndex + 1) % this.turnOrder.length;
+    const current = this.getCurrentPlayerId();
+    if (current === undefined) {
+      return;
+    }
+    const curIdx = this.turnOrder.indexOf(current);
+    for (let i = 1; i <= this.turnOrder.length; i++) {
+      const idx = (curIdx + i) % this.turnOrder.length;
+      if (this.turnOrder[idx] !== this.wordSetter) {
+        this.currentTurnIndex = idx;
+        return;
+      }
+    }
   }
 
   addPlayer(playerId: string, playerName: string): PlayerInfo {
@@ -116,17 +137,27 @@ export class GameManager {
   }
 
   startNewGame(
-    options?: { category?: string; difficulty?: "easy" | "medium" | "hard" },
+    options?: {
+      category?: string;
+      difficulty?: "easy" | "medium" | "hard";
+      customWord?: string;
+    },
     startedBy?: string
   ): GameStateEvent {
     let word: string;
-    if (options?.category) {
-      try { word = getRandomWordFromCategory(options.category); }
-      catch { word = getRandomWord(); }
-    } else if (options?.difficulty) {
-      word = getRandomWordByDifficulty(options.difficulty);
+    if (options?.customWord) {
+      word = options.customWord;
+      this.wordSetter = startedBy;
     } else {
-      word = getRandomWord();
+      this.wordSetter = undefined;
+      if (options?.category) {
+        try { word = getRandomWordFromCategory(options.category); }
+        catch { word = getRandomWord(); }
+      } else if (options?.difficulty) {
+        word = getRandomWordByDifficulty(options.difficulty);
+      } else {
+        word = getRandomWord();
+      }
     }
     this.game = new HangGuyGame(word);
     this.currentTurnIndex = 0;
@@ -138,7 +169,11 @@ export class GameManager {
       playerId: startedBy || "system",
       playerName: player?.name || "System",
       timestamp: Date.now(),
-      data: options,
+      data: {
+        category: options?.category,
+        difficulty: options?.difficulty,
+        isCustomWord: Boolean(options?.customWord),
+      },
     };
 
     console.log(`New game started by ${player?.name || "System"}`);
@@ -243,6 +278,7 @@ export class GameManager {
       status: state.status,
       displayWord: state.displayWord,
       currentPlayer: this.getCurrentPlayerId(),
+      wordSetter: this.wordSetter,
       players: this.getPlayers(),
       gameId: this.gameId,
       lastAction: this.lastAction,
