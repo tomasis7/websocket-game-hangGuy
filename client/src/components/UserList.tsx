@@ -9,6 +9,7 @@ import {
 interface UserListProps {
   users: User[];
   currentUserId?: string;
+  currentTurnPlayerId?: string;
 }
 
 function ChevronIcon({ open }: { open: boolean }) {
@@ -25,7 +26,11 @@ function ChevronIcon({ open }: { open: boolean }) {
   );
 }
 
-export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
+export const UserList: React.FC<UserListProps> = ({
+  users,
+  currentUserId,
+  currentTurnPlayerId,
+}) => {
   const [collapsed, setCollapsed] = useState(false);
   const storedColor = getStoredAvatarColor();
 
@@ -55,6 +60,7 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
         <ul role="list" className="px-3 pb-3 flex flex-col gap-2 border-t border-line-soft pt-3">
           {users.map(user => {
             const isCurrentUser = user.id === currentUserId;
+            const isCurrentTurn = user.id === currentTurnPlayerId;
             const color = isCurrentUser && storedColor ? storedColor : colorForName(user.nickname);
             return (
               <li
@@ -75,12 +81,25 @@ export const UserList: React.FC<UserListProps> = ({ users, currentUserId }) => {
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
+                    {isCurrentTurn && (
+                      <span className="font-mono text-xs text-accent" aria-hidden="true">
+                        ▶
+                      </span>
+                    )}
                     <span className="font-mono font-semibold truncate text-sm text-ink">
                       {user.nickname}
                     </span>
                     {isCurrentUser && (
                       <span className="font-mono text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-[0.08em] bg-accent text-accent-ink">
                         You
+                      </span>
+                    )}
+                    {isCurrentTurn && (
+                      <span
+                        aria-label="Current turn"
+                        className="font-mono text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-[0.08em] border-[1.5px] border-accent text-ink"
+                      >
+                        Turn
                       </span>
                     )}
                   </div>

@@ -15,10 +15,27 @@ export class GameManager {
   private players: Map<string, PlayerInfo> = new Map();
   private gameId: string;
   private lastAction?: GameAction;
+  // Player IDs in join order; the pointer marks whose turn it is.
+  private turnOrder: string[] = [];
+  private currentTurnIndex = 0;
 
   constructor(gameId: string = "main-hangman-game") {
     this.game = new HangGuyGame();
     this.gameId = gameId;
+  }
+
+  getCurrentPlayerId(): string | undefined {
+    return this.turnOrder.length > 0
+      ? this.turnOrder[this.currentTurnIndex]
+      : undefined;
+  }
+
+  private advanceTurn(): void {
+    if (this.turnOrder.length === 0) {
+      this.currentTurnIndex = 0;
+      return;
+    }
+    this.currentTurnIndex = (this.currentTurnIndex + 1) % this.turnOrder.length;
   }
 
   addPlayer(playerId: string, playerName: string): PlayerInfo {
@@ -31,6 +48,11 @@ export class GameManager {
     };
 
     this.players.set(playerId, playerInfo);
+
+    // Guard against duplicate entries when a reconnecting socket re-joins.
+    if (!this.turnOrder.includes(playerId)) {
+      this.turnOrder.push(playerId);
+    }
 
     this.lastAction = {
       type: "player_join",
@@ -54,6 +76,17 @@ export class GameManager {
     const removed = this.players.delete(playerId);
 
     if (removed && playerInfo) {
+      const idx = this.turnOrder.indexOf(playerId);
+      if (idx !== -1) {
+        this.turnOrder.splice(idx, 1);
+        if (idx < this.currentTurnIndex) {
+          this.currentTurnIndex--;
+        } else if (idx === this.currentTurnIndex && this.currentTurnIndex >= this.turnOrder.length) {
+          // Current player was last in order: wrap to the first player.
+          this.currentTurnIndex = 0;
+        }
+      }
+
       this.lastAction = {
         type: "player_leave",
         playerId,
@@ -96,6 +129,7 @@ export class GameManager {
       word = getRandomWord();
     }
     this.game = new HangGuyGame(word);
+    this.currentTurnIndex = 0;
 
     const player = startedBy ? this.players.get(startedBy) : undefined;
 
@@ -120,6 +154,7 @@ export class GameManager {
     isCorrect: boolean;
     gameState: GameStateEvent;
     error?: string;
+    errorCode?: string;
   } {
     const player = this.players.get(playerId);
     if (!player) {
@@ -142,6 +177,17 @@ export class GameManager {
       };
     }
 
+    // Strict turns: only the current player may guess.
+    if (playerId !== this.getCurrentPlayerId()) {
+      return {
+        success: false,
+        isCorrect: false,
+        gameState: this.getGameState(),
+        error: "It's not your turn",
+        errorCode: "NOT_YOUR_TURN",
+      };
+    }
+
     // Validate the guess
     const canGuess = this.game.canGuessLetter(letter);
     if (!canGuess.canGuess) {
@@ -155,6 +201,7 @@ export class GameManager {
 
     // Process the guess
     const guessResult = this.game.guessLetter(letter);
+    this.advanceTurn();
 
     this.lastAction = {
       type: "guess",
@@ -195,6 +242,7 @@ export class GameManager {
       maxGuesses: state.maxGuesses,
       status: state.status,
       displayWord: state.displayWord,
+      currentPlayer: this.getCurrentPlayerId(),
       players: this.getPlayers(),
       gameId: this.gameId,
       lastAction: this.lastAction,

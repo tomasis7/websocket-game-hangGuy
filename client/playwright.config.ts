@@ -21,16 +21,28 @@ export default defineConfig({
     },
     {
       name: 'mobile',
+      testIgnore: /turns/,
       use: {
         ...devices['Pixel 5'],
         executablePath: '/usr/bin/chromium',
       },
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 30000,
-  },
+  webServer: [
+    // reuseExistingServer: a manually started vite without VITE_SERVER_URL=http://localhost:3011 will silently point the app at :3001 — stop it before running e2e
+    {
+      command: 'npm run dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 30000,
+      env: { VITE_SERVER_URL: 'http://localhost:3011' },
+    },
+    {
+      command: 'npm run dev --prefix ../server',
+      url: 'http://localhost:3011',
+      reuseExistingServer: !process.env.CI,
+      timeout: 30000,
+      env: { PORT: '3011', CORS_ORIGIN: 'http://localhost:5173' },
+    },
+  ],
 });

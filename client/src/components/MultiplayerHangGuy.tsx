@@ -11,6 +11,7 @@ import { UserList } from "./UserList";
 import { useUserIdentification } from "../hooks/useUserIdentification";
 import { socket } from "../socket";
 import { QRCodeInvite } from "./QRCodeInvite";
+import { TurnBanner } from "./TurnBanner";
 
 interface GameOptions {
   category?: string;
@@ -42,13 +43,20 @@ export const MultiplayerHangGuy: React.FC = () => {
   const isGameActive = gameState?.status === "playing";
   const isJoining = userJoining || gameJoining || isJoiningLocal;
 
+  // Turn indication only matters with 2+ players; solo play is always "your turn".
+  const hasTurnRotation = (gameState?.players?.length ?? 0) >= 2;
+  const isMyTurn = !hasTurnRotation || gameState?.currentPlayer === socket.id;
+  const currentTurnPlayer = gameState?.players?.find(
+    (p) => p.id === gameState?.currentPlayer
+  );
+
   const handleGuess = useCallback(
     (letter: string): void => {
-      if (isGameActive && isConnected) {
+      if (isGameActive && isConnected && isMyTurn) {
         actions.guessLetter(letter);
       }
     },
-    [isGameActive, isConnected, actions]
+    [isGameActive, isConnected, isMyTurn, actions]
   );
 
   const handleNewGame = useCallback(
@@ -65,9 +73,12 @@ export const MultiplayerHangGuy: React.FC = () => {
       setIsJoining(false);
       setShowJoinDialog(false);
     };
-    const handleJoinError = () => {
+    const handleJoinError = (data: { message: string; code?: string; timestamp: number }) => {
       setIsJoining(false);
-      setShowJoinDialog(true);
+      const code = data?.code;
+      if (code === "JOIN_ERROR" || code === "JOIN_EXCEPTION" || code === "NOT_IN_GAME") {
+        setShowJoinDialog(true);
+      }
     };
 
     socket.on("hangman:join-success", handleJoinSuccess);
@@ -247,10 +258,26 @@ export const MultiplayerHangGuy: React.FC = () => {
             />
           )}
 
-          {/* Keyboard */}
+          {error && (
+            <div
+              role="alert"
+              className="w-full max-w-2xl mx-auto text-center font-mono text-xs font-semibold px-4 py-2.5 border-[1.5px] border-line text-bad"
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Turn banner + keyboard */}
+          {isGameActive && hasTurnRotation && (
+            <TurnBanner
+              isMyTurn={isMyTurn}
+              currentPlayerName={currentTurnPlayer?.name}
+            />
+          )}
           {isGameActive && (
             <LetterInput
               onGuess={handleGuess}
+              disabled={!isMyTurn}
               guessedLetters={allGuessed}
               correctLetters={correctSet}
               incorrectLetters={incorrectSet}
@@ -277,6 +304,9 @@ export const MultiplayerHangGuy: React.FC = () => {
               })) || []
             }
             currentUserId={currentUser?.id}
+            currentTurnPlayerId={
+              hasTurnRotation && isGameActive ? gameState.currentPlayer : undefined
+            }
           />
         </aside>
       </div>

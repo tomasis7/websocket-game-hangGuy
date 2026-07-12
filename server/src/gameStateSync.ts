@@ -45,9 +45,13 @@ export class GameStateSynchronizer {
 
       console.log(`Player ${playerName} joined ${isGameInProgress ? 'ongoing' : 'inactive'} game`);
 
+      // Re-fetch state after adding the player so joiners (and the joined
+      // broadcast) see fresh turn/roster data instead of the pre-join snapshot.
+      const updatedGameState = this.gameManager.getGameState();
+
       return {
         success: true,
-        gameState: currentGameState,
+        gameState: updatedGameState,
         playerInfo,
         isGameInProgress,
       };
