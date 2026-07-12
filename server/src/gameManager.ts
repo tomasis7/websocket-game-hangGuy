@@ -108,6 +108,10 @@ export class GameManager {
         }
       }
 
+      if (playerId === this.wordSetter) {
+        this.wordSetter = undefined;
+      }
+
       this.lastAction = {
         type: "player_leave",
         playerId,

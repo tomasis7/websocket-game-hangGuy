@@ -278,6 +278,16 @@ describe('GameManager', () => {
       expect(gameManager.getGameState().currentPlayer).toBe('p3');
     });
 
+    it('clears the stale wordSetter when the setter leaves', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.startNewGame({ customWord: 'BANANA' }, 'p1');
+
+      gameManager.removePlayer('p1');
+
+      expect(gameManager.getGameState().wordSetter).toBeUndefined();
+    });
+
     it('stalls safely when only the setter remains', () => {
       gameManager.addPlayer('p1', 'Alice');
       gameManager.addPlayer('p2', 'Bob');

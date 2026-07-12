@@ -271,7 +271,7 @@ export const MultiplayerHangGuy: React.FC = () => {
           )}
 
           {/* Turn banner + keyboard */}
-          {isGameActive && hasTurnRotation && (
+          {isGameActive && (hasTurnRotation || isWordSetter) && (
             <TurnBanner
               isMyTurn={isMyTurn}
               currentPlayerName={currentTurnPlayer?.name}
