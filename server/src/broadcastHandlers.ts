@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import { GameManager } from "./gameManager";
 import { GameStateSynchronizer } from "./gameStateSync";
 import { HANGMAN_ROOM, generateGuestName } from "../../shared/multiplayer.ts";
+import { validateCustomWord } from "../../shared/wordSelection.ts";
 
 const gameManager = new GameManager();
 const gameSync = new GameStateSynchronizer(gameManager);
@@ -192,6 +193,23 @@ export const setupHangmanBroadcasters = (io: Server, socket: Socket) => {
     if (!player) {
       emitError(socket, "You must join the game first", "NOT_IN_GAME");
       return;
+    }
+
+    if (data?.customWord !== undefined) {
+      const validation = validateCustomWord(String(data.customWord));
+      if (!validation.valid) {
+        emitError(socket, validation.reason, "INVALID_CUSTOM_WORD");
+        return;
+      }
+      if (gameManager.getPlayerCount() < 2) {
+        emitError(
+          socket,
+          "You need at least one other player to guess your word",
+          "NOT_ENOUGH_PLAYERS"
+        );
+        return;
+      }
+      data = { ...data, customWord: validation.word };
     }
 
     try {

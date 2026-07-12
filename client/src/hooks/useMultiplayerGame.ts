@@ -90,6 +90,7 @@ export const useMultiplayerGame = () => {
     startNewGame: (options?: {
       category?: string;
       difficulty?: "easy" | "medium" | "hard";
+      customWord?: string;
     }) => {
       socket.emit("hangman:new-game", {
         ...options,

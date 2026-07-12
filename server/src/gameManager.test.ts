@@ -207,4 +207,107 @@ describe('GameManager', () => {
       expect(gameManager.getGameState().currentPlayer).toBe('p2');
     });
   });
+
+  describe('custom word rounds', () => {
+    it('uses the custom word, records the setter, and keeps the word masked', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+
+      const state = gameManager.startNewGame({ customWord: 'BANANA' }, 'p1');
+
+      expect(state.wordSetter).toBe('p1');
+      expect(state.displayWord).toBe('_ _ _ _ _ _');
+      expect(state.word).toBe('');
+    });
+
+    it('never leaks the custom word through lastAction', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+
+      const state = gameManager.startNewGame({ customWord: 'BANANA' }, 'p1');
+
+      expect(JSON.stringify(state.lastAction)).not.toContain('BANANA');
+    });
+
+    it('skips the setter in turn rotation', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.addPlayer('p3', 'Cara');
+      gameManager.startNewGame({ customWord: 'BANANA' }, 'p1');
+
+      expect(gameManager.getGameState().currentPlayer).toBe('p2');
+      gameManager.processGuess('X', 'p2');
+      expect(gameManager.getGameState().currentPlayer).toBe('p3');
+      gameManager.processGuess('Y', 'p3');
+      // Wraps around, skipping the setter p1
+      expect(gameManager.getGameState().currentPlayer).toBe('p2');
+    });
+
+    it('keeps the turn on the single guesser in a 2-player round', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.startNewGame({ customWord: 'BANANA' }, 'p1');
+
+      gameManager.processGuess('X', 'p2');
+      expect(gameManager.getGameState().currentPlayer).toBe('p2');
+      gameManager.processGuess('Y', 'p2');
+      expect(gameManager.getGameState().currentPlayer).toBe('p2');
+    });
+
+    it('rejects a guess from the setter', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.startNewGame({ customWord: 'BANANA' }, 'p1');
+
+      const result = gameManager.processGuess('B', 'p1');
+
+      expect(result.success).toBe(false);
+      expect(result.errorCode).toBe('NOT_YOUR_TURN');
+    });
+
+    it('continues the round when the setter leaves', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.addPlayer('p3', 'Cara');
+      gameManager.startNewGame({ customWord: 'BANANA' }, 'p1');
+
+      gameManager.removePlayer('p1');
+
+      expect(gameManager.getGameState().currentPlayer).toBe('p2');
+      expect(gameManager.processGuess('X', 'p2').success).toBe(true);
+      expect(gameManager.getGameState().currentPlayer).toBe('p3');
+    });
+
+    it('clears the stale wordSetter when the setter leaves', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.startNewGame({ customWord: 'BANANA' }, 'p1');
+
+      gameManager.removePlayer('p1');
+
+      expect(gameManager.getGameState().wordSetter).toBeUndefined();
+    });
+
+    it('stalls safely when only the setter remains', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.startNewGame({ customWord: 'BANANA' }, 'p1');
+
+      gameManager.removePlayer('p2');
+
+      expect(gameManager.getGameState().currentPlayer).toBeUndefined();
+      expect(gameManager.processGuess('B', 'p1').success).toBe(false);
+    });
+
+    it('clears the setter on a normal new game', () => {
+      gameManager.addPlayer('p1', 'Alice');
+      gameManager.addPlayer('p2', 'Bob');
+      gameManager.startNewGame({ customWord: 'BANANA' }, 'p1');
+
+      const state = gameManager.startNewGame(undefined, 'p2');
+
+      expect(state.wordSetter).toBeUndefined();
+      expect(gameManager.getGameState().currentPlayer).toBe('p1');
+    });
+  });
 });

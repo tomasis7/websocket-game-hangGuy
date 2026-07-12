@@ -5,7 +5,9 @@ export interface WordCategory {
   words: string[];
 }
 
-// Expanded word lists organized by categories
+// Word lists organized by categories. Rules (enforced by
+// client/src/utils/wordSelection.test.ts): UPPERCASE, A-Z only,
+// 3-20 letters, no duplicates within a category.
 export const WORD_CATEGORIES: WordCategory[] = [
   {
     name: 'Programming',
@@ -15,7 +17,9 @@ export const WORD_CATEGORIES: WordCategory[] = [
       'ALGORITHM', 'FUNCTION', 'VARIABLE', 'COMPONENT', 'INTERFACE',
       'DEBUGGING', 'FRAMEWORK', 'LIBRARY', 'PACKAGE', 'TERMINAL',
       'COMPILER', 'INTERPRETER', 'SYNTAX', 'SEMANTIC', 'BOOLEAN',
-      'ARRAY', 'OBJECT', 'STRING', 'NUMBER', 'CALLBACK'
+      'ARRAY', 'OBJECT', 'STRING', 'NUMBER', 'CALLBACK',
+      'PROMISE', 'CLOSURE', 'RECURSION', 'ITERATOR', 'MUTATION',
+      'TEMPLATE', 'MODULE', 'BUNDLER', 'ROUTER', 'SERVER'
     ]
   },
   {
@@ -23,7 +27,12 @@ export const WORD_CATEGORIES: WordCategory[] = [
     words: [
       'ELEPHANT', 'GIRAFFE', 'TIGER', 'PENGUIN', 'DOLPHIN',
       'BUTTERFLY', 'KANGAROO', 'OCTOPUS', 'RHINOCEROS', 'CHEETAH',
-      'FLAMINGO', 'HIPPOPOTAMUS', 'CROCODILE', 'PEACOCK', 'KOALA'
+      'FLAMINGO', 'HIPPOPOTAMUS', 'CROCODILE', 'PEACOCK', 'KOALA',
+      'PANDA', 'ZEBRA', 'GORILLA', 'LEOPARD', 'OSTRICH',
+      'PELICAN', 'RACCOON', 'SQUIRREL', 'HEDGEHOG', 'TORTOISE',
+      'CHAMELEON', 'ARMADILLO', 'WOLVERINE', 'MONGOOSE', 'PORCUPINE',
+      'ANTELOPE', 'BUFFALO', 'WALRUS', 'LOBSTER', 'JELLYFISH',
+      'SEAHORSE', 'FALCON', 'SPARROW', 'TOUCAN', 'IGUANA'
     ]
   },
   {
@@ -31,7 +40,12 @@ export const WORD_CATEGORIES: WordCategory[] = [
     words: [
       'AUSTRALIA', 'BRAZIL', 'CANADA', 'DENMARK', 'EGYPT',
       'FRANCE', 'GERMANY', 'HUNGARY', 'ICELAND', 'JAPAN',
-      'KAZAKHSTAN', 'LUXEMBOURG', 'MADAGASCAR', 'NETHERLANDS', 'PORTUGAL'
+      'KAZAKHSTAN', 'LUXEMBOURG', 'MADAGASCAR', 'NETHERLANDS', 'PORTUGAL',
+      'ARGENTINA', 'BELGIUM', 'COLOMBIA', 'ECUADOR', 'FINLAND',
+      'GREECE', 'INDONESIA', 'IRELAND', 'ITALY', 'JAMAICA',
+      'KENYA', 'LITHUANIA', 'MEXICO', 'MOROCCO', 'NIGERIA',
+      'NORWAY', 'PAKISTAN', 'PHILIPPINES', 'POLAND', 'SINGAPORE',
+      'SLOVAKIA', 'SWEDEN', 'SWITZERLAND', 'THAILAND', 'VIETNAM'
     ]
   },
   {
@@ -39,7 +53,90 @@ export const WORD_CATEGORIES: WordCategory[] = [
     words: [
       'PIZZA', 'HAMBURGER', 'SPAGHETTI', 'CHOCOLATE', 'STRAWBERRY',
       'PINEAPPLE', 'SANDWICH', 'PANCAKE', 'BROCCOLI', 'AVOCADO',
-      'WATERMELON', 'CROISSANT', 'LASAGNA', 'SMOOTHIE', 'PRETZEL'
+      'WATERMELON', 'CROISSANT', 'LASAGNA', 'SMOOTHIE', 'PRETZEL',
+      'BURRITO', 'CHEESECAKE', 'DUMPLING', 'ESPRESSO', 'FALAFEL',
+      'GRANOLA', 'HUMMUS', 'KETCHUP', 'MEATBALL', 'NOODLES',
+      'OATMEAL', 'OMELETTE', 'PAELLA', 'POPCORN', 'QUICHE',
+      'RAVIOLI', 'RISOTTO', 'SALAD', 'SUSHI', 'TACO',
+      'TIRAMISU', 'WAFFLE', 'YOGURT', 'ZUCCHINI', 'MUFFIN'
+    ]
+  },
+  {
+    name: 'Sports',
+    words: [
+      'SOCCER', 'BASKETBALL', 'TENNIS', 'VOLLEYBALL', 'BASEBALL',
+      'CRICKET', 'RUGBY', 'HOCKEY', 'GOLF', 'BOXING',
+      'WRESTLING', 'SWIMMING', 'DIVING', 'ROWING', 'SAILING',
+      'SURFING', 'SKIING', 'SNOWBOARD', 'SKATING', 'CYCLING',
+      'MARATHON', 'SPRINT', 'HURDLES', 'JAVELIN', 'DISCUS',
+      'ARCHERY', 'FENCING', 'KARATE', 'JUDO', 'TAEKWONDO',
+      'BADMINTON', 'SQUASH', 'HANDBALL', 'LACROSSE', 'SOFTBALL',
+      'BOWLING', 'BILLIARDS', 'DARTS', 'GYMNASTICS', 'TRIATHLON'
+    ]
+  },
+  {
+    name: 'Science',
+    words: [
+      'ATOM', 'MOLECULE', 'ELECTRON', 'PROTON', 'NEUTRON',
+      'GRAVITY', 'ENERGY', 'PHOTON', 'QUANTUM', 'GALAXY',
+      'NEBULA', 'ASTEROID', 'COMET', 'ECLIPSE', 'ORBIT',
+      'TELESCOPE', 'MICROSCOPE', 'CHEMISTRY', 'PHYSICS', 'BIOLOGY',
+      'GEOLOGY', 'ASTRONOMY', 'EVOLUTION', 'GENETICS', 'BACTERIA',
+      'VIRUS', 'ENZYME', 'PROTEIN', 'NEURON', 'SYNAPSE',
+      'MAGNETISM', 'FRICTION', 'VELOCITY', 'MOMENTUM', 'PRESSURE',
+      'TEMPERATURE', 'CATALYST', 'ISOTOPE', 'PENDULUM', 'SPECTRUM'
+    ]
+  },
+  {
+    name: 'Nature',
+    words: [
+      'MOUNTAIN', 'VALLEY', 'RIVER', 'OCEAN', 'DESERT',
+      'FOREST', 'JUNGLE', 'GLACIER', 'VOLCANO', 'CANYON',
+      'WATERFALL', 'MEADOW', 'PRAIRIE', 'TUNDRA', 'SAVANNA',
+      'LAGOON', 'ISLAND', 'PENINSULA', 'CLIFF', 'CAVE',
+      'THUNDER', 'LIGHTNING', 'RAINBOW', 'BLIZZARD', 'HURRICANE',
+      'TORNADO', 'MONSOON', 'DRIZZLE', 'SUNRISE', 'SUNSET',
+      'HORIZON', 'BREEZE', 'AVALANCHE', 'EARTHQUAKE', 'GEYSER',
+      'MARSH', 'SWAMP', 'DUNE', 'REEF', 'ARCHIPELAGO'
+    ]
+  },
+  {
+    name: 'Occupations',
+    words: [
+      'TEACHER', 'DOCTOR', 'NURSE', 'ENGINEER', 'ARCHITECT',
+      'LAWYER', 'PLUMBER', 'ELECTRICIAN', 'CARPENTER', 'MECHANIC',
+      'PILOT', 'SAILOR', 'FARMER', 'BAKER', 'BUTCHER',
+      'CHEF', 'WAITER', 'BARISTA', 'LIBRARIAN', 'SCIENTIST',
+      'JOURNALIST', 'PHOTOGRAPHER', 'MUSICIAN', 'PAINTER', 'SCULPTOR',
+      'ACTOR', 'DIRECTOR', 'PRODUCER', 'DENTIST', 'SURGEON',
+      'PHARMACIST', 'VETERINARIAN', 'ACCOUNTANT', 'BANKER', 'CASHIER',
+      'JANITOR', 'GARDENER', 'TAILOR', 'BLACKSMITH', 'FIREFIGHTER'
+    ]
+  },
+  {
+    name: 'Music',
+    words: [
+      'GUITAR', 'PIANO', 'VIOLIN', 'CELLO', 'TRUMPET',
+      'TROMBONE', 'SAXOPHONE', 'CLARINET', 'FLUTE', 'OBOE',
+      'BASSOON', 'HARP', 'DRUMS', 'CYMBAL', 'TAMBOURINE',
+      'XYLOPHONE', 'ACCORDION', 'HARMONICA', 'BANJO', 'MANDOLIN',
+      'UKULELE', 'ORGAN', 'SYNTHESIZER', 'MELODY', 'HARMONY',
+      'RHYTHM', 'TEMPO', 'CHORUS', 'VERSE', 'OCTAVE',
+      'CHORD', 'SCALE', 'SOPRANO', 'BARITONE', 'ORCHESTRA',
+      'SYMPHONY', 'CONCERTO', 'SONATA', 'BALLAD', 'ANTHEM'
+    ]
+  },
+  {
+    name: 'Transportation',
+    words: [
+      'BICYCLE', 'MOTORCYCLE', 'AUTOMOBILE', 'TRUCK', 'TRACTOR',
+      'BUS', 'TRAIN', 'SUBWAY', 'TRAM', 'TROLLEY',
+      'FERRY', 'YACHT', 'CANOE', 'KAYAK', 'GONDOLA',
+      'SUBMARINE', 'HELICOPTER', 'AIRPLANE', 'GLIDER', 'BALLOON',
+      'ROCKET', 'SHUTTLE', 'SCOOTER', 'SKATEBOARD', 'RICKSHAW',
+      'CARRIAGE', 'WAGON', 'SLED', 'SNOWMOBILE', 'HOVERCRAFT',
+      'ZEPPELIN', 'FREIGHTER', 'TANKER', 'BARGE', 'LIMOUSINE',
+      'AMBULANCE', 'TAXI', 'VAN', 'JEEP', 'CONVOY'
     ]
   }
 ];
@@ -210,4 +307,25 @@ export function isValidWord(word: string): boolean {
  */
 export function getAvailableCategories(): string[] {
   return WORD_CATEGORIES.map(category => category.name);
+}
+
+// ─── Custom word validation (shared by client UI and server enforcement) ────
+
+export type CustomWordValidation =
+  | { valid: true; word: string }
+  | { valid: false; reason: string };
+
+/**
+ * Validates and normalizes a player-supplied custom word.
+ * The server is authoritative; the client uses this for inline feedback.
+ */
+export function validateCustomWord(input: string): CustomWordValidation {
+  const word = input.trim().toUpperCase();
+  if (word.length < 3 || word.length > 20) {
+    return { valid: false, reason: "Word must be 3-20 letters long" };
+  }
+  if (!/^[A-Z]+$/.test(word)) {
+    return { valid: false, reason: "Word may only contain letters A-Z" };
+  }
+  return { valid: true, word };
 }

@@ -1,10 +1,15 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { getAvailableCategories } from '../utils/wordSelection';
+import { getAvailableCategories, validateCustomWord } from '../utils/wordSelection';
 
 interface GameControlsProps {
-  onNewGame: (options?: { category?: string; difficulty?: 'easy' | 'medium' | 'hard' }) => void;
+  onNewGame: (options?: {
+    category?: string;
+    difficulty?: 'easy' | 'medium' | 'hard';
+    customWord?: string;
+  }) => void;
   gameStatus: 'playing' | 'won' | 'lost';
   disabled?: boolean;
+  playerCount: number;
 }
 
 const DIFFICULTIES: { value: 'easy' | 'medium' | 'hard'; label: string }[] = [
@@ -13,13 +18,26 @@ const DIFFICULTIES: { value: 'easy' | 'medium' | 'hard'; label: string }[] = [
   { value: 'hard',   label: 'Hard' },
 ];
 
-export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatus, disabled = false }) => {
+export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatus, disabled = false, playerCount }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard' | ''>('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const categories = useMemo(() => getAvailableCategories(), []);
+
+  const [customWord, setCustomWord] = useState('');
+  const [showWord, setShowWord] = useState(false);
+
+  const customValidation = validateCustomWord(customWord);
+  const canHostWord = customValidation.valid && playerCount >= 2;
+
+  const handleCustomWordStart = () => {
+    if (!customValidation.valid) {return;}
+    onNewGame({ customWord: customValidation.word });
+    setCustomWord('');
+    setShowOptions(false);
+  };
 
   const handleQuickNewGame = () => {
     onNewGame();
@@ -113,6 +131,51 @@ export const GameControls: React.FC<GameControlsProps> = ({ onNewGame, gameStatu
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Set your own word */}
+          <div>
+            <p className="font-mono text-[11px] font-semibold mb-3 uppercase tracking-[0.14em] text-muted">
+              Set your own word
+            </p>
+            <div className="flex gap-2">
+              <input
+                id="custom-word-input"
+                type={showWord ? 'text' : 'password'}
+                value={customWord}
+                onChange={e => setCustomWord(e.target.value)}
+                placeholder="Secret word (3-20 letters)"
+                autoComplete="off"
+                maxLength={20}
+                aria-label="Set your own word"
+                className="flex-1 min-w-0 font-mono text-sm px-3 py-2.5 border-[1.5px] border-line bg-surface text-ink"
+              />
+              <button
+                type="button"
+                onClick={() => setShowWord(v => !v)}
+                aria-label={showWord ? 'Hide word' : 'Show word'}
+                className="font-mono text-xs font-semibold uppercase tracking-[0.04em] px-3 border-[1.5px] border-line text-muted transition-colors hover:text-ink"
+              >
+                {showWord ? 'Hide' : 'Show'}
+              </button>
+            </div>
+            {customWord.trim() !== '' && !customValidation.valid && (
+              <p role="alert" className="font-mono text-xs mt-2 text-bad">
+                {customValidation.reason}
+              </p>
+            )}
+            {playerCount < 2 && (
+              <p className="font-mono text-xs mt-2 text-muted">
+                You need at least one other player to guess your word
+              </p>
+            )}
+            <button
+              onClick={handleCustomWordStart}
+              disabled={disabled || !canHostWord}
+              className="w-full mt-3 font-mono text-[13px] font-bold uppercase tracking-[0.04em] py-3 bg-accent text-accent-ink transition-[filter] hover:brightness-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Start with my word
+            </button>
           </div>
 
           {/* Start custom */}

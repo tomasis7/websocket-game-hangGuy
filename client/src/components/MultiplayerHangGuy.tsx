@@ -16,6 +16,7 @@ import { TurnBanner } from "./TurnBanner";
 interface GameOptions {
   category?: string;
   difficulty?: "easy" | "medium" | "hard";
+  customWord?: string;
 }
 
 export const MultiplayerHangGuy: React.FC = () => {
@@ -49,6 +50,8 @@ export const MultiplayerHangGuy: React.FC = () => {
   const currentTurnPlayer = gameState?.players?.find(
     (p) => p.id === gameState?.currentPlayer
   );
+  const isWordSetter =
+    isGameActive && gameState?.wordSetter === socket.id;
 
   const handleGuess = useCallback(
     (letter: string): void => {
@@ -268,13 +271,14 @@ export const MultiplayerHangGuy: React.FC = () => {
           )}
 
           {/* Turn banner + keyboard */}
-          {isGameActive && hasTurnRotation && (
+          {isGameActive && (hasTurnRotation || isWordSetter) && (
             <TurnBanner
               isMyTurn={isMyTurn}
               currentPlayerName={currentTurnPlayer?.name}
+              spectating={isWordSetter}
             />
           )}
-          {isGameActive && (
+          {isGameActive && !isWordSetter && (
             <LetterInput
               onGuess={handleGuess}
               disabled={!isMyTurn}
@@ -288,6 +292,7 @@ export const MultiplayerHangGuy: React.FC = () => {
           <GameControls
             gameStatus={gameState.status}
             onNewGame={handleNewGame}
+            playerCount={gameState.players?.length ?? 0}
           />
         </main>
 
@@ -307,6 +312,7 @@ export const MultiplayerHangGuy: React.FC = () => {
             currentTurnPlayerId={
               hasTurnRotation && isGameActive ? gameState.currentPlayer : undefined
             }
+            wordSetterId={isGameActive ? gameState.wordSetter : undefined}
           />
         </aside>
       </div>
