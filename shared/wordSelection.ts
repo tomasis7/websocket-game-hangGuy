@@ -324,7 +324,7 @@ export function validateCustomWord(input: string): CustomWordValidation {
   if (word.length < 3 || word.length > 20) {
     return { valid: false, reason: "Word must be 3-20 letters long" };
   }
-  if (!/^[A-Z]+$/.test(word)) {
+  if (!isValidWord(word)) {
     return { valid: false, reason: "Word may only contain letters A-Z" };
   }
   return { valid: true, word };

@@ -26,18 +26,23 @@ export class GameManager {
     this.gameId = gameId;
   }
 
+  // Walk forward from `start` to the first eligible (non-setter) player's index.
+  private firstEligibleFrom(start: number): number | undefined {
+    for (let i = 0; i < this.turnOrder.length; i++) {
+      const idx = (start + i) % this.turnOrder.length;
+      if (this.turnOrder[idx] !== this.wordSetter) {
+        return idx;
+      }
+    }
+    return undefined; // only the setter remains
+  }
+
   getCurrentPlayerId(): string | undefined {
     if (this.turnOrder.length === 0) {
       return undefined;
     }
-    // Walk forward from the pointer to the first eligible (non-setter) player.
-    for (let i = 0; i < this.turnOrder.length; i++) {
-      const idx = (this.currentTurnIndex + i) % this.turnOrder.length;
-      if (this.turnOrder[idx] !== this.wordSetter) {
-        return this.turnOrder[idx];
-      }
-    }
-    return undefined; // only the setter remains
+    const idx = this.firstEligibleFrom(this.currentTurnIndex);
+    return idx === undefined ? undefined : this.turnOrder[idx];
   }
 
   private advanceTurn(): void {
@@ -45,17 +50,15 @@ export class GameManager {
       this.currentTurnIndex = 0;
       return;
     }
-    const current = this.getCurrentPlayerId();
-    if (current === undefined) {
+    // The stored pointer may sit on the setter, so start from the effective
+    // current player and step to the next eligible one.
+    const curIdx = this.firstEligibleFrom(this.currentTurnIndex);
+    if (curIdx === undefined) {
       return;
     }
-    const curIdx = this.turnOrder.indexOf(current);
-    for (let i = 1; i <= this.turnOrder.length; i++) {
-      const idx = (curIdx + i) % this.turnOrder.length;
-      if (this.turnOrder[idx] !== this.wordSetter) {
-        this.currentTurnIndex = idx;
-        return;
-      }
+    const nextIdx = this.firstEligibleFrom((curIdx + 1) % this.turnOrder.length);
+    if (nextIdx !== undefined) {
+      this.currentTurnIndex = nextIdx;
     }
   }
 
